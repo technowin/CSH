@@ -25,9 +25,9 @@ pip install django gunicorn
 
 sudo ufw allow 8000
 
-python3 manage.py runserver  172.26.10.7:8000
+python3 manage.py runserver  172.26.13.184:8000
 
-gunicorn --bind 172.26.10.7:8000 CSH.wsgi
+gunicorn --bind 172.26.13.184:8000 CSH.wsgi
 
 deactivate
 
@@ -75,7 +75,7 @@ Enter i and then paste below part then for save Enter Esc :wq
 
 server {
     listen 80;
-    server_name 172.26.10.7;
+    server_name 172.26.13.184;
 
     location = /favicon.ico { access_log off; log_not_found off; }
     location /static/ {

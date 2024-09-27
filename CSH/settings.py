@@ -92,7 +92,6 @@ INSTALLED_APPS = [
     'axes',
     'Account',
     'Masters',
-    'Notification',
     'corsheaders',
     'Reports',
     'Dashboard'
