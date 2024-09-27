@@ -1,0 +1,137 @@
+
+How to host Django Application using gunicorn & nginx in Production:-
+
+git clone https://github.com/technowin/CSH.git
+
+cd CSH
+
+git config credential.helper store
+
+git push https://github.com/technowin/CSH.git
+
+sudo apt update
+
+sudo apt install python3-pip python3-dev nginx
+
+sudo pip3 install virtualenv
+
+virtualenv env
+
+source env/bin/activate
+
+pip install -r requirements.txt
+
+pip install django gunicorn
+
+sudo ufw allow 8000
+
+python3 manage.py runserver  172.26.10.7:8000
+
+gunicorn --bind 172.26.10.7:8000 CSH.wsgi
+
+deactivate
+
+sudo vim /etc/systemd/system/gunicorn.socket
+
+Enter i and then paste below part then for save Enter Esc :wq
+
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+
+[Install]
+WantedBy=sockets.target
+
+sudo vim /etc/systemd/system/gunicorn.service
+
+Enter i and then paste below part then for save Enter Esc :wq
+
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/CSH
+ExecStart=/home/ubuntu/CSH/env/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          CSH.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl start gunicorn.socket
+sudo systemctl enable gunicorn.socket
+
+sudo vim /etc/nginx/sites-available/CSH
+
+Enter i and then paste below part then for save Enter Esc :wq
+
+server {
+    listen 80;
+    server_name 172.26.10.7;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location /static/ {
+        root /home/ubuntu/CSH;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+
+sudo ln -s /etc/nginx/sites-available/CSH /etc/nginx/sites-enabled/
+
+cd /etc/nginx/sites-available/
+
+sudo rm default
+
+cd /etc/nginx/sites-enabled/
+
+sudo rm default
+
+sudo gpasswd -a www-data ubuntu
+
+sudo systemctl restart nginx
+
+sudo service nginx restart
+
+sudo service gunicorn restart
+
+sudo tail -f /var/log/nginx/error.log
+
+sudo nginx -t
+
+
+pip3 freeze > requirements.txt  (To add new packages to "requirements.txt")
+
+** for daily changes in code **
+
+git pull origin master 
+
+sudo service gunicorn restart
+
+
+** gemini api **
+
+pip install openai
+pip install google-generativeai
+
+
+In Python Django, you can migrate the database using the following steps:
+
+1. Make migrations: First, generate the migration files that describe the changes to your models.
+
+python manage.py makemigrations
+
+2. Apply the migrations: Next, apply the generated migrations to update your database schema.
+
+python manage.py migrate
