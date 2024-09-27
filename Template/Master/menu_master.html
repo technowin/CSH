@@ -1,0 +1,463 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% csrf_token %}
+
+{% comment %} {% csrf_token %} {% endcomment %}
+
+ <!-- Custom styles for this html-->
+ <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/activebtn.css' %}" rel="stylesheet" type="text/css" >
+ 
+ <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+ <!-- Include DataTables CSS -->
+ <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+ <!-- Include DataTables JS -->
+ <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+ <!-- Selectize css -->
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.default.min.css">
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js"></script>
+ 
+
+{% if type == "create"%}
+<div class="container mt-5" style="max-width: 700px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                </h2>
+                <form method="POST" action="{% url 'menu_master' %}?type=create">
+                    <input type="hidden" name="menu_id" value="{{ menu_id }}">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="menu_name" class="form-label">Menu Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ menus.menu_name }}" name="menu_name" class="form-control" id="menu_name" placeholder="Enter Menu Name" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="menu_action" class="form-label">Menu Action<span style="color:red;"></span></label>
+                            <input type="text" value="{{ menus.menu_action }}" name="menu_action" class="form-control" id="menu_action" placeholder="Enter Menu Action">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <!-- Hidden field to ensure that 0 is submitted if checkbox is unchecked -->
+                                <input type="hidden" name="parent" value="0">
+                                
+                                <input class="form-check-input" value="1" name="parent" type="checkbox" id="parent" onclick="toggleDropdown()"
+                                {% if menus.menu_is_parent == 1 %} checked {% endif %}>
+                                <label class="form-check-label" for="parent">Is Menu Parent</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="menu_parent" class="form-label">Menu Parent<span style="color:red;"></span></label>
+                            <select name="menu_parent" id="dropdown" class="form-control">
+                                <option value="" Selected disabled>Select</option>
+                                {% for item in menu %}
+                                    <option value="{{ item.0 }}" {% if item.0 == menus.menu_parent_id %}selected{% endif %}>
+                                        {{ item.1 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <!-- Hidden field to ensure that 0 is submitted if checkbox is unchecked -->
+                                <input type="hidden" name="sub_parent" value="0">
+                    
+                                <input class="form-check-input" name="sub_parent" value="1" type="checkbox" id="subparent" onclick="toggleDropdown()"
+                                {% if menus.is_sub_menu == 1 %} checked {% endif %}>
+                                <label class="form-check-label" for="subparent">Is Sub Parent</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="sub_menu_parent" class="form-label">Sub Menu Parent<span style="color:red;"></span></label>
+                            <select name="sub_menu_parent" id="dropdown" class="form-control">
+                                <option value="" Selected disabled >Select</option>
+                                {% for item in menu %}
+                                    <option value="{{ item.0 }}" {% if item.0 == menus.sub_menu %}selected{% endif %}>
+                                        {{ item.1 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <!-- Hidden field to ensure that 0 is submitted if checkbox is unchecked -->
+                                <input type="hidden" name="sub_parent1" value="0">
+                    
+                                <input class="form-check-input" value="1" name="sub_parent1" type="checkbox" id="subparent1" onclick="toggleDropdown()"
+                                {% if menus.is_sub_menu2 == 1 %} checked {% endif %}>
+                                <label class="form-check-label" for="subparent1">Is Sub Parent 2</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="sub_menu_parent1" class="form-label">Sub Menu Parent 2<span style="color:red;"></span></label>
+                            <select name="sub_menu_parent1" id="dropdown" class="form-control">
+                                <option value="" Selected disabled>Select</option>
+                                {% for item in menu %}
+                                    <option value="{{ item.0 }}" {% if item.0 == menus.sub_menu2 %}selected{% endif %}>
+                                        {{ item.1 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="fa-icons-dropdown" class="form-label">fa fa-icons</label>
+                            <select id="fa-icons-dropdown" name="menu_icon" class="form-control" > <option value="">Select</option></select>
+                        </div>
+                    </div> 
+
+
+                    <div class="text-center">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+    </div>
+{% elif type == 'role'%}
+
+<div class="container mt-5" style="max-width: 700px;">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="text-center" style="color:#4e73df;">
+            </h2>
+            <form method="POST" action="{% url 'assign_menu' %}">
+                {% csrf_token %}
+                <input type="hidden" name="type" value="role" id="datatype">
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="dropdown" class="form-label">Roles<span style="color:red;"> *</span> :</label>
+                        <select name="role_id" id="dropdown" class="form-control" >
+                            <option value="" Selected disabled>Select</option>
+                            {% for item in roles %}
+                                <option value="{{ item.0 }}">{{ item.1 }}</option>
+                            {% endfor %} 
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="dropdown" class="">Menu List<span style="color:red;"> *</span> :</label>
+                        <select name="menu_list" id="MenuDropdown" class="menudropdown" multiple required>
+                            <option value="" disabled>Select</option>
+                            {% for item in menu %}
+                                <option value="{{ item.0 }}">{{ item.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                    </div>
+                </div>
+                
+                
+                
+
+                <div class="text-center">
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+</div>
+
+{% elif type == 'user'%}
+
+<div class="container mt-5" style="max-width: 700px;">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="text-center" style="color:#4e73df;">
+            </h2>
+            <form method="POST" action="{% url 'assign_menu' %}">
+                {% csrf_token %}
+                <input type="hidden" name="type" value="user" id="datatype">
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="dropdown" class="form-label">Users<span style="color:red;"> *</span> :</label>
+                        <select name="user_id" id="dropdown" class="form-control">
+                            <option value=""  Selected disabled>Select</option>
+                            {% for item in users %}
+                                <option value="{{ item.0 }}">{{ item.1 }}</option>
+                            {% endfor %} 
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="dropdown" class="">Menu List<span style="color:red;"> *</span> :</label>
+                        <select name="menu_list" id="MenuDropdown" class="menudropdown" multiple required>
+                            <option value="" disabled>Select</option>
+                            {% for item in menu %}
+                                <option value="{{ item.0 }}">{{ item.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                    </div>
+                </div>
+                
+
+                <div class="text-center">
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+</div>
+{% elif type == 'order'%}
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Index Card -->
+        <div class="card mb-12"style="zoom:90%" >
+            <div class="row">
+                <div class="col-md-3">
+                    <h3> <strong style="color: #4e73df;"> <u>Menu Order</u> </strong></h3>
+                </div>
+            </div>  
+            <div class="card-body">
+             <div class="table-responsive">
+            <form method="post" action="{% url 'menu_order' %}">
+                    {% csrf_token %}
+                    <table style="width: 100%;" class="table" id="dataTable">
+                        <thead>
+                          <tr>
+                            <th>Sr.No</th>
+                            <th hidden>Menu Id</th>
+                            <th>Menu Name</th>
+                            <th>Menu Action</th>
+                            <th>Menu Is Parent</th>
+                            <th>Parent Menu Name</th>
+                            <th>Menu Order</th>
+                          </tr>
+                          <tr>
+                            <th></th>
+                            <th hidden></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for row in data %}
+                          <tr style="color:black">
+                            <td>{{ forloop.counter }}</td> <!-- Serial Number -->
+                            <td style="display:none;">{{ row.0 }}</td> <!-- Menu Id, hidden -->
+                            <td>{{ row.1 }}</td> <!-- Menu Name -->
+                            <td>{{ row.2 }}</td> <!-- Menu Action -->
+                            <td>{{ row.3 }}</td> <!-- Menu Is Parent -->
+                            <td>{{ row.4 }}</td> <!-- Parent Menu Name -->
+                            <td>
+                              {% if row.5 %}
+                              <input type="hidden" name="menu_id_{{ forloop.counter }}" value="{{ row.0 }}">
+                              <input type="number" name="menu_order_{{ forloop.counter }}" value="{{ row.5 }}" step=".0001">
+                              {% else %}
+                              {{ row.5 }}
+                              {% endif %}
+                            </td> <!-- Menu Order -->
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                
+                <div class="text-center">
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                </div>
+             </div>
+            </div>
+        </div>
+    </div>
+</div>
+                 
+{% endif %}
+
+
+<script>
+    $(document).ready(function() {
+        $('.menudropdown').selectize({
+            plugins: ['remove_button'],
+            delimiter: ',',
+            persist: false,
+            create: false, // Prevents creating new items
+            selectOnTab: false, // Disables item creation on tab
+            maxItems: null,
+            onInitialize: function() {
+                // Clear any preselected values if needed
+                var control = this;
+                control.clear();
+            }
+        });
+    });
+
+    
+</script>
+
+<script>
+
+    $('#dropdown').change(function() {
+        var selectedValue = $(this).val(); 
+        var type = $('#datatype').val();
+    
+        if (selectedValue) {
+            $.ajax({
+                url: 'get_assigned_values',  
+                type: 'POST', 
+                data: {
+                    id: selectedValue,
+                    type:type,
+                    csrfmiddlewaretoken: '{{ csrf_token }}' 
+                },
+                success: function(response) {
+                    var menuArray = response.menu_array;
+                    var dropdown = $('#MenuDropdown');
+                    var selectizeInstance = dropdown[0].selectize;
+                    
+                    if (selectizeInstance) {
+                        menuArray.forEach(function(item) {
+                            selectizeInstance.addOption({ value: item[0], text: item[1] });
+                        });
+    
+                        var selectedValues = menuArray.map(item => item[0]);
+                        selectizeInstance.setValue(selectedValues, true); 
+                    } else {
+                        dropdown.selectize({
+                            valueField: 'value',
+                            labelField: 'text',
+                            options: menuArray.map(function(item) {
+                                return { value: item[0], text: item[1] };
+                            }),
+                            items: menuArray.map(item => item[0])  
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+    });
+    
+    
+    
+</script>
+    
+<script>
+    async function loadCSS(url) {
+        const response = await fetch(url);
+        const cssText = await response.text();
+        return cssText;
+    }
+    
+    function extractIconClassNames(cssText) {
+        // Regular expression to match classes starting with 'fa-'
+        const regex = /\.fa-([a-z0-9-]+):before/g;
+        let classNames = [];
+        let match;
+        while ((match = regex.exec(cssText)) !== null) {
+            classNames.push(`fa-${match[1]}`);
+        }
+        return classNames;
+    }
+    
+    function populateDropdown(classNames) {
+        const dropdown = document.getElementById('fa-icons-dropdown');
+        classNames.forEach(className => {
+            const option = document.createElement('option');
+            option.value = className;
+            option.textContent = className;
+            dropdown.appendChild(option);
+        });
+    }
+    
+    async function init() {
+        const cssUrl = "{% static 'vendor/fontawesome-free/css/all.min.css' %}";
+        const cssText = await loadCSS(cssUrl);
+        const iconClassNames = extractIconClassNames(cssText);
+        populateDropdown(iconClassNames);
+    }
+    
+    window.onload = init;
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+      $("#dataTable").DataTable({
+        //order: [[0, 'desc']],
+        "ordering": false,
+        initComplete: function () {
+          this.api()
+            .columns()
+            .every(function () {
+              var column = this;
+              var select = $(
+                '<select style="width:100%;border-radius: 10px;background-color:whitesmoke ;color: black;"><option value="">All</option></select>'
+              )
+                .appendTo($(column.header()).empty())
+                .on("change", function () {
+                  var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                  column.search(val ? "^" + val + "$" : "", true, false).draw();
+                });
+              column
+                .data()
+                .unique()
+                .sort()
+                .each(function (d, j) {
+                  var ce = d;
+                  if (
+                    ce.includes("<a") ||
+                    ce.includes("span") ||
+                    ce.includes("<input") ||
+                    ce.includes("select") ||
+                    ce.includes("textarea")
+                  ) {
+                  } else {
+                    select.append('<option value="' + d + '">' + d + "</option>");
+                  }
+                });
+            });
+        },
+        pageLength: 10,
+        lengthMenu: [
+          [5, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+          [5, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+        ],
+      });
+    });
+  </script>
+
+
+ {% endblock %} 

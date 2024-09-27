@@ -1,0 +1,30 @@
+<!-- templates/search_results.html -->
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %} {% load static %}
+
+
+<div class="row">
+
+    <div class="col-lg-3">
+        <h2>Search Results </h1>
+    </div>
+    <div class="col-lg-3">
+        <a href="/home">&larr; Back to Home</a>
+    </div>
+</div>
+
+<p>Results for "{{ query }}":</p>
+
+<ul>
+    {% for result in results %}
+    <li><a href="{{ result.2 }}">  {{ result.0 }}</a> - {{ result.1 }}</li>
+    {% empty %}
+    <li>No results found.</li>
+    {% endfor %}
+</ul>
+
+{% load static %}
+
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+
+{% endblock %}

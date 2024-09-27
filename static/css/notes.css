@@ -1,0 +1,11 @@
+/* Note Box Icon */
+.notes{position:relative;border-radius:4px;display:block;font-size:14px;margin:16px 0;padding:12px 24px 12px 60px} .notes:before{float:left;font-size:30px; font-family:FontAwesome;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;word-wrap:normal;margin-left:-46px;margin-top:-10px}
+.notes1:before{color:#21a796;content:'\f087';} .notes1{background:#cfffe6;color:#565656}
+.notes2:before{color:#f95060;content:'\f088';} .notes2{background:#f9bfc5;color:#565656}
+.notes3:before{color:#2387c1;content:'\f06a';} .notes3{background:#c8d9e2;color:#565656}
+.notes4:before{color:#1aa687;content:'\f00c';} .notes4{background:#6dedd0;color:#565656}
+.notes5:before{color:#f63a50;content:'\f00d';} .notes5{background:#fb818f;color:#fff}
+.notes6:before{color:#f7871a;content:'\f10d';} .notes6{background:#f5b474;color:black}
+.notes7:before{color:#969696;content:'\f0c1';} .notes7{background:#f5f68e;color:#565656}
+/* Anamasi Note Box*/
+.notes1:hover:before,.notes2:hover:before,.notes3:hover:before,.notes4:hover:before,.notes5:hover:before,.notes6:hover:before,.notes7:hover:before,.notes8:hover:before,.notes9:hover:before,.notes10:hover:before{-webkit-animation:ripple 0.65s linear;-moz-animation:ripple 0.65s linear;-ms-animation:ripple 0.65s linear;-o-animation:ripple 0.65s linear;animation:ripple 0.65s linear}@keyframes ripple{100%{opacity:0;transform:scale(2.5)}}

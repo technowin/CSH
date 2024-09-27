@@ -1,0 +1,109 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% csrf_token %}
+    <div class="container">
+        <div class="card o-hidden border-0 shadow-lg my-5" style="width: 70%; margin: 0 auto;">
+            <div class="card-body p-0">
+                <!-- Nested Row within Card Body -->
+                <div class="row">
+                   {% comment %} <div class="col-lg-2">
+                   </div> {% endcomment %}
+                    <div class="col-lg-12">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h1 class="h4 text-gray-900 mb-4">{% if id == '0' %}Create an Account!{% else%}Edit user Details{% endif %}</h1>
+                            </div>
+                            <form class="user" method="POST" action="{% url 'register_new_user' %}" onsubmit="return validatePassword()">
+                                {% csrf_token %}
+                                {% if id == '0' %}
+                                <input type="hidden" name="id" if  value="{{ id }}">
+                                {% else  %}
+                                <input type="hidden" name="id" if  value="{{ users.id }}">
+                                {% endif %} 
+
+
+
+                                <div class="form-group row">
+                                    
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <input type="text" value="{{ first_name }}" class="form-control form-control-user" id="exampleFirstName" name="firstname" placeholder="First Name" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <input type="text" value="{{ last_name }}" class="form-control form-control-user" id="exampleLastName" name="lastname" placeholder="Last Name" >
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <input type="email"  value="{{ users.email }}" class="form-control form-control-user" id="exampleInputEmail" name="email" placeholder="Email Address" required>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                    <input type="tel" value="{{ users.phone }}"  class="form-control form-control-user" id="exampleMobileNumber" name="mobileNumber" placeholder="Mobile Number" required>
+                                    </div>
+                                {% comment %} <div class="form-group"> {% endcomment %}
+                                    <div class="col-sm-6">
+                                    <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="role_id" id="role_id" class="form-control">
+                                        
+                                        <option value="" Selected disabled >Select Role</option>
+                                        {% for item in roles %}
+                                            <option value="{{ item.0 }}" {% if item.0 == users.role_id %}selected{% endif %}>{{ item.1 }}</option>
+                                        {% endfor %}
+                                        
+                                    </select>
+                                    </div>
+                                </div>
+                                {% if id == '0'%}
+                                <div class="form-group row">
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <input type="password" class="form-control form-control-user" id="exampleInputPassword" name="password" placeholder="Password" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <input type="password"  class="form-control form-control-user" id="exampleRepeatPassword" name="repeatPassword" placeholder="Repeat Password" required>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <button type="submit" class="btn btn-primary btn-user btn-block">
+                                    {% if id == '0' %}Register Account{% else %}Update User Details{% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{% if messages %}
+    {% for message in messages %}
+      <script>
+      Swal.fire({
+        title: "{{ message.tags }}",
+        text: "{{ message }}",
+        icon: "{{ message.tags }}",
+        confirmButtonText: "OK",
+      });
+    </script>
+    {% endfor %}
+{% endif %}
+
+  <script>
+  function validatePassword() {
+      var password = document.getElementById("exampleInputPassword").value;
+      var repeatPassword = document.getElementById("exampleRepeatPassword").value;
+      
+      if (password !== repeatPassword) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Oops...',
+              text: 'Passwords do not match!',
+          });
+          return false;  // Prevent form submission
+      }
+      return true;  // Allow form submission
+  }
+  </script>
+{% endblock %}

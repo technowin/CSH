@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %} 
+{% block content %} {% load static %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" /><link rel="stylesheet" type="text/css" href="{% static 'css/report.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/report.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'js/selectize-bootstrap-4-style-master/dist/css/selectize.bootstrap4.css' %}" />
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Tangerine:bold,bolditalic|Inconsolata:italic|Droid+Sans|Arima+Madurai|El+Messiri|Indie+Flower&effect=decaying|shadow-multiple">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<style>
+@import url(https://fonts.googleapis.com/css?family=Bungee);
+</style>
+<style>
+    .Btns {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      width: 45px;
+      height: 45px;
+      border: none;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      transition-duration: .3s;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+      background-color: #f87912;
+      {% comment %} margin-left: 200px; {% endcomment %}
+    }
+    
+    /* plus sign */
+    .sign {
+      width: 100%;
+      transition-duration: .3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .sign svg {
+      width: 25px;
+    }
+    
+    
+    /* text */
+    .text {
+      position: absolute;
+      left: 5%;
+      width: 0%;
+      opacity: 0;
+      color: white;
+      font-size: 0.8em;
+      font-weight: 600;
+      transition-duration: .3s;
+    }
+    /* hover effect on button width */
+    .Btns:hover {
+      width: 125px;
+      border-radius: 40px;
+      transition-duration: .3s;
+    }
+    
+    .Btns:hover .sign {
+      width: 10%;
+      transition-duration: .3s;
+      padding-left: 50px;
+    }
+    /* hover effect button's text */
+    .Btns:hover .text {
+      opacity: 1;
+      width: 100%;
+      transition-duration: .3s;
+      {% comment %} padding-right: 0px; {% endcomment %}
+    }
+    /* button click effect*/
+    .Btns:active {
+      transform: translate(2px ,2px);
+    }
+  </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/js/selectize.min.js" integrity="sha512-IOebNkvA/HZjMM7MxL0NYeLYEalloZ8ckak+NDtOViP7oiYzG5vn6WVXyrJDiJPhl4yRdmNAG49iuLmhkUdVsQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<div class=" card ">
+    <div class="row " id="headertitle" style="margin-bottom:14px">
+        <input type="hidden" id = "Entity1" name = "Entity" value = "{{ entity }}" />
+        <input type="hidden" id = "CountFilterId" name = "testFilterId" value = "0" />
+        <div class="col-5 no-gutters padding-1">
+            <h3 class=" nav-link active" style=" color:#4e73df; font-size: 25px; font-family: 'Bungee'; text-shadow: 0 1px 0 #ccc, 0 2px 0 #c9c9c9, 0 3px 0 #bbb, 0 4px 0 #b9b9b9, 0 5px 0 #aaa, 0 6px 1px rgba(0,0,0,.1), 0 1px 3px rgba(0,0,0,.3), 0 3px 5px rgba(0,0,0,.2), 0 5px 10px rgba(0,0,0,.25), 0 10px 10px rgba(0,0,0,.2), 0 20px 20px rgba(0,0,0,.15), 0 30px 20px rgba(0,0,0,.1); ">{{ title }}</h3>
+            <h3 class=" nav-link active" style=" color:#4e73df; font-size: 14px;"><b>{{ note }}</b></h3>
+        </div>
+        <div class="col-2 no-gutters padding-0">
+            <div class="form-outline inputcss" hover-tooltip="select or add saved report"  tooltip-position="top">
+                <select name="save_filt_name" id="save_filt_name_id" class="" style="border-radius: 10px; padding: 1.5%; width: 100%;" >
+                    {% if saved_names|length > 0 %}
+                    <option  style="border-radius: 10px; padding: 0.5%; width: 100%" value="0" selected disabled>--select--</option>
+                    {% endif %}
+
+                    {% for item1 in saved_names %}
+                    <option style="border-radius: 10px; padding: 0.5%; width: 100%;"  value="{{ item1.0 }}"> {{ item1.1 }} </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+         <div class="col-1" >              
+            <div class="col-1" hover-tooltip="click to save report"  tooltip-position="top" style="height: 0px; padding-bottom: 2px; padding-top: 2px; padding-right: 0px;">
+                <button type="submit" value="save" class="btn btn-info button_r" id="save_filters_id"><i class="fa fa-save"></i></button>
+            </div>
+        </div>
+        <div class="col-1 padding-1 padding-0" >
+            <div class="col-1" hover-tooltip="delete saved report"  tooltip-position="top" style="height: 0px; padding-bottom: 2px; padding-top: 2px; padding-right: 0px;">
+                <button type="submit" value="save" class="btn btn-info button_r" id="delete_filters_id"><i class="fa fa-trash"></i></button>
+            </div>
+        </div>
+        <div class="col-2 padding-1 padding-0" >
+          
+        </div>
+        <div class="col-1 padding-1 padding-0" >
+            <form action="report_pdf" method="post" id="formSamplePdf" class="form-horizontal" role="form" autocomplete="off" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="ColumnNameHiddenId" name="columnName" value="">
+                <input type="hidden" id="FilterHiddenId" name="filterid" value="">
+                <input type="hidden" id="SubFilterHiddenId" name="subFilterId" value="">
+                <input type="hidden" id="sft_id" name="sft" value="">
+                <input type="hidden" id="entity" name="entity" value="">
+                <div class="col-1" hover-tooltip="export pdf"  tooltip-position="top" style="height: 0px; padding-bottom: 2px; padding-top: 2px; padding-right: 0px;">
+                    <button type="submit" value="pdf" class=" btn-danger button_r" id="btndownloadPdf"><i class="fa fa-file-pdf"></i></button>
+                </div>
+            </form>
+        </div>
+        <div class="col-1 padding-1 padding-0">
+            <form action="report_xlsx" method="post" id="formSampleExcel" class="form-horizontal" role="form" autocomplete="off" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="ColumnNamesHiddenId1" name="columnName" value="">
+                <input type="hidden" id="FiltersHiddenId1" name="filterid" value="">
+                <input type="hidden" id="SubFiltersHiddenId1" name="subFilterId" value="">
+                <input type="hidden" id="sft_id1" name="sft" value="">
+                <input type="hidden" id="entity1" name="entity" value="">
+                <div class="col-1" hover-tooltip="export excel"  tooltip-position="top" style="height: 0px; padding-bottom: 2px; padding-top: 2px; padding-right: 0px;">
+                    <button type="submit" value="Excel" class=" btn-success button_r" id="btnDownloadExcel"><i class="fa fa-file-excel"></i></button>
+                </div>
+            </form>
+        </div>
+        <div class="col-1" hover-tooltip="enable or disable filter"  tooltip-position="top" style="height: 0px; padding-bottom: 2px; padding-top: 2px;">
+            <button type="button" value="Filter" class=" btn-success button_r " id="ddlfilter"> <i class="fa fa-filter"></i></button>
+        </div>
+    </div>
+    <div class=" partial" id="ddlfilterpartial" style="display: block;zoom: 95%;">
+        <div class="row">
+            <div class="col-2 no-gutters padding-0" style="margin-top:0.3% ;">
+                <div class="form-outline inputcssf" >
+                    <select name="FilterId" id="1filterId" class="filter" style="border-radius: 10px; padding: 1.5%; width: 100%;"  required onchange="change(this.id)">
+                        {% for item1 in filter_name %}
+                        <option style="border-radius: 10px; padding: 0.5%; width: 100%"  value="{{ item1.0 }}"> {{ item1.1 }} </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-4 no-gutters padding-0">
+                <div class="form-outline inputcss">
+                    <select name="SubFilterId" id="1subFilterId" class="subfilter" style="border-radius: 10px; padding: 1.5%; width: 100%;color:white;"  required multiple >
+                         <!-- <option  style="border-radius: 10px; padding: 0.5%; width: 100%" value="0" disabled>--ALL--</option> -->
+                    </select>
+                </div>
+            </div>
+            <div class="col-1" hover-tooltip="add filter"  tooltip-position="top" style="height: 0px; padding-bottom: 2px; padding-top: 2px;" >
+                <button type="button" value="" class=" btn-success button_r" id="AddFilters"> <i class='fa fa-plus'></i></button>
+            </div>
+            <div class="col-1" hover-tooltip="remove filter"  tooltip-position="top" style="height: 0px; padding-bottom: 2px; padding-top: 2px;">
+                <button type="button" value="" class=" btn-danger button_r" id="remove_filters"> <i class='fa fa-close'></i></button>
+            </div>
+            <div class="col-3 no-gutters padding-0" id="column">
+                <div class="form-outline inputcss" id="selectedoptions">
+                    <select name="ColumnId" id="ddlColumnId" class="" style="border-radius: 10px; padding: 1.5%; width: 100%;color:white;" required multiple >
+                        {% for item1 in column_name %}
+                        <option style="border-radius: 10px; padding: 0.5%; width: 100%;color:white;"  value="{{ item1.0 }}"> {{ item1.1 }} </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-1 no-gutters padding-0" hover-tooltip="search report"  tooltip-position="top">
+                <button type="button" value="" class=" btn-success button_r" id="ReportBtn"><i class="fa fa-search" aria-hidden="true" id="searchId"></i></button>
+            </div>
+        </div>
+    </div>
+ 
+    <div>
+        <div style="display: none;" id="loderDiv" class="my-loader">
+            <div class="rubiks-cube">
+                <div class="face front">
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ffffff;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                </div>
+     
+                <div class="face back">
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ffffff;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                </div>
+                <div class="face left">
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #ffffff;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                </div>
+                <div class="face right">
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ffffff;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                </div>
+                <div class="face top">
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #ffffff;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                </div>
+                <div class="face bottom">
+                    <div style="background: #ffffff;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                    <div style="background: #ffeb3b;" class="cube"></div>
+                    <div style="background: #4caf50;" class="cube"></div>
+                    <div style="background: #2196f3;" class="cube"></div>
+                    <div style="background: #ffffff;" class="cube"></div>
+                    <div style="background: #ff3d00;" class="cube"></div>
+                </div>
+            </div>
+        </div>
+        <div id="partialcomponent" class="partial"></div>
+    </div>
+</div>
+
+{% load static%}
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+
+<script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.0/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/4.1.0/js/dataTables.fixedColumns.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.4.0/js/dataTables.select.min.js"></script>
+<script src="{% static 'js/selectize-bootstrap-4-style-master/dist/js/selectize/standalone/selectize.min.js' %}"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        
+       var selectz = $("#ddlColumnId").selectize({ create: false, selectOnTab: true, maxItems: 1000, placeholder: 'ALL' });
+        $("#CountFilterId").val(1);
+        var cNames = "";
+        cNames = $("#ddlColumnId").val().join();
+        var selectedText = $('#ddlColumnId option:selected').toArray().map(item => item.text).join();
+        var fid = $("#1filterId").val();
+        var sFid = $("#1subFilterId").val();
+
+        $.ajax({
+          type: "GET",
+          url: "get_sub_filter",
+          type: 'GET',
+          datatype: "json",
+          traditional: true,
+          data: { 'filter_id': fid },
+          success: function (data) {
+            
+            if (data == '0') {
+                $('#1subFilterId').selectize()[0].selectize.destroy();
+                $("#1subFilterId").empty();
+                $("#1subFilterId").prop('disabled', false);
+                var select = $("#1subFilterId").selectize({ placeholder: 'ALL'});
+                control = select[0].selectize;
+                control.clear();
+            }
+            else {
+                $('#1subFilterId').selectize()[0].selectize.destroy();
+                $("#1subFilterId").empty();
+                $("#1subFilterId").prop('disabled', false);
+
+                data.forEach(function (item) {
+                    
+                    $("#1subFilterId").append('<option style = "color black " value="' + item.id1 + '">' + item.name + '</option>');
+                });
+                var select = $("#1subFilterId").selectize({ placeholder: 'ALL' });
+
+            }
+          }
+        
+        });
+        $('#ddlfilter').click(function (e) {
+           
+           var x = document.getElementById("ddlfilterpartial");
+           if (x.style.display === "none") {
+               x.style.display = "block";
+           } else {
+               x.style.display = "none";
+           }
+        })
+    });
+
+    $("#AddFilters").click(function () {
+        
+        var filtercount = $("#CountFilterId").val();
+        var entity = $("#Entity1").val();
+        var filterid = 0;
+        filtercount++;
+        $.ajax({
+            url: "add_new_filter",
+            type: 'GET',
+            datatype: "json",
+            traditional: true,
+            data: {
+                'filter_count': filtercount,
+                'entity': entity,
+            },
+            success: function (data) {
+                if (filtercount % 2 === 0) {
+                    $("#ddlfilterpartial").append(data.html);
+                } else {
+                    var n = Number(filtercount) - 1;
+                    $("#new_f_row_" + n).append(data.html);
+                }
+
+                $.ajax({
+                    url:"get_filter",
+                    type: 'GET',
+                    datatype: "json",
+                    traditional: true,
+                    data: { 'entity': entity },
+                    success: function (data) {
+
+                        $("#" + filtercount + "filterId").empty();
+                        data.forEach(function (item) {
+                            
+                            if (filterid == '0') {
+                            filterid = item.id1;
+                            }
+                            $("#" + filtercount + "filterId").append('<option style="border-radius: 10px; padding: 0.5%; width: 100%" value="' + item.id1 + '">' + item.name + '</option>');
+                        });
+
+                        $.ajax({
+                            url: "get_sub_filter",
+                            type: 'GET',
+                            datatype: "json",
+                            traditional: true,
+                            data: { 'filter_id': filterid },
+                            success: function (data) {
+                                
+                                if (data == '0') {
+                                    $("#" + filtercount + "subFilterId").selectize()[0].selectize.destroy();
+                                    $("#" + filtercount + "subFilterId").empty();
+                                    $("#" + filtercount + "subFilterId").prop('disabled', false);
+                                    var select = $("#" + filtercount + "subFilterId").selectize({ placeholder: 'ALL' });
+                                    control = select[0].selectize;
+                                    control.clear();
+                                }
+                                else {
+                                    $("#" + filtercount + "subFilterId").selectize()[0].selectize.destroy();
+                                    $("#" + filtercount + "subFilterId").empty();
+                                    $("#" + filtercount + "subFilterId").prop('disabled', false);
+
+                                    data.forEach(function (item) {
+                                        $("#" + filtercount + "subFilterId").append('<option value="' + item.id1 + '">' + item.name + '</option>');
+                                    });
+                                    var select = $("#" + filtercount + "subFilterId").selectize({ placeholder: 'ALL' });
+                                    control = select[0].selectize;
+                                    control.clear();
+                                }
+                                
+                                $("#CountFilterId").val(filtercount);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    });
+    $("#remove_filters").click(function () {
+        var f_count = $("#CountFilterId").val();
+        if (Number(f_count) % 2 === 0) {
+            var element = document.getElementById("new_f_row_" + f_count);
+            if (element) {
+                element.remove();
+            }
+        } else {
+            $(".new_f_row_odd" + f_count).remove();
+        }
+        if(Number(f_count) !=1)
+        {
+            $("#CountFilterId").val(Number(f_count) - 1);
+        }
+    });
+    $("#ReportBtn").click(function () {
+        
+        $("#partialcomponent").empty();
+        document.getElementById("loderDiv").style.display = "block";
+        var cNames = "";
+        cNames = $("#ddlColumnId").val().map(item => item.replace(/,/g, '|')).join();
+
+        var entity = $("#Entity1").val();
+    
+        var fid = "";
+        var sfid = "";
+        var sft = "";
+        var f = "";
+        var fcount = $("#CountFilterId").val();
+        for (var i = 1; i <= fcount; i++) {
+            var s = $("#" + i + "filterId").val();
+
+            if (s == "") {
+                s = "0";
+            }
+            if (fid == "") {
+                fid = s;
+            } else {
+                fid = fid + "," + s;
+            }
+            var s = $("#" + i + "subFilterId option:selected").toArray().map(item => item.value).join();
+            var s1 = $("#" + i + "subFilterId option:selected").toArray().map(item => item.text).join();
+            s = s.replaceAll(',', '|');
+            s1 = s1.replaceAll(',', '|');
+            if (sfid == "") {
+                if (s == "") {
+                    s = " ";
+                    s1 = " ";
+                }
+                sfid = s;
+                sft = s1;
+            } else {
+                sfid = sfid + "," + s;
+                sft = sft + "," + s1;
+            }
+        }
+        
+        $.ajax({
+            url: "partial_report",
+            data: {
+                'columnName': cNames,
+                'filterid': fid,
+                'subFilterId': sfid,
+                'sft': sft,
+                'entity': entity,
+            },
+            success: function (data) {
+                $("#partialcomponent").empty();
+                document.getElementById("loderDiv").style.display = "none";
+                $("#partialcomponent").append(data.html);
+                var pc = document.getElementById("partialcomponent");
+                pc.style.overflowX = "scroll";
+
+            }
+        });
+    });
+
+    function change(fids) {
+        
+        var cNames = "";
+        cNames = $("#ddlColumnId").val().map(item => item.replace(/,/g, '|')).join();
+        var fidid = fids;
+        var id = fidid.charAt(0);
+        var fid = $("#" + id + "filterId").val();
+        var fidt = $("#filterId option:selected").toArray().map(item => item.text).join();
+        $.ajax({
+            url: "get_sub_filter",
+            type: 'GET',
+            datatype: "json",
+            traditional: true,
+            data: { 'filter_id': fid },
+            success: function (data) {
+                
+                if (data == '0') {
+                    $("#" + id + "subFilterId").selectize()[0].selectize.destroy();
+                    $("#" + id + "subFilterId").empty();
+                    $("#" + id + "subFilterId").prop('disabled', false);
+                    var select = $("#" + id + "subFilterId").selectize({ placeholder: 'ALL' });
+                    control = select[0].selectize;
+                    control.clear();
+                }
+                else {
+                    $("#" + id + "subFilterId").selectize()[0].selectize.destroy();
+                    $("#" + id + "subFilterId").empty();
+                    $("#" + id + "subFilterId").prop('disabled', false);
+
+                    data.forEach(function (item) {
+                        $("#" + id + "subFilterId").append('<option value="' + item.id1 + '">' + item.name + '</option>');
+                    });
+
+                    var select = $("#" + id + "subFilterId").selectize({ placeholder: 'ALL' });
+                    control = select[0].selectize;
+                    control.clear();
+                }
+            }
+        });
+    };
+
+
+   $("#btndownloadPdf").click(function () {
+        var cNames = "";
+        cNames = $("#ddlColumnId").val().map(item => item.replace(/,/g, '|')).join();
+        var entity = $("#Entity1").val();
+        var fid = "";
+        var sfid = "";
+        var sft = "";
+        var f = "";
+        var fcount = $("#CountFilterId").val();
+        for (var i = 1; i <= fcount; i++) {
+            var s = $("#" + i + "filterId").val();
+
+            if (s == "") {
+                s = "0";
+            }
+            if (fid == "") {
+                fid = s;
+            } else {
+                fid = fid + "," + s;
+            }
+            var s = $("#" + i + "subFilterId option:selected").toArray().map(item => item.value).join();
+            var s1 = $("#" + i + "subFilterId option:selected").toArray().map(item => item.text).join();
+            s = s.replaceAll(',', '|');
+            s1 = s1.replaceAll(',', '|');
+            if (sfid == "") {
+                if (s == "") {
+                    s = " ";
+                    s1 = " ";
+                }
+                sfid = s;
+                sft = s1;
+            } else {
+                sfid = sfid + "," + s;
+                sft = sft + "," + s1;
+            }
+        }
+        $("#entity").val(entity);
+        $("#ColumnNameHiddenId").val(cNames);
+        $("#FilterHiddenId").val(fid);
+        $("#SubFilterHiddenId").val(sfid);
+        $("#sft_id").val(sft);
+        $("#formSamplePdf").submit();
+    })
+
+
+   $("#btnDownloadExcel").click(function () {
+        
+        var cNames = "";
+        cNames = $("#ddlColumnId").val().map(item => item.replace(/,/g, '|')).join();
+        var fid = "";
+        var sfid = "";
+        var sft = "";
+        var f = "";
+        var fcount = $("#CountFilterId").val();
+        for (var i = 1; i <= fcount; i++) {
+            var s = $("#" + i + "filterId").val();
+            if (s == "") {
+                s = "0";
+            }
+            if (fid == "") {
+                fid = s;
+            } else {
+                fid = fid + "," + s;
+            }
+            var s = $("#" + i + "subFilterId option:selected").toArray().map(item => item.value).join();
+            var s1 = $("#" + i + "subFilterId option:selected").toArray().map(item => item.text).join();
+            s = s.replaceAll(',', '|');
+            s1 = s1.replaceAll(',', '|');
+            if (sfid == "") {
+                if (s == "") {
+                    s = " ";
+                    s1 = " ";
+                }
+                sfid = s;
+                sft = s1;
+            } else {
+                sfid = sfid + "," + s;
+                sft = sft + "," + s1;
+            }
+        }
+        
+        var entity = $("#Entity1").val();
+        $("#entity1").val(entity);
+        $("#ColumnNamesHiddenId1").val(cNames);
+        $("#FiltersHiddenId1").val(fid);
+        $("#SubFiltersHiddenId1").val(sfid);
+        $("#sft_id1").val(sft);
+        $("#formSampleExcel1").submit();
+    })
+
+
+    $("#save_filters_id").click(function () {
+        
+        var cNames = "";
+        cNames = $("#ddlColumnId").val().map(item => item.replace(/,/g, '|')).join();
+        var fid = "";
+        var sfid = "";
+        var sft = "";
+        var f = "";
+        var fcount = $("#CountFilterId").val();
+        for (var i = 1; i <= fcount; i++) {
+            var s = $("#" + i + "filterId").val();
+
+            if (s == "") {
+                s = "0";
+            }
+            if (fid == "") {
+                fid = s;
+            } else {
+                fid = fid + "," + s;
+            }
+            var s = $("#" + i + "subFilterId option:selected").toArray().map(item => item.value).join();
+            var s1 = $("#" + i + "subFilterId option:selected").toArray().map(item => item.text).join();
+            s = s.replaceAll(',', '|');
+            s1 = s1.replaceAll(',', '|');
+            if (sfid == "") {
+                if (s == "") {
+                    s = " ";
+                    s1 = " ";
+                }
+                sfid = s;
+                sft = s1;
+            } else {
+                sfid = sfid + "," + s;
+                sft = sft + "," + s1;
+            }
+        }
+        
+        var entity = $("#Entity1").val();
+        var save_filter_name = $('#save_filt_name_id option:selected').toArray().map(item => item.text).join();
+        var save_filter_val = $('#save_filt_name_id option:selected').toArray().map(item => item.value).join();
+        if(save_filter_name!='' && save_filter_val !='0')
+        {
+            $.ajax({
+                type: "GET",
+                url: "save_filters",
+                data: { 'columnName': cNames,'filterid': fid,'subFilterId': sfid,'sft': sft,'entity': entity,'save_filter_name': save_filter_name,'f_count': fcount},
+                beforeSend: function () {},
+                success: function (data) {
+                  if (data.result === "success") {
+                    Swal.fire({
+                      icon: 'success',
+                      title: "Success...! ",
+                      text: "saved successfully !",
+                      timer: 2000, 
+                      showConfirmButton: false
+                    });
+                  }
+                  else{
+                    Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Something went wrong!"
+                    });     
+                  }
+                },
+                error: function (res) {},
+              });
+        }
+        else{
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: "please add name to save!"
+            });     
+        }
+       
+    })
+
+
+
+    $("#delete_filters_id").click(function () {
+        var fcount = $("#CountFilterId").val();
+        var entity = $("#Entity1").val();
+        var save_filter_name = $("#save_filt_name_id").val();
+        if(save_filter_name!='' && save_filter_name!='0')
+        {
+            $.ajax({
+                type: "GET",
+                url: "delete_filters",
+                data: {'entity': entity,'save_filter_name': save_filter_name,'f_count': fcount},
+                beforeSend: function () {},
+                success: function (data) {
+                  if (data.result === "success") {
+                    Swal.fire({
+                      icon: 'success',
+                      title: "Success...! ",
+                      text: "deleted successfully !",
+                      timer: 2000, 
+                      showConfirmButton: false
+                    });
+                  }
+                  else{
+                    Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Something went wrong!"
+                    });     
+                  }
+                },
+                error: function (res) {},
+              });
+        }
+        else{
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: "please select saved report name!"
+            });     
+          }
+       
+    })
+</script>
+
+
+
+<script>
+ $(document).ready(async function () {
+    var selectz = $("#save_filt_name_id").selectize({ create: true, placeholder: '--select--' });
+    selectz.on('change', async function (value) {
+        var saved_id = $("#save_filt_name_id").val();
+        var entity = $("#Entity1").val();
+
+        var f_id11 = document.getElementById("1filterId");
+        f_id11.value = '';
+        f_id11.selectedIndex = 0;
+        var s_fid11 = $("#1subFilterId").selectize();
+        s_fid11[0].selectize.setValue(['']);
+        var e1 = document.getElementsByClassName("f_row");
+        if (e1) {
+            for (var i = 0; i < e1.length; i++) {
+                e1[i].remove();
+            }
+        }
+        var colnn = $("#ddlColumnId").selectize({ create: false, selectOnTab: true, maxItems: 1000, placeholder: 'ALL' });
+        colnn[0].selectize.setValue(['']);
+
+        $("#partialcomponent").empty();
+        $("#CountFilterId").val(1);
+
+        if (saved_id !== "0") {
+            try {
+                var res = await $.ajax({
+                    type: "GET",
+                    url: "saved_filters",
+                    data: { 'entity': entity, 'saved_id': saved_id },
+                    beforeSend: function () { },
+                });
+
+                console.log(res);
+
+                if (res.result === "success") {
+                    var f_id1 = document.getElementById("1filterId");
+                    f_id1.value = res.f_id;
+                    sub_fil1 = res.s_fid.replace(/\|/g, ',');
+                    sub_fil1_arr = sub_fil1.includes(',') ? sub_fil1.split(',') : [sub_fil1];
+                    var s_fid1 = $("#1subFilterId").selectize();
+                    s_fid1[0].selectize.setValue(sub_fil1_arr);
+                    var sel_col = ""; var sel_col_arr = [];
+                    if (res.sel_col_arr.length > 0) {
+                        if (res.sel_col_arr.length == 1) {
+                            sel_col = res.sel_col.replace(/\|/g, ',');
+                            sel_col_arr.push(sel_col);
+                        }
+                        else {
+                            sel_col = res.sel_col;
+                            sel_col_arr = sel_col.includes(',') ? sel_col.split(',').map(item => item.replace(/\|/g, ',')) : [sel_col];
+                        }
+                    }
+                    var coln = $("#ddlColumnId").selectize({ create: false, selectOnTab: true, maxItems: 1000, placeholder: 'ALL' });
+                    coln[0].selectize.setValue(sel_col_arr);
+
+                    for (var i = 0; i < res.filters.length; i++) {
+                        var filtercount = $("#CountFilterId").val();
+                        filtercount++;
+                        var data = await $.ajax({
+                            url: "add_new_filter",
+                            type: 'GET',
+                            datatype: "json",
+                            traditional: true,
+                            data: {
+                                'filter_count': filtercount,
+                                'entity': entity,
+                            },
+                        });
+
+                        if (filtercount % 2 === 0) {
+                            $("#ddlfilterpartial").append(data.html);
+                        } else {
+                            var n = Number(filtercount) - 1;
+                            $("#new_f_row_" + n).append(data.html);
+                        }
+
+                        var filterData = await $.ajax({
+                            url: "get_filter",
+                            type: 'GET',
+                            datatype: "json",
+                            traditional: true,
+                            data: { 'entity': entity },
+                        });
+
+                        $("#" + filtercount + "filterId").empty();
+                        filterData.forEach(function (item) {
+                            $("#" + filtercount + "filterId").append('<option style="border-radius: 10px; padding: 0.5%; width: 100%" value="' + item.id1 + '">' + item.name + '</option>');
+                        });
+                        var ex_f = document.getElementById(filtercount + "filterId");
+                        ex_f.value = res.filters[i];
+
+                        var subFilterData = await $.ajax({
+                            url: "get_sub_filter",
+                            type: 'GET',
+                            datatype: "json",
+                            traditional: true,
+                            data: { 'filter_id': res.filters[i] },
+                        });
+
+                        if (subFilterData == '0') {
+                            $("#" + filtercount + "subFilterId").selectize()[0].selectize.destroy();
+                            $("#" + filtercount + "subFilterId").empty();
+                            $("#" + filtercount + "subFilterId").prop('disabled', false);
+                            var select = $("#" + filtercount + "subFilterId").selectize({ placeholder: 'ALL' });
+                            control = select[0].selectize;
+                            control.clear();
+                        }
+                        else {
+                            $("#" + filtercount + "subFilterId").selectize()[0].selectize.destroy();
+                            $("#" + filtercount + "subFilterId").empty();
+                            $("#" + filtercount + "subFilterId").prop('disabled', false);
+
+                            subFilterData.forEach(function (item) {
+                                $("#" + filtercount + "subFilterId").append('<option value="' + item.id1 + '">' + item.name + '</option>');
+                            });
+
+                            var select = $("#" + filtercount + "subFilterId").selectize({ placeholder: 'ALL' });
+                            control = select[0].selectize;
+                            control.clear();
+                        }
+
+                        var sub_fil = ""; var sub_fil_arr = [];
+                        var sf = res.sub_filters;
+                        if (sf.length > 0) {
+                            if (sf.length == 1) {
+                                sub_fil = sf[i].replace(/\|/g, ',');
+                                sub_fil_arr = sub_fil.includes(',') ? sub_fil.split(',') : [sub_fil];
+                            }
+                            else {
+                                debugger;
+                                sub_fil = sf[i].replace(/\|/g, ',');
+                                sub_fil_arr = sub_fil.includes(',') ? sub_fil.split(',').map(item => item.replace(/\|/g, ',')) : [sub_fil];
+                            }
+                        }
+
+                        var ex_sf = $("#" + filtercount + "subFilterId").selectize();
+                        ex_sf[0].selectize.setValue(sub_fil_arr);
+                        $("#CountFilterId").val(filtercount);
+                    }
+
+                    $("#partialcomponent").empty();
+                    document.getElementById("loderDiv").style.display = "none";
+                    $("#partialcomponent").append(res.table);
+                    var pc = document.getElementById("partialcomponent");
+                    pc.style.overflowX = "scroll";
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Something went wrong!"
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        else {
+            var f_id1 = document.getElementById("1filterId");
+            f_id1.value = '';
+            f_id1.selectedIndex = 0;
+
+            var s_fid1 = $("#1subFilterId").selectize();
+            s_fid1[0].selectize.setValue(['']);
+            var e = document.getElementsByClassName("f_row");
+            if (e) {
+                for (var i = 0; i < e.length; i++) {
+                    e[i].remove();
+                }
+            }
+            $("#partialcomponent").empty();
+            $("#CountFilterId").val(1);
+
+        }
+    });
+
+});
+
+  </script>
+{% endblock %}

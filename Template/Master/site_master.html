@@ -1,0 +1,165 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% comment %} {% csrf_token %} {% endcomment %}
+
+ <!-- Custom styles for this html-->
+ <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/activebtn.css' %}" rel="stylesheet" type="text/css" >
+ 
+ <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+ <!-- Include DataTables CSS -->
+ <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+ <!-- Include DataTables JS -->
+ <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+ 
+
+ <body>
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                    <u>{% if site_id == '0' %} Create {% else %} Edit {% endif %} Site Master</u>
+                </h2>
+                <br>
+                    <form method="POST" action="{% url 'site_master' %}">
+                
+                    {% csrf_token %}
+
+                    <input type="hidden" name="site_id" value="{{ site_id }}">
+
+                    <div class="row mb-3">
+
+                        <div class="col-md-3">
+                            <label for="company_id" class="form-label">Company<span style="color:red;"> *</span> :</label>
+                            <select name="company_id" id="company_id" class="form-control">
+                                {% if site_id == '0' %}
+                                <option value="" selected disabled>Select</option>
+                                    {% for item in company_names %}
+                                        <option value="{{ item.0 }}">{{ item.1 }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                   <option value="" {% if company_name == '' %}selected{% endif %}>Select</option> 
+                                    {% for item in company_names %}
+                                        <option value="{{ item.0 }}" {% if item.0 == company_name %}selected{% endif %}>{{ item.1 }}</option>
+                                    {% endfor %} 
+                                     
+                                {% endif%} 
+
+
+                            </select>
+                        </div>
+                        
+                        <!-- <div class="col-md-3">
+                            <label for="roster_type" class="form-label">Roster Type<span style="color:red;"> *</span> :</label>
+                            <select name="roster_type" id="roster_type" class="form-control">
+                                {% if site_id == '0' %}
+                                    <option value="" selected>Select</option>
+                                    {% for item in roster_type %}
+                                        <option value="{{ item.0 }}">{{ item.1 }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" {% if roster_type == '' %}selected{% endif %}>Select</option>
+                                    {% for item in roster_types %}
+                                        <option value="{{ item.0 }}" {% if item.0 == roster_type %}selected{% endif %}>{{ item.1 }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                            
+                            </select>
+                            
+                        </div> -->
+                        <div class="col-md-3">
+                            <label for="site_name" class="form-label">Site Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ site_name }}" name="siteName" class="form-control" id="site_name" placeholder="Enter Site Name" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="site_address" class="form-label">Site Address<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ site_address }}" name="siteAddress" class="form-control" id="site_address" placeholder="Enter Address">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="contactPersonName" class="form-label">Contact Person Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ contact_person_name }}" name="contactPersonName" class="form-control" id="contactPersonName" placeholder="Enter Contact Person Name">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="contactPersonEmail" class="form-label">Contact Person Email<span style="color:red;"> *</span> :</label>
+                            <input type="email" value="{{ contact_person_email }}" name="contactPersonEmail" class="form-control" id="contactPersonEmail" placeholder="Enter Email">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="pincode" class="form-label">Pincode<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ pincode }}" name="pincode" class="form-control" id="pincode" placeholder="Enter Pincode">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="Number" class="form-label">Contact Person Mobile<span style="color:red;"> *</span></label>
+                            <input type="number" value="{{ contact_person_mobile_no }}" name="Number" class="form-control" id="Number" placeholder="Enter Mobile Number">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <!--
+                        <div class="col-md-3">
+                            <label for="FieldDays" class="form-label">Days of Field<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ no_of_days }}" name="FieldDays" class="form-control" id="FieldDays" placeholder="Number of Days">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="notificationTime" class="form-label">Notification Time<span style="color:red;"> *</span> :</label>
+                            <input type="time" value="{{ notification_time }}" name="notificationTime" class="form-control" id="notificationTime">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="ReminderTime" class="form-label">Reminder Time<span style="color:red;"> *</span> :</label>
+                            <input type="time" value="{{ reminder_time }}" name="ReminderTime" class="form-control" id="ReminderTime">
+                        </div>-->
+                        {% if site_id != '0' %}
+                            <div class="col-md-3">  
+                                <label for="activeBtn" class="form-label">Is Active<span style="color:red;"> *</span> :</label>
+                                <br>
+                                <label class="switch">
+                                    <input type="checkbox" values ="{{ is_active }}" id="statusSwitch" name="is_active" 
+                                           {% if is_active == "1" %} checked {% endif %} 
+                                           onchange="updateStatus()">
+                                    <span class="slider"></span>
+                                </label>
+                                <input type="text" id="statusValue" name="status_value" value="{{ is_active }}" hidden>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('statusSwitch');
+        const isActive = checkbox.getAttribute('values');
+        checkbox.checked = (isActive == '1');
+        updateStatus(); 
+      });
+
+</script>
+
+<script>
+    function updateStatus() {
+        var checkBox = document.getElementById("statusSwitch");
+        var statusValue = document.getElementById("statusValue");
+    
+        // Set the value based on whether the checkbox is checked
+        statusValue.value = checkBox.checked ? "1" : "0";
+    }
+</script>
+
+ {% endblock %} 

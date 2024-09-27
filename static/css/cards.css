@@ -1,0 +1,36 @@
+
+.cards {
+  justify-content: space-between;
+  padding: 35px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(15px);
+}
+
+.cards-footer {
+  font-size: 0.65em;
+}
+table.dataTable.stripe tbody tr.odd,
+table.dataTable.display tbody tr.odd {
+  background: rgb(255, 255, 255);
+}
+
+.cards-header .fa {
+  transition: 0.3s transform ease-in-out;
+}
+.cards-header .collapsed .fa {
+  transform: rotate(90deg);
+}
+
+.cards-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.cards-body {
+  display: none;
+}

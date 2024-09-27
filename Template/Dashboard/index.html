@@ -1,0 +1,948 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/graph.css' %}" rel="stylesheet" type="text/css" >
+{% comment %} <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" > {% endcomment %}
+
+
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Include jQuery -->
+
+
+ <div>
+
+    <!-- Content Row -->
+    <div class="row">
+
+        <!-- Earnings (Monthly) Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Employees</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"> {{ roster_count.3 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa fa-solid fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Confirmed Employees
+                            </div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{roster_count.0}}</div>
+                                </div>
+                                <div class="col">
+                                    <div class="progress progress-sm mr-2">
+                                        <div class="progress-bar bg-info" role="progressbar"
+                                            style="width: {{ roster_count.4 }}%" 
+                                            aria-valuenow="{{ roster_count.0 }}" aria-valuemin="0"
+                                            aria-valuemax="{{ roster_count.3 }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                                        
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earnings (Monthly) Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Absent Employees
+                            </div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{roster_count.1}}</div>
+                                </div>
+                                <div class="col">
+                                    <div class="progress progress-sm mr-2">
+                                        <div class="progress-bar bg-info" role="progressbar"
+                                            style="width: {{ roster_count.5 }}%" 
+                                            aria-valuenow="{{roster_count.1}}" aria-valuemin="0"
+                                            aria-valuemax="{{ roster_count.3 }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                       
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-solid fa-ban fa-2x text-gray-300"></i>
+                        </div>
+                                             
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Requests Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{roster_count.2}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-sharp fa-regular fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-xl-12 col-lg-7">
+            <div class="card shadow mb-4">
+
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-4 d-flex flex-column">
+                        <label for="company-dropdown" class="mb-2">Company List<span style="color:red;"> *</span>:</label>
+                        <select name="company_name" id="company_name" class="form-control form-control-sm" required>
+                            {% for item in company_names %}
+                                <option value="{{ item.0 }}">{{ item.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                
+                    <div class="col-md-4 d-flex flex-column">
+                        <label for="site-dropdown" class="mb-2">Site List<span style="color:red;"> *</span>:</label>
+                        <select name="site_name" id="site_name" class="form-control form-control-sm" required>
+                            {% for item in site_names %}
+                                <option value="{{ item.0 }}">{{ item.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                
+                    <div class="col-md-4 d-flex flex-column">
+                        <label for="date-input" class="mb-2">Date<span style="color:red;"> *</span>:</label>
+                        <input type="date" name="date" id="dateInput" class="form-control form-control-sm" required>
+                    </div>
+                </div>
+                
+                           
+
+            </div>
+        </div>
+    </div> 
+
+    <div class="my-loader" id="cubeloader" style="display: none;">
+        <div class="rubiks-cube">
+          <div class="face front">
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ffffff;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+          </div>
+      
+          <div class="face back">
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ffffff;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+          </div>
+          <div class="face left">
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #ffffff;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+          </div>
+          <div class="face right">
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ffffff;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+          </div>
+          <div class="face top">
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #ffffff;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+          </div>
+          <div class="face bottom">
+            <div style="background: #ffffff;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+            <div style="background: #ffeb3b;" class="cube"></div>
+            <div style="background: #4caf50;" class="cube"></div>
+            <div style="background: #2196f3;" class="cube"></div>
+            <div style="background: #ffffff;" class="cube"></div>
+            <div style="background: #ff3d00;" class="cube"></div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Bar Graph Content  -->
+
+    <div class="row" id="barGraph">
+        <div class="col-xl-6 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <div class="shift-date">
+                        <strong>Roster Details</span> </strong>
+                    </div>
+
+                    <!-- Right side: Count -->
+                    <div class="">
+                        <strong>Date:<span id="shiftdatetoday"></span></strong></span> 
+                    </div>
+                </div>
+
+                <div id="TodayBarChart"></div>
+            </div>
+        </div>
+        
+    
+        <!-- Tommorow Bar  Chart -->
+        <div class="col-xl-6 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <div class="shift-date">
+                        <strong>Roster Details Next Day</span> </strong>
+                    </div>
+
+                    <!-- Right side: Count -->
+                    <div class="">
+                        <strong>Date:<span id="shiftdatetommrow"></span> </strong></span> 
+                    </div>
+                </div>
+                
+                <div id="tommorowBarChart"></div>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="row" id="pieGraph">
+            <div class="col-xl-8 col-lg-7">
+                <div class="card shadow mb-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="shift-date">
+                            <strong>Roster Details Company Wise</span> </strong>
+                        </div>
+    
+                        <!-- Right side: Count -->
+                        <div class="">
+                            <strong>Date:<span id="shiftdatePie"></span> </strong></span>  
+                        </div>
+                    </div>
+        
+                    <div id="chartdiv"></div>
+                    
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <div class="shift-date">
+                        <strong>Worksite(Pie Chart)</span> </strong>
+                    </div>
+                    <div class="">
+                        <strong>Date:<span id="shiftdateDonot"></span> </strong></span> 
+                    </div>
+                </div>
+                
+                <div id="donotchart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    window.onload = function() {
+        const dateInput = document.getElementById('dateInput');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    };
+</script>
+
+
+<script>
+    var chartToda, seriesToday, xAxisToday;
+
+    function initializeTodayChart() {
+        am5.ready(function() {
+            var root = am5.Root.new("TodayBarChart");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            chartToday = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: true, panY: true, wheelX: "panX", wheelY: "zoomX", pinchZoomX: true, paddingLeft: 0, paddingRight: 1
+            }));
+
+            var cursor = chartToday.set("cursor", am5xy.XYCursor.new(root, {}));
+            cursor.lineY.set("visible", false);
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30, minorGridEnabled: true });
+            xRenderer.labels.template.setAll({
+                rotation: -90, centerY: am5.p50, centerX: am5.p100, paddingRight: 15
+            });
+
+            xAxisToday = chartToday.xAxes.push(am5xy.CategoryAxis.new(root, {
+                maxDeviation: 0.3, categoryField: "category", renderer: xRenderer, tooltip: am5.Tooltip.new(root, {})
+            }));
+
+            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.1 });
+            var yAxis = chartToday.yAxes.push(am5xy.ValueAxis.new(root, { maxDeviation: 0.3, renderer: yRenderer }));
+
+            seriesToday = chartToday.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Series 1", xAxis: xAxisToday, yAxis: yAxis, valueYField: "value", sequencedInterpolation: true, categoryXField: "category",
+                tooltip: am5.Tooltip.new(root, { labelText: "{valueY}" })
+            }));
+
+            seriesToday.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5, strokeOpacity: 0 });
+            seriesToday.columns.template.adapters.add("fill", (fill, target) => chartToday.get("colors").getIndex(seriesToday.columns.indexOf(target)));
+            seriesToday.columns.template.adapters.add("stroke", (stroke, target) => chartToday.get("colors").getIndex(seriesToday.columns.indexOf(target)));
+            
+            // Initial data loading
+            var initialDataToday = [
+                { category: "All Employees", value: {{ today_result.0 }} },
+                { category: "Employees Affirmed", value: {{ today_result.1 }} },
+                { category: "Employees Declined", value: {{ today_result.2 }} },
+                { category: "Pending Employees", value: {{ today_result.3 }} },
+                { category: "More Than 8 Hours", value: {{ today_result.4 }} },
+                { category: "Less Than 8 Hours", value: {{ today_result.5 }} }
+            ];
+            xAxisToday.data.setAll(initialDataToday);
+            seriesToday.data.setAll(initialDataToday);
+
+            seriesToday.columns.template.events.on("click", function(ev) {
+            
+            var company_id = $('#company_name').val();
+            var site_name = $('#site_name').val();
+            var shift_date = $('#dateInput').val();
+
+            var clickedCategory = ev.target.dataItem.dataContext.category;
+            var count = ev.target.dataItem.dataContext.value;
+
+            $.ajax({
+                url: "{% url 'get_roster_data' %}",
+                method: 'GET',
+                contentType: 'application/json', 
+                data: {
+                    company_id: company_id,
+                    site_name: site_name,
+                    shift_date:shift_date,
+                    clickedCategory:clickedCategory,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    var content = `
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="shift-date">
+                            <strong>Shift Date: <span>${shift_date}</span> </strong>
+                        </div>
+
+                        <!-- Right side: Count -->
+                        <div class="employee-count">
+                            <strong>Employee Count:${count} </strong></span> 
+                        </div>
+                    </div>
+                    <div  class="table-container">
+                        <table>
+                            <tr>
+                                <th>Sr No</th>
+                                <th>Employee No</th>
+                                <th>Employee Name</th>
+                                <th>Company Name</th>
+                                <th>Worksite</th>
+                            </tr>
+                    `;
+                    
+                    response.data.forEach(function(item, index) {
+                        content += `
+                            <tr>
+                               <td>${item[0]}</td>
+                               <td>${item[1]}</td>
+                               <td>${item[2]}</td>
+                               <td>${item[3]}</td>
+                               <td>${item[4]}</td>
+                            </tr>
+                        `;
+                    });
+                    content += `</table></div>`;
+        
+                    // Show SweetAlert
+                    Swal.fire({
+                        title: `Details of <span>${clickedCategory}</span>`,
+                        html: content,
+                        showCloseButton: true,
+                        focusConfirm: false,
+                        confirmButtonText: 'Close',
+                        customClass: {
+                            popup: 'custom-popup' // Custom class for the popup
+                        }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching data:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Could not retrieve data. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'Close'
+                    });
+                }
+            });
+        });
+        }
+        )};
+
+</script>
+<script>
+
+    var chartTomorrow, seriesTomorrow, xAxisTomorrow;
+
+    function initializeTommorowChart() {
+        am5.ready(function() {
+            var root = am5.Root.new("tommorowBarChart");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            chartTomorrow = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: true, panY: true, wheelX: "panX", wheelY: "zoomX", pinchZoomX: true, paddingLeft: 0, paddingRight: 1
+            }));
+
+            chartTomorrow.set("cursor", am5xy.XYCursor.new(root, { lineY: { visible: false } }));
+
+            var xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30, minorGridEnabled: true });
+            xRenderer.labels.template.setAll({
+                rotation: -90, centerY: am5.p50, centerX: am5.p100, paddingRight: 15
+            });
+
+            xAxisTomorrow = chartTomorrow.xAxes.push(am5xy.CategoryAxis.new(root, {
+                maxDeviation: 0.3, categoryField: "category", renderer: xRenderer
+            }));
+
+            var yAxis = chartTomorrow.yAxes.push(am5xy.ValueAxis.new(root, {
+                maxDeviation: 0.3, renderer: am5xy.AxisRendererY.new(root, { strokeOpacity: 0.1 })
+            }));
+
+            seriesTomorrow = chartTomorrow.series.push(am5xy.ColumnSeries.new(root, {
+                name: "Series 1", xAxis: xAxisTomorrow, yAxis: yAxis, valueYField: "value", categoryXField: "category",
+                tooltip: am5.Tooltip.new(root, { labelText: "{valueY}" })
+            }));
+
+            seriesTomorrow.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5, strokeOpacity: 0 });
+            seriesTomorrow.columns.template.adapters.add("fill", (fill, target) => chartTomorrow.get("colors").getIndex(seriesTomorrow.columns.indexOf(target)));
+            seriesTomorrow.columns.template.adapters.add("stroke", (stroke, target) => chartTomorrow.get("colors").getIndex(seriesTomorrow.columns.indexOf(target)));
+
+            // Initial data loading
+            var initialDataTomorrow = [
+                { category: "All Employees", value: {{ tommorow_result.0 }} },
+                { category: "Employees Affirmed", value: {{ tommorow_result.1 }} },
+                { category: "Employees Declined", value: {{ tommorow_result.2 }} },
+                { category: "Pending Employees", value: {{ tommorow_result.3 }} },
+                { category: "More Than 8 Hours", value: {{ tommorow_result.4 }} },
+                { category: "Less Than 8 Hours", value: {{ tommorow_result.5 }} }
+            ];
+            xAxisTomorrow.data.setAll(initialDataTomorrow);
+            seriesTomorrow.data.setAll(initialDataTomorrow);
+            seriesTomorrow.columns.template.events.on("click", function(ev) {
+                var company_id = $('#company_name').val();
+                var site_name = $('#site_name').val();
+                var shift_date = $('#dateInput').val();
+    
+                var clickedCategory = ev.target.dataItem.dataContext.category;
+                var count = ev.target.dataItem.dataContext.value;
+            $.ajax({
+                url: "{% url 'get_roster_data_tommorow' %}",
+                method: 'GET',
+                contentType: 'application/json', 
+                data: {
+                    company_id: company_id,
+                    site_name: site_name,
+                    shift_date:shift_date,
+                    clickedCategory:clickedCategory,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    var content = `
+                   <div class="d-flex justify-content-between mb-3">
+                        <div class="shift-date">
+                            <strong>Shift Date: <span>${shift_date}</span> </strong>
+                        </div>
+
+                        <!-- Right side: Count -->
+                        <div class="employee-count">
+                            <strong>Employee Count:${count} </strong></span> 
+                        </div>
+                    </div>
+                    <div  class="table-container">
+                        <table>
+                            <tr>
+                                <th>Sr No</th>
+                                <th>Employee No</th>
+                                <th>Employee Name</th>
+                                <th>Company Name</th>
+                                <th>Worksite</th>
+                            </tr>
+                    `;
+                    
+                    response.data.forEach(function(item, index) {
+                        content += `
+                            <tr>
+                               <td>${item[0]}</td>
+                               <td>${item[1]}</td>
+                               <td>${item[2]}</td>
+                               <td>${item[3]}</td>
+                               <td>${item[4]}</td>
+                            </tr>
+                        `;
+                    });
+                    content += `</table></div>`;
+        
+                    // Show SweetAlert
+                    Swal.fire({
+                        title: `Details of <span>${clickedCategory}</span>`,
+                        html: content,
+                        showCloseButton: true,
+                        focusConfirm: false,
+                        confirmButtonText: 'Close',
+                        customClass: {
+                            popup: 'custom-popup' // Custom class for the popup
+                        }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching data:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Could not retrieve data. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'Close'
+                    });
+                }
+            });
+        });
+        }
+        )};
+
+</script>
+<script>
+    
+    function initialDonotToday(){
+        am5.ready(function() {
+            var root = am5.Root.new("donotchart");
+            root.setThemes([am5themes_Animated.new(root)]);
+
+            var chart = root.container.children.push(am5percent.PieChart.new(root, {
+                radius: am5.percent(90),
+                innerRadius: am5.percent(50),
+                layout: root.horizontalLayout
+            }));
+
+            pieSeries = chart.series.push(am5percent.PieSeries.new(root, {
+                name: "Series",
+                valueField: "count",
+                categoryField: "worksite"
+            }));
+
+            // Initial data loaded from template
+            var chartData = [
+                {% for result in fetched_results %}
+                    { worksite: "{{ result.0 }}", count: {{ result.1 }} }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+
+            pieSeries.data.setAll(chartData);
+            pieSeries.labels.template.set("visible", false);
+            pieSeries.ticks.template.set("visible", false);
+            pieSeries.slices.template.set("strokeOpacity", 0);
+            pieSeries.slices.template.set("fillGradient", am5.RadialGradient.new(root, {
+                stops: [
+                    { brighten: -0.8 }, 
+                    { brighten: -0.8 }, 
+                    { brighten: -0.5 }, 
+                    { brighten: 0 }, 
+                    { brighten: -0.5 }
+                ]
+            }));
+
+            var legend = chart.children.push(am5.Legend.new(root, {
+                centerY: am5.percent(50),
+                y: am5.percent(50),
+                layout: root.verticalLayout
+            }));
+
+            legend.labels.template.setAll({ text: "[bold]{category}[/]", fill: am5.color(0x000000) });
+            legend.valueLabels.template.setAll({ text: "{value.percent.formatNumber('#.0')}%", textAlign: "right" });
+            legend.data.setAll(pieSeries.dataItems);
+
+            pieSeries.appear(1000, 100);
+        });
+    }
+
+</script>
+
+<script>
+    function updateTodayChartData(data) {
+        am5.ready(function() {
+            var updatedData = [
+                { category: "All Employees", value: data.total_count },
+                { category: "Employees Affirmed", value: data.yes_count },
+                { category: "Employees Declined", value: data.no_count },
+                { category: "Pending Employees", value: data.pending_count },
+                { category: "More Than 8 Hours", value: data.more_than_8_hours_count },
+                { category: "Less Than 8 Hours", value: data.less_than_8_hours_count }
+            ];
+
+            if (chartToday && xAxisToday && seriesToday) {
+                xAxisToday.data.setAll(updatedData);
+                seriesToday.data.setAll(updatedData);
+                seriesToday.appear(1000);
+                chartToday.appear(1000, 100);
+            }
+        });
+    }
+</script>
+<script>
+    function updateTommorowChartData(data1) {
+        am5.ready(function() {
+            var updatedData = [
+                { category: "All Employees", value: data1.nxttotal_count },
+                { category: "Employees Affirmed", value: data1.nxtyes_count },
+                { category: "Employees Declined", value: data1.nxtno_count },
+                { category: "Pending Employees", value: data1.nxtpending_count },
+                { category: "More Than 8 Hours", value: data1.nxtmore_than_8_hours_count },
+                { category: "Less Than 8 Hours", value: data1.nxtless_than_8_hours_count }
+            ];
+
+            if (chartTomorrow && xAxisTomorrow && seriesTomorrow) {
+                xAxisTomorrow.data.setAll(updatedData);
+                seriesTomorrow.data.setAll(updatedData);
+                seriesTomorrow.appear(1000);
+                chartTomorrow.appear(1000, 100);
+            }
+        });
+    }
+</script>
+<script>
+    function updatePieChart(newData) {
+        var chartData = newData.map(function(item) {
+            return {
+                worksite: item[0],
+                count: item[1]
+            };
+        });
+
+        if (pieSeries) {
+            pieSeries.data.setAll(chartData);
+            
+            // Update the legend with the new data
+            var legend = pieSeries.chart.children.getIndex(1); // Assumes the legend is the second child
+            if (legend) {
+                legend.data.setAll(pieSeries.dataItems);
+            }
+
+            pieSeries.appear(1000, 100);
+        } else {
+            console.error("pieSeries is not defined.");
+        }
+    }
+</script>
+<script>
+    $(document).ready(function() {
+        initializeTodayChart();
+        initializeTommorowChart();
+        initialDonotToday();
+        var today = new Date();
+        var todayDate = today.toISOString().split('T')[0]; 
+        $('#shiftdatetoday').text(todayDate);
+        $('#shiftdatePie').text(todayDate);
+        $('#shiftdateDonot').text(todayDate);
+      
+        var tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        var tommorowDate = tomorrow.toISOString().split('T')[0]; 
+        $('#shiftdatetommrow').text(tommorowDate);
+        
+    });
+</script>
+<script>
+    am5.ready(function() {
+        var root = am5.Root.new("chartdiv");
+        root.setThemes([am5themes_Animated.new(root)]);
+            
+        var container = root.container.children.push(am5.Container.new(root, { width: am5.p100, height: am5.p100, layout: root.horizontalLayout }));
+        var chart = container.children.push(am5percent.PieChart.new(root, { tooltip: am5.Tooltip.new(root, {}) }));
+        var series = chart.series.push(am5percent.PieSeries.new(root, { valueField: "value", categoryField: "category", alignLabels: false }));
+            
+        series.labels.template.setAll({ textType: "circular", radius: 4 });
+        series.ticks.template.set("visible", false);
+        series.slices.template.set("toggleKey", "none");
+                
+        series.slices.template.events.on("click", function(e) { selectSlice(e.target); });
+                
+        var subChart = container.children.push(am5percent.PieChart.new(root, { radius: am5.percent(50), tooltip: am5.Tooltip.new(root, {}) }));
+        var subSeries = subChart.series.push(am5percent.PieSeries.new(root, { valueField: "value", categoryField: "category" }));
+            
+        subSeries.data.setAll([{ category: "A", value: 0 }, { category: "B", value: 0 }, { category: "C", value: 0 }, { category: "D", value: 0 }, { category: "E", value: 0 }, { category: "F", value: 0 }, { category: "G", value: 0 }]);
+        subSeries.slices.template.set("toggleKey", "none");
+            
+        var selectedSlice;
+        series.on("startAngle", updateLines);
+        container.events.on("boundschanged", function() { root.events.once("frameended", updateLines); });
+            
+        function updateLines() {
+            if (selectedSlice) {
+                var startAngle = selectedSlice.get("startAngle"), arc = selectedSlice.get("arc"), radius = selectedSlice.get("radius");
+                var x00 = radius * am5.math.cos(startAngle), y00 = radius * am5.math.sin(startAngle);
+                var x10 = radius * am5.math.cos(startAngle + arc), y10 = radius * am5.math.sin(startAngle + arc);
+                var subRadius = subSeries.slices.getIndex(0).get("radius");
+                var point00 = series.toGlobal({ x: x00, y: y00 }), point10 = series.toGlobal({ x: x10, y: y10 });
+                var point01 = subSeries.toGlobal({ x: 0, y: -subRadius }), point11 = subSeries.toGlobal({ x: 0, y: subRadius });
+                line0.set("points", [point00, point01]);
+                line1.set("points", [point10, point11]);
+                }
+            }
+            
+            var line0 = container.children.push(am5.Line.new(root, { position: "absolute", stroke: root.interfaceColors.get("text"), strokeDasharray: [2, 2] }));
+            var line1 = container.children.push(am5.Line.new(root, { position: "absolute", stroke: root.interfaceColors.get("text"), strokeDasharray: [2, 2] }));
+            
+            var results = {{ results|safe }};
+            var formattedData = formatData(results);
+            
+                series.data.setAll(formattedData);
+            
+                function formatData(data) {
+                    return data.map(worksite => ({
+                        category: worksite.worksite_name,
+                        value: worksite.percent,
+                        subData: [
+                            { category: "Yes", value: worksite.yes_count },
+                            { category: "No", value: worksite.no_count },
+                            { category: "Pending", value: worksite.pending_count }
+                        ]
+                    }));
+                }
+                
+            
+                function selectSlice(slice) {
+                    selectedSlice = slice;
+                    var dataContext = slice.dataItem.dataContext;
+                    if (dataContext) {
+                        subSeries.data.each((dataObject, i) => {
+                            var dataObj = dataContext.subData[i];
+                            if (dataObj) {
+                                if (!subSeries.dataItems[i].get("visible")) subSeries.dataItems[i].show();
+                                subSeries.data.setIndex(i, dataObj);
+                            } else {
+                                subSeries.dataItems[i].hide();
+                            }
+                        });
+                    }
+                    
+                    var middleAngle = slice.get("startAngle") + slice.get("arc") / 2;
+                    var firstAngle = series.dataItems[0].get("slice").get("startAngle");
+                    series.animate({ key: "startAngle", to: firstAngle - middleAngle, duration: 1000, easing: am5.ease.out(am5.ease.cubic) });
+                    series.animate({ key: "endAngle", to: firstAngle - middleAngle + 360, duration: 1000, easing: am5.ease.out(am5.ease.cubic) });
+                }
+            
+                container.appear(1000, 10);
+                series.events.on("datavalidated", function() { selectSlice(series.slices.getIndex(0)); });
+        
+                // Function to update chart data
+                window.updateChartData = function(newData) {
+                    var formattedData = formatData(newData);
+                    series.data.setAll(formattedData);
+        
+                    // If there is a selected slice, update the subSeries data
+                    if (selectedSlice) {
+                        var dataContext = selectedSlice.dataItem.dataContext;
+                        if (dataContext) {
+                            subSeries.data.each((dataObject, i) => {
+                                var dataObj = dataContext.subData[i];
+                                if (dataObj) {
+                                    if (!subSeries.dataItems[i].get("visible")) subSeries.dataItems[i].show();
+                                    subSeries.data.setIndex(i, dataObj);
+                                } else {
+                                    subSeries.dataItems[i].hide();
+                                }
+                            });
+                        }
+                    }
+                };
+            });
+</script>
+        
+<script>
+
+function updateChartData(newData) {
+                // Format the new data for the main PieChart
+    var formattedData = newData.map(worksite => ({
+        category: worksite.worksite_name,
+        value: worksite.percent,
+        subData: [
+            { category: "Yes", value: worksite.yes_count },
+            { category: "No", value: worksite.no_count },
+            { category: "Pending", value: worksite.pending_count }
+        ]
+    }));
+            
+                // Update the main series data
+    series.data.setAll(formattedData);
+                
+                // If you want to reset the subSeries data, you can do this:
+    if (selectedSlice) {
+        var dataContext = selectedSlice.dataItem.dataContext;
+            if (dataContext) {
+                subSeries.data.each((dataObject, i) => {
+                var dataObj = dataContext.subData[i];
+                    if (dataObj) {
+                        if (!subSeries.dataItems[i].get("visible")) subSeries.dataItems[i].show();
+                        subSeries.data.setIndex(i, dataObj);
+                    } else {
+                        subSeries.dataItems[i].hide();
+                    }
+                });
+            }
+        }
+                
+                // Optionally, you can also re-select the first slice after updating the data
+        series.events.on("datavalidated", function() {
+            selectSlice(series.slices.getIndex(0));
+        });
+            }
+
+</script>
+
+<script type="text/javascript">
+
+        $('#company_name').change(function() {
+            var selectedCompany = $(this).val();
+            if (selectedCompany) {
+                $.ajax({
+                    url: "{% url 'get_sites' %}",  
+                    type: "POST",
+                    data: {
+                        'selectedCompany': selectedCompany,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'  
+                    },
+                    success: function(response) {
+                        $('#site_name').empty();
+                       
+                        $.each(response.companywise_site_names, function(index, value) {
+                            $('#site_name').append('<option value="' + value[0] + '">' + value[1] + '</option>');
+                        });
+        
+                        $('#site_name').trigger('change'); // Trigger change to update graph
+                    },
+                    error: function(error) {
+                        console.log("Error fetching site names:", error);
+                    }
+                });
+            } else {
+                $('#site_name').empty();
+            }
+        }); 
+        
+        $('#site_name, #dateInput').on('change', function() {
+            var company_id = $('#company_name').val();
+            var site_name = $('#site_name').val();
+            var shift_date = $('#dateInput').val();
+            $('#cubeloader').show();
+            $('#barGraph').hide();
+            $('#pieGraph').hide();
+        
+            // Ensure all fields have values before making the AJAX call
+            if (company_id && site_name && shift_date) {
+                $.ajax({
+                    url: "{% url 'updateGraph' %}",  // Django URL to update the graph
+                    type: "POST",
+                    data: {
+                        company_id: company_id,
+                        site_name: site_name,
+                        shift_date: shift_date,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'  // CSRF token for security
+                    },
+                    success: function(response) {
+                        $('#cubeloader').hide();
+                        $('#barGraph').show();
+                        $('#pieGraph').show();
+                        var tomorrowDate = new Date(shift_date);
+                        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+                        var formattedTomorrowDate = tomorrowDate.toISOString().split('T')[0];
+        
+                        if (response.data && response.data1 && response.data2 && response.data3) {
+                            updateTodayChartData(response.data);
+                            updateTommorowChartData(response.data1);
+                            updatePieChart(response.data3);
+                            updateChartData(response.data2);
+                            $('#shiftdatetoday').text(shift_date);
+                            $('#shiftdatePie').text(shift_date);
+                            $('#shiftdateDonot').text(shift_date);
+                            $('#shiftdatetommrow').text(formattedTomorrowDate);
+                        }
+                    },
+                    error: function(error) {
+                        console.log("Error fetching chart data:", error);
+                    }
+                });
+            }
+        });
+        
+</script>
+
+
+{% endblock %}
+

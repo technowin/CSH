@@ -1,0 +1,36 @@
+
+{% if fcount|divisibleby:2 %}
+<div class="row f_row" id="new_f_row_{{fcount}}">
+    <div class="col-2 no-gutters padding-0  new_f_row_even{{fcount}}">
+        <div class="form-outline inputcssf " style="margin-top:1% ;">
+            <select name="FilterId" id="{{fId}}" class="filter" style="border-radius: 10px; padding: 1.5%; width: 100%"  required onchange="change(this.id)">
+                {% for item1 in filter_name %}
+                <option style="border-radius: 10px; padding: 0.5%; width: 100%"  value="{{ item1.0 }}"> {{ item1.1 }} </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="col-4 no-gutters padding-0  new_f_row_even{{fcount}}">
+        <div class="form-outline inputcss ">
+            <select name="SubFilterId" id="{{sfId}}" class="subfilter" style="border-radius: 10px; padding: 1.5%; width: 100%"  required multiple >
+            </select>
+        </div>
+    </div>
+</div>
+{% else %}
+    <div class="col-2 no-gutters padding-0  new_f_row_odd{{fcount}}">
+        <div class="form-outline inputcssf " style="margin-top:1% ;">
+            <select name="FilterId" id="{{fId}}" class="filter" style="border-radius: 10px; padding: 1.5%; width: 100%"  required onchange="change(this.id)">
+                {% for item1 in filter_name %}
+                <option style="border-radius: 10px; padding: 0.5%; width: 100%"  value="{{ item1.0 }}"> {{ item1.1 }} </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="col-4 no-gutters padding-0  new_f_row_odd{{fcount}}">
+        <div class="form-outline inputcss ">
+            <select name="SubFilterId" id="{{sfId}}" class="subfilter" style="border-radius: 10px; padding: 1.5%; width: 100%"  required multiple >
+            </select>
+        </div>
+    </div>
+{% endif %} 

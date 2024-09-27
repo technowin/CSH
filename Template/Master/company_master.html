@@ -1,0 +1,117 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% comment %} {% csrf_token %} {% endcomment %}
+
+ <!-- Custom styles for this html-->
+ <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/activebtn.css' %}" rel="stylesheet" type="text/css" >
+ 
+ <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+ <!-- Include DataTables CSS -->
+ <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+ <!-- Include DataTables JS -->
+ <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+ 
+
+ <body>
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                    <u>{% if company_id == '0' %} Create {% else %} Edit {% endif %} Company Master</u>
+                </h2>
+                <br>
+
+                <input type="hidden" name="company_id" value="{{ company_id }}">
+
+                {% comment %} {% if company_id == '0' %}
+                    <form method="POST" action="{% url 'InsertCompanyMasterData' %}">
+                {% else %} {% endcomment %}
+                    <form method="POST" action="{% url 'company_master' %}">
+                
+                    {% csrf_token %}
+
+                    <input type="hidden" name="company_id" value="{{ company_id }}">
+
+                    <div class="row mb-3">
+
+                        <div class="col-md-3" hidden>
+                            <label for="site_name" class="form-label">Company Id<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ company_id }}" name="company_id" class="form-control" id="site_name" placeholder="Enter Site Name">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="site_name" class="form-label">Company Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ company_name }}" name="company_name" class="form-control" id="site_name" placeholder="Enter Site Name" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="site_address" class="form-label">Company Address<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ company_address }}" name="company_address" class="form-control" id="site_address" placeholder="Enter Address">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="contactPersonName" class="form-label">Contact Person Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ contact_person_name }}" name="contact_person_name" class="form-control" id="contactPersonName" placeholder="Enter Contact Person Name">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="contactPersonEmail" class="form-label">Contact Person Email<span style="color:red;"> *</span> :</label>
+                            <input type="email" value="{{ contact_person_email }}" name="contact_person_email" class="form-control" id="contactPersonEmail" placeholder="Enter Email">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="pincode" class="form-label">Pincode<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ pincode }}" name="pincode" class="form-control" id="pincode" placeholder="Enter Pincode">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="Number" class="form-label">Contact Person Mobile<span style="color:red;"> *</span> :</label>
+                            <input type="number" value="{{ contact_person_mobile_no }}" name="contact_person_mobile_no" class="form-control" id="Number" placeholder="Enter Mobile Number">
+                        </div>
+                        {% if company_id != '0' %}
+                            <div class="col-md-3">  
+                                <label for="activeBtn" class="form-label">Is Active<span style="color:red;"> *</span> :</label>
+                                <br>
+                                <label class="switch">
+                                    <input type="checkbox" values ="{{ is_active }}" id="statusSwitch" name="is_active" 
+                                           {% if is_active == "1" %} checked {% endif %} onchange="updateStatus()">
+                                    <span class="slider"></span>
+                                </label>
+                                <input type="text" id="statusValue" name="status_value" value="{{ is_active }}" hidden>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('statusSwitch');
+        const isActive = checkbox.getAttribute('values');
+        checkbox.checked = (isActive == '1');
+        updateStatus(); 
+      });
+
+</script>
+
+<script>
+    function updateStatus() {
+        var checkBox = document.getElementById("statusSwitch");
+        var statusValue = document.getElementById("statusValue");
+        statusValue.value = checkBox.checked ? "1" : "0";
+    }
+</script>
+ {% endblock %} 

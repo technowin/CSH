@@ -1,0 +1,35 @@
+.menubutton{
+    width: fit-content;
+    display: flex;
+    padding: 0.8em 1rem;
+    cursor: pointer;
+    gap: 0.4rem;
+    font-weight: bold;
+    border-radius: 30px;
+    text-shadow: 2px 2px 3px rgb(136 0 136 / 50%);
+    background: linear-gradient(15deg, #b22222, #b22222, #cc3f47, #de6f3d, #A7C4FF, #de6f3d, #c02129, #aa2068, #d4332d) no-repeat;
+    background-size: 300%;
+    color: #fff;
+    border: none;
+    background-position: left center;
+    box-shadow: 0 30px 10px -20px rgba(0,0,0,.2);
+    transition: background .3s ease;
+    text-decoration: none;
+  }
+  
+  .menubutton:hover {
+    background-size: 320%;
+    background-position: right center;
+    text-decoration: none;
+    color:#fff;    
+  }
+  
+  .menubutton:hover svg {
+    fill: #fff;
+  }
+  
+  .menubutton svg {
+    width: 23px;
+    fill: #da8920;
+    transition: .3s ease;
+  }

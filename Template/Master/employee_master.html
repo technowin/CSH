@@ -1,0 +1,134 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% comment %} {% csrf_token %} {% endcomment %}
+
+ <!-- Custom styles for this html-->
+ <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/activebtn.css' %}" rel="stylesheet" type="text/css" >
+ 
+ <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+ <!-- Include DataTables CSS -->
+ <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+ <!-- Include DataTables JS -->
+ <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+ 
+
+ <body>
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                  <u>{% if id == '0' %} Create {% else %} Edit {% endif %} Employee Master</u>
+                </h2>
+                <br>
+                
+                <form method="POST" action="{% url 'employee_master' %}">
+                
+                    {% csrf_token %}
+
+                    <input type="hidden" value="{{ id }}" name="id" >
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Employee No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ employee_id }}" name="employee_id" class="form-control" id="EmployeeNumber" placeholder="Enter Employee Id" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeName" class="form-label">Employee Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ employee_name }}" name="employee_name" class="form-control" id="EmployeeName" placeholder="Enter Employee Name" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="MobileNumber" class="form-label">Mobile Number<span style="color:red;"> *</span> :</label>
+                            <input type="number" value="{{ mobile_no }}" name="mobile_no" class="form-control" id="MobileNumber" placeholder="Enter Person Mobile Number" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="site_name" class="form-label">Worksite<span style="color:red;"> *</span> :</label>
+                            <select name="site_name" id="dropdown" class="form-control">
+                                {% if id == '0' %}
+                                <option value="" selected disabled >Select</option>
+                                      {% for item in site_name %}
+                                        <option value="{{ item.0 }}">{{ item.1 }}</option>
+                                      {% endfor %}
+                                {% else %}
+                                   <option value="" {% if site_name_value == '' %}Selected{% endif %}>Select</option> 
+                                    {% for item in site_name %}
+                                        <option value="{{ item.0 }}" {% if item.0 == site_name_value %}selected{% endif %}>{{ item.1 }}</option>
+                                    {% endfor %}  
+                                {% endif%}    
+                            </select>
+                        </div>
+                    </div>
+                    
+                    {% if id != '0' %}
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                    <label for="employee_status_id" class="form-label">Employeee Status<span style="color:red;"> *</span> :</label>
+                                    <select name="employee_status_name" id="dropdown" class="form-control">
+                                        {% if id == '0' %}
+                                        <option value="" selected disabled>Select</option>
+                                              {% for item in employee_status %}
+                                                <option value="{{ item.0 }}">{{ item.1 }}</option>
+                                              {% endfor %}
+                                        {% else %}
+                                           <option value="" {% if employee_status_id == '' %}Selected{% endif %}>Select</option> 
+                                            {% for item in employee_status %}
+                                                <option value="{{ item.0 }}" {% if item.0 == employee_status_id %}selected{% endif %}>{{ item.1 }}</option>
+                                            {% endfor %}  
+                                        {% endif%}    
+                                    </select>
+                            </div>
+                            <div class="col-md-3">  
+                                <label for="activeBtn" class="form-label">Is Active<span style="color:red;"> *</span> :</label>
+                                <br>
+                                <label class="switch">
+                                    <input type="checkbox" values ="{{ is_active }}" id="statusSwitch" name="is_active" 
+                                           {% if is_active == "1" %} checked {% endif %} 
+                                           onchange="updateStatus()">
+                                    <span class="slider"></span>
+                                </label>
+                                <input type="text" id="statusValue" name="status_value" value="{{ is_active }}" hidden>
+                            </div>
+                        </div>
+                        <input type="hidden" id="hiddenActiveStatus" name="employee_status" value="0">
+
+                    {% endif %}
+
+                    
+
+                    <div class="text-center">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('statusSwitch');
+        const isActive = checkbox.getAttribute('values');
+        checkbox.checked = (isActive == '1');
+        updateStatus(); 
+      });
+
+</script>
+
+<script>
+    function updateStatus() {
+        var checkBox = document.getElementById("statusSwitch");
+        var statusValue = document.getElementById("statusValue");
+    
+        statusValue.value = checkBox.checked ? "1" : "0";
+    }
+</script>
+
+
+ {% endblock %} 
