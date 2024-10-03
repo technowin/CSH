@@ -7,52 +7,31 @@ from CSH.encryption import *
 import traceback
 from django.http import JsonResponse
 import traceback
-
+from Account.db_utils import callproc
+from django.utils import timezone
 @login_required
 def newdashboard(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor = m.cursor()
-    
     try:
         user_id = request.session.get('user_id', '')
-        cursor.callproc("stp_get_roster_count",[user_id])
-        for result in cursor.stored_results():
-            roster_count = result.fetchone() 
+        roster_count = callproc("stp_get_roster_count",[user_id])
+        roster_count = roster_count[0] if roster_count else None
 
         user_id = request.session.get('user_id', '')
-        cursor.callproc("stp_get_today_roster_graph",[user_id])
+        today_result = callproc("stp_get_today_roster_graph",[user_id])
+        today_result = today_result[0] if today_result else None
+        tommorow_result = callproc("stp_get_tommorow_roster_graph",[user_id])
+        tommorow_result = tommorow_result[0] if tommorow_result else None
 
-        for result in cursor.stored_results():
-            today_result = result.fetchone() 
-
-        cursor.callproc("stp_get_tommorow_roster_graph",[user_id])
-
-        for result in cursor.stored_results():
-            tommorow_result = result.fetchone() 
-
+        user_id = request.session.get('user_id', '')
+        company_names = callproc("stp_get_graph_dropdown", [user_id,'company'])
         
-        user_id = request.session.get('user_id', '')
-        cursor.callproc("stp_get_graph_dropdown", [user_id,'company'])
-        for result in cursor.stored_results():
-            company_names = list(result.fetchall())
-
-        cursor.callproc("stp_get_graph_dropdown", [user_id,'site'])
-        for result in cursor.stored_results():
-            site_names = list(result.fetchall())
-
-        cursor.callproc("stp_get_worksite_percent_count_pie", ['1'])
+        site_names = callproc("stp_get_graph_dropdown", [user_id,'site'])
         fetched_results = []
-    
-        for result in cursor.stored_results():
-            fetched_results = result.fetchall()
+        fetched_results = callproc("stp_get_worksite_percent_count_pie", ['1'])
 
-        cursor.callproc("stp_get_worksite_percent_count_pie2", ['1'])
-        
         results = []
-        for result in cursor.stored_results():
-            results = result.fetchall()
-
+        results = callproc("stp_get_worksite_percent_count_pie2", ['1'])
+        
         # # Structure data into a more manageable format
         formatted_results = [
             {
@@ -80,102 +59,65 @@ def newdashboard(request):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log", [fun, str(e), request.user.id])
+        callproc("stp_error_log", [fun, str(e), request.user.id])
         print(f"error: {e}")
         messages.error(request, 'Oops...! Something went wrong!')
         response = {'result': 'fail', 'messages': 'something went wrong !'}
 
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
-    
-    # Render the dashboard template with the context data
-    if request.method == "GET":
-        return render(request, 'Dashboard/index.html', context)
-
+        if request.method == "GET":
+            return render(request, 'Dashboard/index.html', context)
 
 @login_required
 def get_sites(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor = m.cursor()
-    
     try:
         user_id = request.session.get('user_id', '')
         selectedCompany = request.POST.get('selectedCompany','')
-        cursor.callproc("stp_get_company_wise_site_names", [user_id,selectedCompany])
-        for result in cursor.stored_results():
-            companywise_site_names = list(result.fetchall())
-
+        companywise_site_names = callproc("stp_get_company_wise_site_names", [user_id,selectedCompany])
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log", [fun, str(e), request.user.id])
+        callproc("stp_error_log", [fun, str(e), request.user.id])
         print(f"error: {e}")
         return JsonResponse({'result': 'fail', 'message': 'something went wrong!'}, status=500)
-    
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
-    
-    return JsonResponse({'companywise_site_names': companywise_site_names}, status=200)
-
+        return JsonResponse({'companywise_site_names': companywise_site_names}, status=200)
 
 @login_required
 def updateGraph(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor = m.cursor()
-    
     try:
         company_id = request.POST.get('company_id', '')
         site_name = request.POST.get('site_name', '')
         shift_date = request.POST.get('shift_date', '')
 
+        fetched_result = callproc("stp_get_today_roster_graph_filter", [company_id, site_name, shift_date])
+        fetched_result = fetched_result[0] if fetched_result else None
+        if fetched_result:
+            result_data = {
+                'total_count': fetched_result[0],
+                'yes_count': fetched_result[1],
+                'no_count': fetched_result[2],
+                'pending_count': fetched_result[3],
+                'more_than_8_hours_count': fetched_result[4],
+                'less_than_8_hours_count': fetched_result[5]
+            }
 
-        cursor.callproc("stp_get_today_roster_graph_filter", [company_id, site_name, shift_date])
-        
-        for result in cursor.stored_results():
-            fetched_result = result.fetchone() 
-            if fetched_result:
-                result_data = {
-                    'total_count': fetched_result[0],
-                    'yes_count': fetched_result[1],
-                    'no_count': fetched_result[2],
-                    'pending_count': fetched_result[3],
-                    'more_than_8_hours_count': fetched_result[4],
-                    'less_than_8_hours_count': fetched_result[5]
-                }
-
-        cursor.callproc("stp_get_tommorow_roster_graph_filter", [company_id, site_name, shift_date])
-        
-        for result in cursor.stored_results():
-            fetched_result = result.fetchone() 
-            if fetched_result:
-                result_data_tommorow = {
-                    'nxttotal_count': fetched_result[0],
-                    'nxtyes_count': fetched_result[1],
-                    'nxtno_count': fetched_result[2],
-                    'nxtpending_count': fetched_result[3],
-                    'nxtmore_than_8_hours_count': fetched_result[4],
-                    'nxtless_than_8_hours_count': fetched_result[5]
-                }
-
-        cursor.callproc("stp_get_worksite_percent_count_pie_filter", [company_id,shift_date])
+        fetched_result= callproc("stp_get_tommorow_roster_graph_filter", [company_id, site_name, shift_date])
+        fetched_result = fetched_result[0] if fetched_result else None
+        if fetched_result:
+            result_data_tommorow = {
+                'nxttotal_count': fetched_result[0],
+                'nxtyes_count': fetched_result[1],
+                'nxtno_count': fetched_result[2],
+                'nxtpending_count': fetched_result[3],
+                'nxtmore_than_8_hours_count': fetched_result[4],
+                'nxtless_than_8_hours_count': fetched_result[5]
+            }
         fetched_results = []
-    
-        for result in cursor.stored_results():
-            fetched_results = result.fetchall()
-
-        cursor.callproc("stp_get_worksite_percent_count_filter2",[company_id,shift_date])
+        fetched_results = callproc("stp_get_worksite_percent_count_pie_filter", [company_id,shift_date])
         
         results = []
-        for result in cursor.stored_results():
-            results = result.fetchall() or []
+        results = callproc("stp_get_worksite_percent_count_filter2",[company_id,shift_date])
 
         formatted_results = [
             {
@@ -201,75 +143,44 @@ def updateGraph(request):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log", [fun, str(e), request.user.id])
+        callproc("stp_error_log", [fun, str(e), request.user.id])
         print(f"error: {e}")
         return JsonResponse({'result': 'fail', 'message': 'something went wrong!'}, status=500)
     
 @login_required
 def get_roster_data(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor = m.cursor()
-
     try:
-
         company_id = request.GET.get('company_id', '')
         site_name = request.GET.get('site_name', '')
         shift_date = request.GET.get('shift_date', '')
         clickedCategory = request.GET.get('clickedCategory', '')
-
-        cursor.callproc("stp_get_roster_count_data",[shift_date,company_id,site_name,clickedCategory])
-        
         data = []
-        for result in cursor.stored_results():
-            data = result.fetchall()
-
+        data = callproc("stp_get_roster_count_data",[shift_date,company_id,site_name,clickedCategory])
         return JsonResponse({'data': data})
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log", [fun, str(e), request.user.id])
+        callproc("stp_error_log", [fun, str(e), request.user.id])
         print(f"error: {e}")
         return JsonResponse({'result': 'fail', 'message': 'something went wrong!'}, status=500)
     
-    finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
-    
 @login_required
 def get_roster_data_tommorow(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor = m.cursor()
-
     try:
         company_id = request.GET.get('company_id', '')
         worksite = request.GET.get('site_name', '')
         shift_date = request.GET.get('shift_date', '')
         clickedCategory = request.GET.get('clickedCategory', '')
-
-        cursor.callproc("stp_get_roster_count_tommorow_data", [shift_date, company_id, worksite, clickedCategory])
-
         data1 = []
-        for result in cursor.stored_results():
-            data1 = result.fetchall()
-
+        data1 = callproc("stp_get_roster_count_tommorow_data", [shift_date, company_id, worksite, clickedCategory])
         return JsonResponse({'data': data1})
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log", [fun, str(e), request.user.id])
+        callproc("stp_error_log", [fun, str(e), request.user.id])
         print(f"Error: {e}")
         return JsonResponse({'result': 'fail', 'message': 'Something went wrong!'}, status=500)
 
-    finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
-    
     

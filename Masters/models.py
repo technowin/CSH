@@ -5,7 +5,7 @@ from django.db import models
 from django.db import models
 
 from Account.models import CustomUser
-
+from Account.managers import ServiceManager
  
 class application_search(models.Model):
     id = models.AutoField(primary_key=True)
@@ -18,6 +18,7 @@ class application_search(models.Model):
     created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='app_search_created',blank=True, null=True,db_column='created_by')
     updated_at = models.DateTimeField(null=True,blank=True,auto_now_add=True)
     updated_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='app_search_updated',blank=True, null=True,db_column='updated_by')
+    objects = ServiceManager()
     class Meta:
         db_table = 'application_search'
     def __str__(self):
@@ -32,6 +33,7 @@ class Roles(models.Model):
     updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
     created_by = models.ForeignKey('Account.CustomUser', on_delete=models.CASCADE, related_name='roles_created', blank=True, null=True, db_column='created_by')
     updated_by = models.ForeignKey('Account.CustomUser', on_delete=models.CASCADE, related_name='roles_updated', blank=True, null=True, db_column='updated_by')
+    objects = ServiceManager()
     class Meta:
         db_table = 'roles'
 
@@ -43,6 +45,7 @@ class parameter_master(models.Model):
     created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='parameter_created_by',blank=True, null=True,db_column='created_by')
     updated_at = models.DateTimeField(null=True,blank=True,auto_now_add=True)
     updated_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='parameter_updated_by',blank=True, null=True,db_column='updated_by')
+    objects = ServiceManager()
     class Meta:
         db_table = 'parameter_master'
     def __str__(self):
@@ -55,7 +58,7 @@ class NodalMaster(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'nodal_master'
 
@@ -66,7 +69,7 @@ class DepartmentMaster(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'department_master'
         
@@ -78,7 +81,7 @@ class ServiceMaster(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'service_master'
 
@@ -90,7 +93,7 @@ class StatusMaster(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'status_master'
 
@@ -102,7 +105,7 @@ class DocumentMaster(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'document_master'
         
@@ -118,7 +121,7 @@ class WorkflowDetail(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'workflow_details'
 
@@ -131,7 +134,7 @@ class LevelActionMapping(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'level_action_mapping'
         
@@ -145,7 +148,7 @@ class ServiceMatrix(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'service_matrix'
 
@@ -157,7 +160,7 @@ class CitizenDocument(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True) 
     updated_at = models.DateTimeField(null=True, blank=True)                
     updated_by = models.CharField(max_length=100, null=True, blank=True)  
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'citizen_document'
         
@@ -168,12 +171,13 @@ class InternalUserDocument(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True) 
     updated_at = models.DateTimeField(null=True, blank=True)               
     updated_by = models.CharField(max_length=100, null=True, blank=True) 
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'internal_user_document'
 
         
 class Log(models.Model):
     log_text = models.TextField(null=True,blank=True)
+    objects = ServiceManager()
     class Meta:
         db_table = 'logs'

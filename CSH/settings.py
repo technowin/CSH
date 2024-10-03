@@ -18,13 +18,16 @@ ALLOWED_HOSTS = ['13.127.171.88']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-# DEBUG = True
+# DEBUG = True   
+
+# Adding the Router
+DATABASE_ROUTERS = ['Account.routers.ServiceRouter']
 
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.mysql',
         'ENGINE': 'mysql.connector.django',
-        'NAME': 'drainage_connection_db',      # Replace with your database name
+        'NAME': 'common_db',      # Replace with your database name
         'USER': 'root',      # Replace with your database user
         'PASSWORD': 'Mysql_7319',  # Replace with your database password
         # 'HOST': '13.127.171.88',       # IP FOR TEST
@@ -33,7 +36,34 @@ DATABASES = {
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
-    }
+    },
+     '1': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'drainage_connection_db',  
+        'USER': 'root',    
+        'PASSWORD': 'Mysql_7319',  
+        # 'HOST': '13.127.171.88',   
+        'HOST': '127.0.0.1',    
+        'PORT': '3306',
+    },
+     '2': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'contract_registration_db',  
+        'USER': 'root',    
+        'PASSWORD': 'Mysql_7319',  
+        # 'HOST': '13.127.171.88',  
+        'HOST': '127.0.0.1',      
+        'PORT': '3306',
+    },
+    '3': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'product_approval_db',  
+        'USER': 'root',    
+        'PASSWORD': 'Mysql_7319',  
+        # 'HOST': '13.127.171.88',  
+        'HOST': '127.0.0.1',      
+        'PORT': '3306',
+    },
 }
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -112,6 +142,7 @@ MIDDLEWARE = [
     'django_auto_logout.middleware.auto_logout',
     'corsheaders.middleware.CorsMiddleware',
     'axes.middleware.AxesMiddleware',
+    'Account.middleware.ServiceDatabaseMiddleware',
 ]
 CORS_ALLOWED_ORIGINS = [
     'http://13.202.157.7'

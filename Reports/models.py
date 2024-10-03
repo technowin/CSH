@@ -1,4 +1,5 @@
 from django.db import models
+from Account.managers import ServiceManager
 
 # Create your models here.
 
@@ -10,7 +11,7 @@ class report_columns(models.Model):
     join_name = models.TextField(null=True, blank=True)
     join_clause = models.TextField(null=True, blank=True)
     order = models.FloatField(null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'report_columns'
 
@@ -28,7 +29,7 @@ class report_filters(models.Model):
     note = models.TextField(null=True, blank=True)
     is_mandatory = models.TextField(null=True, blank=True)
     order = models.FloatField(null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'report_filters'
         
@@ -47,6 +48,6 @@ class saved_report_filters(models.Model):
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.TextField(null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'saved_report_filters'

@@ -76,9 +76,9 @@
                                     <div class="text-center" >
                                         <a class="medium" href="/forgot_password?type=email">Forgot Password?</a>
                                     </div>
-                                    {% comment %} <div class="text-center">
-                                        <a class="small" href="/register">Create an Account!</a>
-                                    </div> {% endcomment %}
+                                    <div class="text-center">
+                                        <a class="small" href="/register_new_user?id=0">Create an Account!</a>
+                                    </div> 
                                 </div>
                             </div>
                         </div>
@@ -99,6 +99,18 @@
     <!-- Custom scripts for all pages-->
     <script src="{% static 'js/CSH.min.js' %}"></script>
 
+    {% if messages %}
+    {% for message in messages %}
+      <script>
+      Swal.fire({
+        title: "{{ message.tags }}",
+        text: "{{ message }}",
+        icon: "{{ message.tags }}",
+        confirmButtonText: "OK",
+      });
+    </script>
+    {% endfor %}
+  {% endif %}
 </body>
 
 </html>

@@ -49,13 +49,11 @@ from django.http import FileResponse
 from xhtml2pdf import pisa
 from django.template.loader import get_template
 import traceback
-
+from Account.db_utils import callproc
+from django.utils import timezone
 # Report section
 @login_required
 def common_html(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     title,note ='',''
     try:
         if request.user.is_authenticated ==True:                
@@ -63,70 +61,51 @@ def common_html(request):
             user = request.user.id
             entity =request.GET.get('entity', '')  
             if request.method=="GET":
-                cursor.callproc("stp_get_filter_names",[entity])        
-                for result in cursor.stored_results():
-                    filter_name = list(result.fetchall())                
-                cursor.callproc("stp_get_column_names",[entity])        
-                for result in cursor.stored_results():
-                    column_name = list(result.fetchall()) 
-                cursor.callproc("stp_get_report_title", [entity])
-                for result in cursor.stored_results():
-                    for items in result.fetchall():
-                        title,note = items
-                cursor.callproc("stp_get_saved_filters",[entity,user])        
-                for result in cursor.stored_results():
-                    saved_names = list(result.fetchall()) 
+                filter_name = callproc("stp_get_filter_names",[entity])          
+                column_name = callproc("stp_get_column_names",[entity])        
+                result = callproc("stp_get_report_title", [entity])
+                if result and result[0]:
+                    for items in result[0]:
+                        title, note = items
+                saved_names = callproc("stp_get_saved_filters",[entity,user])        
+
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         return render(request,'Reports/common_reports.html', {'filter_name':filter_name,'column_name':column_name,'saved_names':saved_names,'entity':entity,'title':title,'note':note})
     
 @login_required      
 def get_filter(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     try:
         if request.user.is_authenticated ==True:                
             global user
             user = request.user.id
             if request.method=="GET":
                 entity =request.GET.get('entity', '')
-                cursor.callproc("stp_get_filter_names",[entity])
+                data4 = callproc("stp_get_filter_names",[entity])
                 drop_down=[]
-                for result in cursor.stored_results():
-                        data4 = list(result.fetchall()) 
-                        data5 = []
-                        for items in data4:
-                            data5=[]
-                            data5=list(items)
-                            unit = common_model(id1=data5[0], name=data5[1])
-                            drop_down.append(common_dict(unit))
+                data5 = []
+                for items in data4:
+                    data5=[]
+                    data5=list(items)
+                    unit = common_model(id1=data5[0], name=data5[1])
+                    drop_down.append(common_dict(unit))
                 if len(drop_down) == 0:
                     drop_down = 0
     except Exception  as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         return JsonResponse(drop_down, safe=False)
     
 class common_model(models.Model):
     name = models.CharField(max_length=255)
     id1 =models.CharField(max_length=255)
-    
     def __str__(self):
         return self.id1    
     
@@ -138,44 +117,32 @@ def common_dict(unit):
     
 @login_required    
 def get_sub_filter(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     try:
         if request.user.is_authenticated ==True:                
             global user
             user = request.user.id 
             if request.method=="GET":
                 filter_id =request.GET.get('filter_id', '')
-                cursor.callproc("stp_get_sub_filter",[filter_id,user])
+                data4 = callproc("stp_get_sub_filter",[filter_id,user])
                 drop_down=[]
-                for result in cursor.stored_results():
-                        data4 = list(result.fetchall()) 
-                        data5 = []
-                        for items in data4:
-                            data5=[]
-                            data5=list(items)
-                            unit = common_model(id1=data5[0], name=data5[1])
-                            drop_down.append(common_dict(unit))
+                data5 = []
+                for items in data4:
+                    data5=[]
+                    data5=list(items)
+                    unit = common_model(id1=data5[0], name=data5[1])
+                    drop_down.append(common_dict(unit))
                 if len(drop_down) == 0:
                     drop_down = 0 
     except Exception  as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         return JsonResponse(drop_down, safe=False)  
 
 @login_required
 def add_new_filter(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     try:
         if request.user.is_authenticated ==True:                
             global user
@@ -183,9 +150,7 @@ def add_new_filter(request):
             if request.method == "GET":
                 filter_count =str(request.GET.get('filter_count', ''))
                 entity =str(request.GET.get('entity', ''))
-                cursor.callproc("stp_get_filter_names",[entity])        
-                for result in cursor.stored_results():
-                    filter_name = list(result.fetchall())           
+                filter_name = callproc("stp_get_filter_names",[entity])                
                 fId = filter_count + 'filterId'           
                 sfId = filter_count + 'subFilterId'           
                 context = {'filter_name':filter_name,'fId':fId,'sfId':sfId,'fcount':filter_count}
@@ -193,21 +158,14 @@ def add_new_filter(request):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         data = {'html': html}
         return JsonResponse(data, safe=False)
     
 @login_required
 def partial_report(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     try:
         if request.user.is_authenticated ==True:                
             global user
@@ -227,50 +185,42 @@ def partial_report(request):
                 data_list = data['data_list']
                 display_name_list = data['display_name_list']
                 # entityName = entity
-
                 context = {'emptycheck':emptycheck,'columns':display_name_list,'rows':data_list,'entity':entity}
                 html = render_to_string('Reports/_partial_report.html', context)
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         data = {'html': html}
         return JsonResponse(data, safe=False)
     
 def common_fun(columnName,filterid,SubFilterId,sft,entity,user):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     try:
         report_filters= []
         report_columns= []
         column_join_list= []
         mandatory_arr= []
-        cursor.callproc("stp_get_report_filters", [entity])
-        for result in cursor.stored_results():
-            for row in result:
+        result_data = callproc("stp_get_report_filters", [entity])
+        if result_data and result_data[0]:
+            for row in result_data[0]:
                 report_filters.append(list(row))
-        cursor.callproc("stp_get_report_columns", [entity])
-        for result in cursor.stored_results():
-            for row in result:
+        result_data =callproc("stp_get_report_columns", [entity])
+        if result_data and result_data[0]:
+            for row in result_data[0]:
                 report_columns.append(list(row))
-        cursor.callproc("stp_get_column_join", [entity])
-        for result in cursor.stored_results():
-            for row in result:
+        result_data = callproc("stp_get_column_join", [entity])
+        if result_data and result_data[0]:
+            for row in result_data[0]:
                 column_join_list.append(list(row))
-        cursor.callproc("stp_get_mandatory", [entity])
-        for result in cursor.stored_results():
-            for items in result.fetchall():
-                    mandf = items[0]
+        result_data = callproc("stp_get_mandatory", [entity])
+        mandf = ''
+        if result_data and result_data[0]: 
+            mandf = result_data[0][0]
         if mandf != '':
             mandatory_arr = mandf.split(',')
-                    
+      
         from_clause = ""
         language = ""
         where_clause = ""
@@ -322,14 +272,14 @@ def common_fun(columnName,filterid,SubFilterId,sft,entity,user):
                 where_clause1[b] = where_clause1[b].replace("BindPara1", SubFilterId[sub])
             b += 1
         
-        cursor.callproc("stp_get_dispay_names",[entity])        
-        for result in cursor.stored_results():
-            column_name = list(result.fetchall())
-            
-        cursor.callproc("get_user_role_map",[user])   
-        for result in cursor.stored_results():
-            for items in result.fetchall():
-                company = items[0]
+        column_name = callproc("stp_get_dispay_names",[entity])        
+        
+        result_data = callproc("get_user_role_map",[user])   
+        company = '' 
+        worksite = ''
+        if result_data and result_data[0]:  
+            for items in result_data[0]:  
+                company = items[0]  
                 worksite = items[1]
                 
         if columnName == '': 
@@ -396,9 +346,9 @@ def common_fun(columnName,filterid,SubFilterId,sft,entity,user):
                 
         data_list= []
         if ch == 0:
-            cursor.callproc("stp_get_execute_report_query", [sql_query])
-            for result in cursor.stored_results():
-                for row in result:
+            result_data = callproc("stp_get_execute_report_query", [sql_query])
+            if result_data and result_data[0]:
+                for row in result_data[0]:
                     data_list.append(list(row))
       
         display_name_list = list(display_name_arr)
@@ -427,12 +377,8 @@ def common_fun(columnName,filterid,SubFilterId,sft,entity,user):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),user])  
+        callproc("stp_error_log",[fun,str(e),user])  
     finally:
-          cursor.close()
-          m.commit()
-          m.close()
-          Db.closeConnection()
           return data
       
 def render_to_pdf(html):
@@ -444,9 +390,6 @@ def render_to_pdf(html):
 
 @login_required
 def report_pdf(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor = m.cursor()
     response = ''
     html_string = ''
     try:
@@ -469,9 +412,10 @@ def report_pdf(request):
                 data_list = data['data_list']
                 column_list = data['display_name_list']
 
-                cursor.callproc("stp_get_report_title", [entity])
-                for result in cursor.stored_results():
-                    for items in result.fetchall():
+                result_data = callproc("stp_get_report_title", [entity])
+                title = ''
+                if result_data and result_data[0]:
+                    for items in result_data[0]:  
                         title = items[0]
                         
                 html_string = render_to_string('Reports/report_template.html', {
@@ -488,20 +432,13 @@ def report_pdf(request):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         return response
     
 @login_required
 def report_xlsx(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     response = ''
     try:
         if request.user.is_authenticated ==True:                
@@ -523,9 +460,10 @@ def report_xlsx(request):
                 data_list = data['data_list']
                 column_list = data['display_name_list']
 
-                cursor.callproc("stp_get_report_title", [entity])
-                for result in cursor.stored_results():
-                    for items in result.fetchall():
+                result_data = callproc("stp_get_report_title", [entity])
+                title = ''
+                if result_data and result_data[0]:
+                    for items in result_data[0]:  
                         title = items[0]
 
                 output = io.BytesIO()
@@ -556,13 +494,9 @@ def report_xlsx(request):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         return response
     
 def add_page_number(canvas, doc):
@@ -574,9 +508,6 @@ def add_page_number(canvas, doc):
 
 @login_required
 def save_filters(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     try:
         if request.user.is_authenticated ==True:                
             global user
@@ -595,28 +526,19 @@ def save_filters(request):
                 data = common_fun(columnName,filterid1,SubFilterId1,sft1,entity,user)
                 sql_query = data['sql_query'] 
                 display_names = data['display_names']       
-                cursor.callproc("stp_save_report_filters",[saved_name,entity,filterid,subFilterId,columnName,f_count,display_names,sql_query,user])
-                for result in cursor.stored_results():
-                        datalist = list(result.fetchall())
+                datalist = callproc("stp_save_report_filters",[saved_name,entity,filterid,subFilterId,columnName,f_count,display_names,sql_query,user])
                 response_data = {'result': datalist[0][0]}                       
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
         response_data = {'result': 'fail'}       
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         return JsonResponse(response_data,safe=False)
 
 @login_required
 def delete_filters(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     try:
         if request.user.is_authenticated ==True:                
             global user
@@ -624,28 +546,19 @@ def delete_filters(request):
             if request.method == "GET":
                 entity =str(request.GET.get('entity', ''))
                 saved_id =str(request.GET.get('save_filter_name', ''))
-                cursor.callproc("stp_delete_report_filters",[saved_id,entity,user])
-                for result in cursor.stored_results():
-                        datalist = list(result.fetchall())
+                datalist = callproc("stp_delete_report_filters",[saved_id,entity,user])
                 response_data = {'result': datalist[0][0]}                       
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
         response_data = {'result': 'fail','messages ':'something went wrong !'}       
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         return JsonResponse(response_data,safe=False)
     
 @login_required
 def saved_filters(request):
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     try:
         if request.user.is_authenticated ==True:                
             global user
@@ -653,10 +566,11 @@ def saved_filters(request):
             if request.method == "GET":
                 entity =str(request.GET.get('entity', ''))
                 saved_id =str(request.GET.get('saved_id', ''))
-                cursor.callproc("stp_get_saved_report_filters",[saved_id,entity,user])
-                for result in cursor.stored_results():
-                    for items in result.fetchall():
-                        filters, sub_filters, selected_columns, f_count, display_name, sql_query = items
+                result_data  = callproc("stp_get_saved_report_filters",[saved_id,entity,user])
+                filters, sub_filters, selected_columns, f_count, display_name, sql_query = ('',) * 6  # Initialize variables
+                if result_data and result_data[0]: 
+                    for items in result_data[0]: 
+                        filters, sub_filters, selected_columns, f_count, display_name, sql_query = items 
 
                 display_name_arr = display_name.split(',')
                 display_name_list = list(display_name_arr)
@@ -673,9 +587,9 @@ def saved_filters(request):
                     sub_fil_arr = sub_fil_arr[1:]
 
                 data_list= []
-                cursor.callproc("stp_get_execute_report_query", [sql_query])
-                for result in cursor.stored_results():
-                    for row in result:
+                result_data  = callproc("stp_get_execute_report_query", [sql_query])
+                if result_data and result_data[0]:
+                    for row in result_data[0]:
                         data_list.append(list(row))
 
                 if len(data_list) > 0:
@@ -689,14 +603,10 @@ def saved_filters(request):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log",[fun,str(e),request.user.id])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
         context = {'result': 'fail'}       
     finally:
-        cursor.close()
-        m.commit()
-        m.close()
-        Db.closeConnection()
         return JsonResponse(context,safe=False)
  
  

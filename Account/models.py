@@ -4,10 +4,12 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+from .managers import ServiceManager
 
 
 
 class CustomUserManager(BaseUserManager):
+    
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
@@ -24,6 +26,11 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
 
         return self.create_user(email, password, **extra_fields)
+    
+    def get_queryset(self):
+        from .db_utils import get_service_db
+        service_db = get_service_db()
+        return super().get_queryset().using(service_db)
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
@@ -44,17 +51,31 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['full_name', 'phone']  # Add any additional required fields
-
     class Meta:
         db_table = 'users'
 
     def __str__(self):
         return self.email
 
+class user_dept_services(models.Model):
+    id = models.AutoField(primary_key=True)
+    user_id = models.BigIntegerField(null=True, blank=True)
+    department_id = models.BigIntegerField(null=True, blank=True)
+    service_id = models.BigIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    created_by = models.TextField(null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
+    updated_by = models.TextField(null=True, blank=True)
+    class Meta:
+        db_table = 'user_dept_services'
+    def __str__(self):
+        return f'User {self.user_id} - Role {self.service_id}'
+    
 class OTPVerification(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     otp_text = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
+    objects = ServiceManager()
     class Meta:
         db_table = 'otp_verification'
         
@@ -62,6 +83,7 @@ class password_storage(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='user_id_repos',blank=True, null=True,db_column='user_id')
     passwordText =models.CharField(max_length=255,null=True,blank=True)
+    objects = ServiceManager()
     class Meta:
         db_table = 'password_storage'
 
@@ -71,6 +93,7 @@ class error_log(models.Model):
     error =models.TextField(null=True,blank=True)
     error_date = models.DateTimeField(null=True,blank=True,auto_now_add=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='error_by',blank=True, null=True)
+    objects = ServiceManager()
     class Meta:
         db_table = 'error_log'
 
@@ -91,7 +114,7 @@ class MenuMaster(models.Model):
     updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
     updated_by = models.TextField(null=True, blank=True)
     menu_icon = models.CharField(max_length=50, null=True, blank=True)
-
+    objects = ServiceManager()
     class Meta:
         db_table = 'menu_master'
 
@@ -105,6 +128,7 @@ class UserMenuDetails(models.Model):
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
     updated_by = models.TextField(null=True, blank=True)
+    objects = ServiceManager()
     class Meta:
         db_table = 'user_menu_details'
 
@@ -116,6 +140,7 @@ class RoleMenuMaster(models.Model):
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
     updated_by = models.TextField(null=True, blank=True)
+    objects = ServiceManager()
     class Meta:
         db_table = 'role_menu_master'
 

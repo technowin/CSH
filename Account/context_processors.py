@@ -1,12 +1,9 @@
 from django.conf import settings
 from CSH.encryption import decrypt_parameter
 import Db
-
+from .db_utils import callproc
+from django.utils import timezone
 def logged_in_user(request):
-    
-    Db.closeConnection()
-    m = Db.get_connection()
-    cursor=m.cursor()
     user =''
     session_cookie_age_seconds = settings.AUTO_LOGOUT['IDLE_TIME']
     session_timeout_minutes = session_cookie_age_seconds 
@@ -16,16 +13,14 @@ def logged_in_user(request):
     role_id = request.session.get('role_id', '')
     if request.user.is_authenticated ==True:
         user = str(request.user.id or '')
-        
-    cursor.callproc("stp_get_all_reports", [user])
-    for result in cursor.stored_results():
-        for items in result.fetchall():
+    reports = ''    
+    result_data  = callproc("stp_get_all_reports", [user])
+    if result_data and result_data[0]: 
+        for items in result_data[0]:
             reports = items[0]     
     
-    cursor.callproc("stp_get_side_navbar_details", [user_id, role_id])
-    for result in cursor.stored_results():
-            menu_data = list(result.fetchall())
-        
+    menu_data = callproc("stp_get_side_navbar_details", [user_id, role_id])
+  
     # Organize the menu data
     items = []
     for row in menu_data:
@@ -42,11 +37,5 @@ def logged_in_user(request):
             menu_dict[item['parent_id']] = []
         menu_dict[item['parent_id']].append(item)
     
-    menu_items = menu_dict.get(-1, [])
-    
-    cursor.close()
-    m.commit()
-    cursor.close()
-    m.close()
-    Db.closeConnection()        
+    menu_items = menu_dict.get(-1, [])      
     return {'username':username,'full_name':full_name,'session_timeout_minutes':session_timeout_minutes,'reports':reports, 'menu_items': menu_items}
