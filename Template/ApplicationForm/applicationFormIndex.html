@@ -1,0 +1,92 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+
+<body>
+    
+    <div class="card mb-4" style="zoom:85%" >
+        <div class="card-body">
+           
+            <div class="row">
+                
+                <div class="col-md-6">
+                    <h1 style="color:#4e73df;font-weight:bold">
+                        <u>Application Form</u>
+                      </h2>
+                </div>
+
+                <div class="col-md-6">
+                    <a class="LocationBtns" href="{% url 'applicationMasterCrate' %}">
+                        <div class="Locationsign"> 
+                            <i class="fa-solid fa-plus" style="color: white; font-size:20px; margin-top:-2%;"></i>
+                        </div>
+                        <div class="Locationtext">Apply</div>
+                    </a>
+                </div>
+                
+            </div>
+         
+          <div class="table-responsive">
+             <table style="width: 100%; margin-top:2%;"  class="table"  id="dataTable">   
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Request No</th>
+                        <th>Applicant Name</th>
+                        <th>Form Status</th>
+                        <th>Remarks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                      <td>{{ row.srno }}</td>
+                      <td>{{ row.request_no }}</td>
+                      <td>{{ row.name_of_owner }}</td>
+                      <td>{{ row.status }}</td>
+                      <td>{{ row.comments }}</td>
+                      <td>
+                        <a class="edit-link" href="EditAct?act_id={{ row.act_id }}">
+                            <i 
+                              class="fa-solid fa-eye"
+                              style="font-size: 30px; color: #274FC2; margin-right: 8px"
+                            ></i>
+                            <span class="edit-text">View</span>
+                          </a>
+                      </td>
+                    </tr>
+                    {% endfor %}       
+                </tbody>
+             </table>
+        </div>
+      </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                debugger
+                Swal.fire({
+                    title: "{{ message.tags }}",
+                    text: "{{ message }}",
+                    icon: "{{ message.tags }}",
+                    confirmButtonText: "OK",
+                });
+            </script>
+        {% endfor %}
+    {% endif %}
+    
+</body>
+
+{% endblock %}

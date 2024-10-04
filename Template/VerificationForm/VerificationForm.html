@@ -1,0 +1,136 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/applicationForm.css' %}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+
+<body>
+  <div class="container-fluid">
+    <div class="row fullBox">
+        <div class="cardNew pt-4">
+            <h2 id="heading" class="Hello">Service And Action</h2>
+
+            <!-- Upper Button -->
+            <div class="row upperButton">
+                
+                <div class="col-md-6">
+                    <button class="button type1">
+                        <span 
+                            class="btn-txt">Forword
+                        </span>
+                    </button>
+                </div>
+
+                <div class="col-md-6">
+                    <button class="button type1" data-toggle="modal" data-target="#viewDocumentModal">
+                        <span class="btn-txt">View Document</span>
+                    </button>
+                    <button class="button type1">
+                        <span 
+                            class="btn-txt">Send Back
+                        </span>
+                    </button>
+                    <button class="button type1">
+                        <span 
+                            class="btn-txt">Send Forward
+                        </span>
+                    </button>
+                </div>
+                
+            </div>
+
+            <!-- Form Section -->
+
+            <div class="FormAndDocumentHere">
+
+                <div class="col-md-7">
+                    Form Details
+                </div>
+
+                <div class="col-md-2">
+
+                    <button class="button type1">
+                        <span class="btn-txt">View Document&nbsp;<i class="fa-solid fa-eye"></i> </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SummerNote -->
+            <div class="row upperButton">
+                <div class="col-md-12 summernoteCss">
+                    <textarea id="summernote" name="summernote" cols="30" rows="30"></textarea>
+                </div>
+            </div>
+
+            <!-- Lower Button -->
+            <div class="row LowerButton">
+                <button class="button type1">
+                    <span class="btn-txt">Action</span>
+                </button>
+                <button class="button type1">
+                    <span class="btn-txt">Go Back</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- View Document Modal Here-->
+         
+        <div class="modal fade" id="viewDocumentModal" tabindex="-1" role="dialog" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+            <div class="modal-dialog custom-modal" role="document">
+                <div class="modal-content">
+                    <!-- Modal header with close button -->
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="viewDocumentModalLabel">View Document</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+        
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <button class="container-btn-file">
+                            <i class="fa-solid fa-folder-open"></i>&nbsp;&nbsp;Upload File
+                            <input class="file" name="text" type="file" />
+                        </button>
+                    </div>
+        
+                    <!-- Modal footer with close button -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  
+  <script>
+      $(document).ready(function() {
+          console.log('jQuery is loaded');
+          $('#summernote').summernote({
+              placeholder: 'Hello Ryan',
+              tabsize: 2,
+              height: 120,
+              toolbar: [
+                  ['style', ['style']],
+                  ['font', ['bold', 'underline', 'clear']],
+                  ['color', ['color']],
+                  ['para', ['ul', 'ol', 'paragraph']],
+                  ['table', ['table']],
+                  ['insert', ['link', 'picture', 'video']],
+                  ['view', ['fullscreen', 'codeview', 'help']]
+              ]
+          });
+      });
+  </script>
+</body>
+{% endblock %}

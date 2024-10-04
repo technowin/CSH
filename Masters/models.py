@@ -105,6 +105,8 @@ class DocumentMaster(models.Model):
     created_by = models.CharField(max_length=100, null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.CharField(max_length=100, null=True, blank=True)
+    isActive = models.IntegerField(default=1)
+    mandatory = models.IntegerField(default=1)
     objects = ServiceManager()
     class Meta:
         db_table = 'document_master'
@@ -151,15 +153,17 @@ class ServiceMatrix(models.Model):
     objects = ServiceManager()
     class Meta:
         db_table = 'service_matrix'
-
-class CitizenDocument(models.Model):
-    userdocumentid = models.AutoField(primary_key=True)       
-    file_name = models.CharField(max_length=255, null=True, blank=True)  
-    doc_id_id = models.ForeignKey('DocumentMaster', on_delete=models.CASCADE, null=True, blank=True, related_name='doc_id_id_F', db_column='doc_id_id')  
+        
+class CitizenDocumentFilePath(models.Model):
+    id = models.AutoField(primary_key=True) 
+    user_id = models.IntegerField() 
+    file_name = models.CharField(max_length=255, null=True, blank=True)
+    filepath = models.CharField(max_length=1000, null=True, blank=True)  # Add this field
+    document = models.ForeignKey('DocumentMaster', on_delete=models.CASCADE, null=True, blank=True, related_name='citizen_documents_f', db_column='doc_id_id')  
     created_at = models.DateTimeField(auto_now_add=True)           
     created_by = models.CharField(max_length=100, null=True, blank=True) 
     updated_at = models.DateTimeField(null=True, blank=True)                
-    updated_by = models.CharField(max_length=100, null=True, blank=True)  
+    updated_by = models.CharField(max_length=100, null=True, blank=True)   
     objects = ServiceManager()
     class Meta:
         db_table = 'citizen_document'
@@ -181,3 +185,28 @@ class Log(models.Model):
     objects = ServiceManager()
     class Meta:
         db_table = 'logs'
+        
+class FormDetail(models.Model):
+    request_no = models.CharField(max_length=100, null=True, blank=True)
+    name_of_premises = models.CharField(max_length=255, null=True, blank=True)
+    plot_no = models.CharField(max_length=100, null=True, blank=True)
+    sector_no = models.CharField(max_length=100, null=True, blank=True)
+    node = models.CharField(max_length=100, null=True, blank=True)
+    name_of_owner = models.CharField(max_length=255, null=True, blank=True)
+    address_of_owner = models.TextField(null=True, blank=True)
+    name_of_plumber = models.CharField(max_length=255, null=True, blank=True)
+    license_no_of_plumber = models.CharField(max_length=100, null=True, blank=True)
+    address_of_plumber = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=100, null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
+    plot_size = models.CharField(max_length=100, null=True, blank=True)
+    no_of_flats = models.IntegerField(null=True, blank=True)
+    no_of_shops = models.IntegerField(null=True, blank=True)
+    septic_tank_size = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    created_by = models.CharField(max_length=255, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    updated_by = models.CharField(max_length=255, null=True, blank=True)
+    objects = ServiceManager()
+    class Meta:
+        db_table = "form_detail"        

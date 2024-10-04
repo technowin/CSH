@@ -1,0 +1,111 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% csrf_token %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>{% block title %} CSH {% endblock %}</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="{% static 'css/CSH.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/citizenLogin.css' %}" rel="stylesheet">
+
+</head>
+
+<body class="bg-gradient-primary">
+
+    <div class="container">
+
+        <!-- Outer Row -->
+        <div class="row justify-content-center">
+
+            <div class="col-xl-10 col-lg-12 col-md-9">
+
+                <div class="card o-hidden border-0 shadow-lg my-5">
+                    <div class="card-body p-0">
+                        <!-- Nested Row within Card Body -->
+                        <div class="row">
+                            <div class="col-lg-6 d-none d-lg-block bg-login-image">
+                                <br>
+                                <br>
+                                <img src="{% static 'images/cidcologo.jpg' %}" width="450" height = "250" title="CSH" > 
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <div class="text-center">
+                                        <h1 class="h4 text-gray-900 mb-4">Welcome Back!</h1>
+                                    </div>
+                                    <form class="user" action="Login" method="post" onsubmit="return validatePhoneNumber()">
+                                        <div class="form-group">
+                                            <input type="number" class="form-control form-control-user"
+                                                id="exampleInputPhone" name="username" aria-describedby="phoneHelp"
+                                                placeholder="Enter Phone Number..." required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-user btn-block">
+                                            Login
+                                        </button>
+                                        <a class="textSignUp" href="citizenRegisterAccount">SignUp Now</a>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Core plugin JavaScript-->
+    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+    <!-- Custom scripts for all pages-->
+    <script src="{% static 'js/CSH.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {% if messages %}
+        {% for message in messages %}
+        <script>
+        Swal.fire({
+            title: "{{ message.tags }}",
+            text: "{{ message }}",
+            icon: "{{ message.tags }}",
+            confirmButtonText: "OK",
+        });
+        </script>
+        {% endfor %}
+    {% endif %}
+
+    <script>
+    function validatePhoneNumber() {
+        var phoneInput = document.getElementById('exampleInputPhone').value;
+        var phonePattern = /^[0-9]{10}$/;
+
+        if (!phonePattern.test(phoneInput)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Phone Number',
+                text: 'Please enter a valid 10-digit phone number.',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+        return true;
+    }
+</script>
+
+</body>
+
+</html>
+

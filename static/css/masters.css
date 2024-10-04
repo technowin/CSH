@@ -225,10 +225,7 @@
         transform: translate(2px ,2px);
       }
 
-          
-    
-
-       table {
+      table {
         width: 100%;
         margin-bottom: 1.5em;
         border-spacing: 0;
@@ -239,14 +236,15 @@
           background-color: #A7C4FF;
           border: 1px solid #A7C4FF;
           font-weight: normal;
-          text-align: center;
           color: black;
+          text-align: center !important;
         }
         
         td {
             color: black;
             padding: 10px;
             border: 1px solid #ccc;
+            text-align: center;
         }
     
         tr:nth-child(odd) td {
@@ -520,4 +518,100 @@ select[name="company_id"]:focus,select[name="roster_type"]:focus {
 
 th {
 color: black;
+}
+
+/* Location Button */
+
+.LocationBtns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 55px;
+  height: 55px;
+  border: none;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  transition: width 0.3s, border-radius 0.3s, transform 0.3s;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+  background-color: #274EC2;
+  margin-left: 10px;
+  color: white;
+  text-decoration: none;
+}
+
+.Locationsign {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  transition: width 0.3s, padding-left 0.3s;
+}
+
+.Locationtext {
+  position: absolute;
+  left: 40%;
+  width: 0;
+  opacity: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+  transition: width 0.3s, opacity 0.3s, padding-right 0.3s;
+  color: #ffffff;
+  letter-spacing: 0.2em;
+}
+
+.LocationBtns:hover {
+  width: 225px;
+  border-radius: 40px;
+}
+
+.LocationBtns:hover .Locationsign {
+  width: 10%;
+  padding-left: 50px;
+}
+
+.LocationBtns:hover .Locationtext {
+  opacity: 1;
+  width: 100%;
+  padding-right: 10px;
+}
+
+.LocationBtns:active {
+  transform: translate(2px, 2px);
+}
+
+/* edit css */
+
+
+.edit-link,
+.Delete-link {
+  text-decoration: none;
+  position: relative;
+  display: inline-block;
+}
+
+.edit-text,
+.Delete-text {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  padding: 5px 10px;
+  background-color: #ffffff;
+  border: 1px solid black;
+  pointer-events: none;
+  z-index: 1; /* Ensure text is above icon */
+}
+
+.edit-link:hover .edit-text {
+  opacity: 1;
+}
+
+.Delete-link:hover .Delete-text {
+  opacity: 1;
+}
+
+.edit-link .fa-pen-to-square {
+  z-index: 2; /* Ensure icon is above Delete icon */
 }

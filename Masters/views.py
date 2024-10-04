@@ -6,6 +6,7 @@ from django.shortcuts import render,redirect
 from django.contrib.auth import authenticate, login ,logout,get_user_model
 from Account.forms import RegistrationForm
 from Account.models import *
+from Masters.models import *
 import Db 
 import bcrypt
 from django.contrib.auth.decorators import login_required
@@ -37,6 +38,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django.utils import timezone
 from .models import Log, CustomUser 
 from Account.db_utils import callproc
+from django.views.decorators.csrf import csrf_exempt
+import os
 
 @login_required
 def masters(request):
@@ -479,6 +482,7 @@ def employee_master(request):
             return render(request, "Master/employee_master.html", context)
         elif request.method=="POST":  
             return redirect(f'/masters?entity=em&type=i')
+
 @login_required  
 def upload_excel(request):
 
@@ -577,4 +581,298 @@ def get_access_control(request):
 
     finally:
         return JsonResponse(response)
-  
+
+# Verification Form
+def VerificationForm(request):
+    try:
+        return render(request, 'VerificationForm/VerificationForm.html') 
+    except Exception as e:
+       
+        print(f"An error occurred: {e}")
+     
+        return HttpResponse("An error occurred while rendering the page.", status=500)
+
+# application Form Index
+def applicationFormIndex(request):
+    try:
+        session_company = request.session.get("CC", "")
+        username = ""
+
+        if request.user.full_name is not None:
+            username = request.user.full_name
+            userid = request.user.id
+            useremail = request.user.id
+
+        if session_company != "":
+            companyId = decrypt_parameter(str(session_company))
+            company_name = request.session.get("CCN", "")
+
+        if request.method == "GET":
+            Db.closeConnection()
+            m = Db.get_connection()
+            cursor = m.cursor()
+
+        # Get Applicant Data
+
+        getApplicantData = []
+        applicationIndex = callproc("stp_getFormDetails")
+        for items in applicationIndex:
+            item = {
+                "srno": items[0],
+                "request_no": items[1],       
+                "name_of_owner": items[2],   
+                "status": items[3],             
+                "comments": items[4]          
+            }
+            getApplicantData.append(item)
+
+        return render(request,"ApplicationForm/applicationFormIndex.html",{"data": getApplicantData})
+
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return JsonResponse({"error": "Failed to fetch data"}, status=500)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return HttpResponse("An error occurred while rendering the page.", status=500)
+
+# application Form Index Aple Sarkar
+@csrf_exempt
+def aple_sarkar(request):
+    try:
+        
+        getApplicantData = []
+            
+        if request.method == "POST":
+            fullname = request.POST.get('fullname', None)
+            email_id = request.POST.get('email', None)
+            phone_no = request.POST.get('phone', None)
+            
+            CustomUser.objects.create(
+                full_name=fullname,
+                email=email_id,
+                phone=phone_no,
+            )
+    
+            m = Db.get_connection()
+
+        # Get Index Data Here
+            
+            Db.closeConnection()
+            m = Db.get_connection()
+
+            applicationIndex = callproc("stp_getFormDetails")
+            for items in applicationIndex:
+                item = {
+                    "srno": items[0],
+                    "request_no": items[1],       
+                    "name_of_owner": items[2],   
+                    "status": items[3],             
+                    "comments": items[4]          
+                }
+                getApplicantData.append(item)
+
+        return render(request,"ApplicationForm/applicationFormIndex.html",{"data": getApplicantData})
+        # return render(request,"ApplicationForm/applicationFormIndex.html",{"data": getApplicantData, "status": 1})
+
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return JsonResponse({"error": "Failed to fetch data"}, status=500)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return HttpResponse("An error occurred while rendering the page.", status=500)
+    
+# application Form Create
+def applicationMasterCrate(request):
+    try:
+        
+        if request.method == "GET":
+            Db.closeConnection()
+            m = Db.get_connection()
+            cursor = m.cursor()
+
+        getDocumentData = DocumentMaster.objects.filter(isActive=1) 
+
+        return render(request, 'ApplicationForm/applicationForm.html', {'documents': getDocumentData}) 
+    
+    except Exception as e:
+       
+        print(f"An error occurred: {e}")
+     
+        return HttpResponse("An error occurred while rendering the page.", status=500)
+
+# application Form Create Post
+
+def application_Master_Post(request):
+    m = Db.get_connection()
+    cursor = m.cursor()
+    global user
+    try:
+        if request.method == "POST":
+            user = 'Pruthvi Hajare'
+            
+            mandatory_documents = DocumentMaster.objects.filter(mandatory=1, isActive=1)
+            all_uploaded = True
+            missing_documents = []
+
+            for document in mandatory_documents:
+                if not request.FILES.get(f'upload_{document.doc_id}'):
+                    all_uploaded = False
+                    missing_documents.append(document.doc_name)
+
+            if not all_uploaded:
+                missing_docs = ', '.join(missing_documents)
+                messages.error(request, f'Please upload the mandatory document.')
+                # messages.error(request, f'Please upload the mandatory document(s): {missing_docs}.')
+                return redirect('applicationMasterCrate')
+            
+            # Collecting form data
+            Name_Premises = request.POST.get('Name_Premises', '')
+            Plot_No = request.POST.get('Plot_No', '')
+            Sector_No = request.POST.get('Sector_No', '')
+            Node = request.POST.get('Node', '')
+            Name_Owner = request.POST.get('Name_Owner', '')
+            Address_Owner = request.POST.get('Address_Owner', '')
+            Name_Plumber = request.POST.get('Name_Plumber', '')
+            License_No_Plumber = request.POST.get('License_No_Plumber', '')
+            Address_of_Plumber = request.POST.get('Address_of_Plumber', '')
+            Plot_size = request.POST.get('Plot_size', '')
+            No_of_flats = request.POST.get('No_of_flats', '')
+            No_of_shops = request.POST.get('No_of_shops', '')
+            Septic_tank_size = request.POST.get('Septic_tank_size', '')
+
+            FormDetail.objects.create(
+                name_of_premises=Name_Premises,
+                plot_no=Plot_No,
+                sector_no=Sector_No,
+                node=Node,
+                name_of_owner=Name_Owner,
+                address_of_owner=Address_Owner,
+                name_of_plumber=Name_Plumber,
+                license_no_of_plumber=License_No_Plumber,
+                address_of_plumber=Address_of_Plumber,
+                status='New',
+                plot_size=Plot_size,
+                no_of_flats=No_of_flats,
+                no_of_shops=No_of_shops,
+                septic_tank_size=Septic_tank_size,
+                created_by=user
+            )
+            
+            user_id = 3 
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            if not os.path.exists(user_folder_path):
+                os.makedirs(user_folder_path)
+
+            for document in DocumentMaster.objects.all():
+                uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+
+                if uploaded_file:
+                    document_folder_path = os.path.join(user_folder_path, f'document_{document.doc_id}')
+                    if not os.path.exists(document_folder_path):
+                        os.makedirs(document_folder_path)
+
+                    existing_document = CitizenDocumentFilePath.objects.filter(
+                        user_id=user_id,
+                        document=document
+                    ).first()
+
+                    if existing_document:
+                        old_file_path = existing_document.filepath
+                        if os.path.exists(old_file_path):
+                            os.remove(old_file_path) 
+
+                    # Generate the new file name with a timestamp
+                    current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
+                    file_name = f"{current_time}_{uploaded_file.name}"
+
+                    # Set the full file path for the new document
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    # Save the uploaded file to the file system
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    # If the document already exists, update the record
+                    if existing_document:
+                        existing_document.file_name = file_name
+                        existing_document.filepath = file_path
+                        existing_document.updated_by = user
+                        existing_document.save()  # Save the updated record
+                    else:
+                        # Otherwise, create a new record for the uploaded document
+                        CitizenDocumentFilePath.objects.create(
+                            user_id=user_id,
+                            file_name=file_name,
+                            filepath=file_path,
+                            document=document,
+                            created_by=user,
+                            updated_by=user
+                        )
+
+            # Commit the transaction to the database
+            m.commit()
+            messages.success(request, 'Data and files uploaded successfully!')
+
+        cursor.close()
+        m.close()
+
+        return redirect('applicationFormIndex')
+    
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        cursor.callproc("stp_error_log", [fun, str(e), user])
+        print(f"Error in {fun}: {str(e)}")
+        messages.error(request, 'Oops...! Something went wrong!')
+        m.rollback()
+
+    finally:
+        if cursor:
+            cursor.close()
+        if m:
+            m.close()
+
+    return redirect('applicationFormIndex')
+
+# Main Index For Internal User
+
+def InternalUserIndex(request):
+    try:
+        session_company = request.session.get("CC", "")
+        username = ""
+
+        service_db = request.session.get('service_db', 'default')    
+        
+        service = ServiceMaster.objects.get(ser_id= service_db)
+        service_name = service.ser_name
+        
+        if request.method == "GET":
+            Db.closeConnection()
+            m = Db.get_connection()
+            cursor = m.cursor()
+
+        # Get Applicant Data
+
+        getApplicantData = []
+
+        applicationIndex = callproc("stp_getFormDetails")
+        for items in applicationIndex:
+            item = {
+                "srno": items[0],
+                "request_no": items[1],        
+                "name_of_owner": items[2],      
+                "status": items[3],           
+                "comments": items[4]            
+            }
+            getApplicantData.append(item)
+        
+        return render(request,"Internal User/InternalUserIndex.html",{"data": getApplicantData, "service": service_name})
+
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return JsonResponse({"error": "Failed to fetch data"}, status=500)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return HttpResponse("An error occurred while rendering the page.", status=500)  

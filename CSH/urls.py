@@ -96,5 +96,23 @@ urlpatterns = [
     
     # path('check_shift/<int:employee_id>/<int:site_id>/', check_shift_for_next_day, name='check_shift_for_next_day'),
     
+    # application master
+    
+    path('applicationFormIndex', applicationFormIndex, name='applicationFormIndex'),
+    path('aple_sarkar/', aple_sarkar, name='aple_sarkar'),
+    path('applicationMasterCrate', applicationMasterCrate, name='applicationMasterCrate'), 
+    path('application_Master_Post', application_Master_Post, name='application_Master_Post'), 
+    
+    # Verification Screen 
+    
+    path('VerificationForm', VerificationForm, name='VerificationForm'), 
+    
+    # Internal User Index 
+    
+    path('InternalUserIndex', InternalUserIndex, name='InternalUserIndex'), 
 
+    # Login With OTP
+    
+    path('citizenLoginAccount', citizenLoginAccount, name='citizenLoginAccount'), 
+    path('citizenRegisterAccount', citizenRegisterAccount, name='citizenRegisterAccount'), 
 ]

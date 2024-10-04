@@ -638,6 +638,15 @@ def charts(request):
 def tables(request):
     return render(request,'Bootstrap/tables.html')
 
+@csrf_exempt
+def citizenLoginAccount(request):
+    if request.method=="GET":
+       return render(request,'citizenAccount/citizenLogin.html')
+
+@csrf_exempt
+def citizenRegisterAccount(request):
+    if request.method=="GET":
+       return render(request,'citizenAccount/citizenRegister.html')
 
 
 
