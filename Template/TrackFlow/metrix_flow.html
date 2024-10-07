@@ -1,0 +1,243 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% csrf_token %}
+
+ <!-- Custom styles for this html-->
+<link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    .table-container {
+        max-height: 100%; 
+        overflow-x: auto; 
+        overflow-y: auto; 
+        position: relative;
+    }
+    thead th {
+        position: sticky;
+        
+        top: 0;
+        background-color: #fff; /* Set background color for sticky header */
+        z-index: 10; /* Ensure the header is on top of scrolling content */
+    }
+ 
+</style>
+ <!-- Begin Page Content -->
+ <div>
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">WorkflowX</h1>
+        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-download fa-sm text-white-50"></i> Report</a>
+    </div>
+
+    <div class="row col-lg-12 mb-2" style="text-align:center">
+        <div class="col-md-3">
+            <button type="submit" id="Btn1" class="btn btn-primary">Forward</button>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" id="Btn2" class="btn btn-primary">Send Back</button>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" id="Btn3" class="btn btn-primary">View Documents</button>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" id="Btn4" class="btn btn-primary">Send Forward</button>
+        </div>
+    </div>
+    <!-- Content Row -->
+
+    <div class="row">
+
+        <!-- Applicant Form -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <!-- Card Header -->
+                <div class="card-header"> <h6 class="m-0 font-weight-bold text-primary">Applicant Form</h6></div>
+                <!-- Card Body -->
+                <div class="card-body" style="zoom:85%">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Name of the Premises<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Name_Premises" class="form-control" id="Name_Premises" placeholder="Enter Name of Premises" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Plot_No" class="form-control" id="Plot_No" placeholder="Enter Plot No." required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Sector No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Sector_No" class="form-control" id="Sector_No" placeholder="Enter Sector No" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Node.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Node" class="form-control" id="Node" placeholder="Enter Node" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Name of the Owner<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Name_Owner" class="form-control" id="Name_Owner" placeholder="Enter Name of Owner" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Address of the Owner<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Address_Owner" class="form-control" id="Address_Owner" placeholder="Enter Address of Owner" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Name of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Name_Plumber" class="form-control" id="Name_Plumber" placeholder="Enter Name of Plumber" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">License No of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="License_No_Plumber" class="form-control" id="License_No_Plumber" placeholder="Enter License No of Plumber" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Address of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Address_of_Plumber" class="form-control" id="Address_of_Plumber" placeholder="Enter Address of Plumber" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Plot size<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Plot_size" class="form-control" id="Plot_size" placeholder="Enter Plot size" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">No of flats<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">No of shops<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Septic tank size<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applicant Documents -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <!-- Card Header -->
+                <div class="card-header"> <h6 class="m-0 font-weight-bold text-primary">Applicant Documents</h6></div>
+                <!-- Card Body -->
+                <div class="card-body" style="zoom:85%;height:385px;">
+                    <div class="table-container">
+                        <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th style="font-weight:bold;">Document</th>
+                                <th style="font-weight:bold;">Download</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in docs %}
+                            <tr>
+                                <td>{{ doc.doc_name }}</td>
+                                <td><a style="font-weight: bold; font-size: 15px" download >
+                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row col-lg-12 mb-2" style="text-align:center">
+        <div class="col-md-3">
+           
+        </div>
+        <div class="col-md-3">
+            <textarea rows="3" cols="20" placeholder="Comments.."></textarea>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" id="Btn3" class="btn btn-primary">Acknowledge</button>
+        </div>
+        <div class="col-md-3">
+        </div>
+    </div>
+ 
+</div>
+    
+
+
+{% if messages %}
+  {% for message in messages %}
+    <script>
+    Swal.fire({
+      title: "{{ message.tags }}",
+      text: "{{ message }}",
+      icon: "{{ message.tags }}",
+      confirmButtonText: "OK",
+    });
+  </script>
+  {% endfor %}
+{% endif %}
+
+  
+
+<script type="text/javascript">
+    $(document).ready(function () {
+      $("#dataTable").DataTable({
+        //order: [[0, 'desc']],
+        "ordering": false,
+        initComplete: function () {
+          this.api()
+            .columns()
+            .every(function () {
+              var column = this;
+              var select = $(
+                '<select style="width:100%;border-radius: 10px;background-color:whitesmoke ;color: black;"><option value="">All</option></select>'
+              )
+                .appendTo($(column.header()).empty())
+                .on("change", function () {
+                  var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                  column.search(val ? "^" + val + "$" : "", true, false).draw();
+                });
+              column
+                .data()
+                .unique()
+                .sort()
+                .each(function (d, j) {
+                  var ce = d;
+                  if (
+                    ce.includes("<a") ||
+                    ce.includes("span") ||
+                    ce.includes("<input") ||
+                    ce.includes("select") ||
+                    ce.includes("textarea")
+                  ) {
+                  } else {
+                    select.append('<option value="' + d + '">' + d + "</option>");
+                  }
+                });
+            });
+        },
+        pageLength: 10,
+        lengthMenu: [
+          [5, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+          [5, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+        ],
+      });
+    });
+  </script>
+
+<!-- End of Main Content -->
+{% endblock %}
