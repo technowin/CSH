@@ -72,7 +72,7 @@ class user_dept_services(models.Model):
         return f'User {self.user_id} - Role {self.service_id}'
     
 class OTPVerification(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    mobile = models.TextField(null=True, blank=True)
     otp_text = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     objects = ServiceManager()

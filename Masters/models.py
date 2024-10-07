@@ -1,10 +1,6 @@
 from django.db import models
-
-# Create your models here.
-
 from django.db import models
-
-from Account.models import CustomUser
+from Account.models import *
 from Account.managers import ServiceManager
  
 class application_search(models.Model):
@@ -24,15 +20,15 @@ class application_search(models.Model):
     def __str__(self):
         return self.name
          
-class Roles(models.Model):
+class roles(models.Model):
     id = models.AutoField(primary_key=True)
-    role_id = models.IntegerField(null=True, blank=False)
     role_name = models.TextField(null=True, blank=True)
+    role_disc = models.TextField(null=True, blank=True)
     role_type = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
     updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
-    created_by = models.ForeignKey('Account.CustomUser', on_delete=models.CASCADE, related_name='roles_created', blank=True, null=True, db_column='created_by')
-    updated_by = models.ForeignKey('Account.CustomUser', on_delete=models.CASCADE, related_name='roles_updated', blank=True, null=True, db_column='updated_by')
+    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='roles_created', blank=True, null=True, db_column='created_by')
+    updated_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='roles_updated', blank=True, null=True, db_column='updated_by')
     objects = ServiceManager()
     class Meta:
         db_table = 'roles'
@@ -51,162 +47,180 @@ class parameter_master(models.Model):
     def __str__(self):
         return self.parameter_name
 
-class NodalMaster(models.Model):
+class nodal_master(models.Model):
     id = models.AutoField(primary_key=True)
-    nodal_office_location = models.CharField(max_length=255, null=True, blank=True)
+    nodal_office_location = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    created_by = models.CharField(max_length=100, null=True, blank=True)
+    created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
-    updated_by = models.CharField(max_length=100, null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'nodal_master'
 
-class DepartmentMaster(models.Model):
+class department_master(models.Model):
     dept_id = models.AutoField(primary_key=True)
-    dept_name = models.CharField(max_length=100, null=True, blank=True)
+    dept_name =  models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    created_by = models.CharField(max_length=100, null=True, blank=True)
+    created_by =  models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
-    updated_by = models.CharField(max_length=100, null=True, blank=True)
+    updated_by =  models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'department_master'
         
-class ServiceMaster(models.Model):
+class service_master(models.Model):
     ser_id = models.AutoField(primary_key=True)
-    ser_name = models.CharField(max_length=100, null=True, blank=True)
-    dept_id_id = models.ForeignKey('DepartmentMaster', on_delete=models.CASCADE, null=True, blank=True, related_name='dept_id_F', db_column="dept_id_id")
+    ser_name = models.TextField(null=True, blank=True)
+    dept = models.ForeignKey(department_master, on_delete=models.CASCADE, null=True, blank=True, related_name='dept_ser_F')
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    created_by = models.CharField(max_length=100, null=True, blank=True)
+    created_by =  models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
-    updated_by = models.CharField(max_length=100, null=True, blank=True)
+    updated_by =  models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'service_master'
 
-class StatusMaster(models.Model):
+class status_master(models.Model):
     status_id = models.AutoField(primary_key=True)
-    status_name = models.CharField(max_length=100, null=True, blank=True)
+    status_name = models.TextField(null=True, blank=True)
     is_active = models.IntegerField(default=1)  
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    created_by = models.CharField(max_length=100, null=True, blank=True)
+    created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
-    updated_by = models.CharField(max_length=100, null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'status_master'
 
-class DocumentMaster(models.Model):
+class document_master(models.Model):
     doc_id = models.AutoField(primary_key=True)
-    doc_name = models.CharField(max_length=255, null=True, blank=True)
-    doc_path = models.CharField(max_length=255, null=True, blank=True)
+    doc_name = models.TextField(null=True, blank=True)
+    doc_subpath =models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.CharField(max_length=100, null=True, blank=True)
+    created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
-    updated_by = models.CharField(max_length=100, null=True, blank=True)
-    isActive = models.IntegerField(default=1)
+    updated_by = models.TextField(null=True, blank=True)
+    is_active = models.IntegerField(default=1)
     mandatory = models.IntegerField(default=1)
     objects = ServiceManager()
     class Meta:
         db_table = 'document_master'
-        
-# Transaction
 
-class WorkflowDetail(models.Model):
-    request_no = models.CharField(max_length=255, primary_key=True)  
+class application_form(models.Model):
+    id = models.AutoField(primary_key=True)
+    request_no = models.TextField(null=True, blank=True)
+    name_of_premises = models.TextField(null=True, blank=True)
+    plot_no = models.TextField(null=True, blank=True)
+    sector_no = models.TextField(null=True, blank=True)
+    node = models.TextField(null=True, blank=True)
+    name_of_owner = models.TextField(null=True, blank=True)
+    address_of_owner = models.TextField(null=True, blank=True)
+    name_of_plumber = models.TextField(null=True, blank=True)
+    license_no_of_plumber = models.TextField(null=True, blank=True)
+    address_of_plumber = models.TextField(null=True, blank=True)
+    plot_size = models.TextField(null=True, blank=True)
+    no_of_flats = models.IntegerField(null=True, blank=True)
+    no_of_shops = models.IntegerField(null=True, blank=True)
+    septic_tank_size = models.TextField(null=True, blank=True)
+    status = models.ForeignKey(status_master, on_delete=models.CASCADE, null=True, blank=True, related_name='status_form_F')
+    comments = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    created_by = models.TextField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
+    objects = ServiceManager()
+    class Meta:
+        db_table = "application_form"     
+
+class service_matrix(models.Model):
+    id = models.AutoField(primary_key=True) 
+    ser = models.ForeignKey(service_master, on_delete=models.CASCADE, null=True, blank=True, related_name='ser_id_F')
     level = models.IntegerField(null=True, blank=True)
-    user_id_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='user_id_F', db_column='user_id_id')
-    status = models.CharField(max_length=50, null=True, blank=True)
-    action = models.CharField(max_length=100, null=True, blank=True)
+    role = models.ForeignKey(roles, on_delete=models.CASCADE, null=True, blank=True, related_name='roles_matrix_F')
+    action = models.TextField(null=True, blank=True)
+    href = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.CharField(max_length=100, null=True, blank=True)
+    created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
-    updated_by = models.CharField(max_length=100, null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
+    objects = ServiceManager()
+    class Meta:
+        db_table = 'service_matrix'
+
+class workflow_details(models.Model):
+    id = models.AutoField(primary_key=True)
+    request_no = models.TextField(null=True, blank=True)  
+    level = models.IntegerField(null=True, blank=True)
+    status = models.ForeignKey(status_master, on_delete=models.CASCADE, null=True, blank=True, related_name='status_flow_F')
+    action = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='user_flow_F')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.TextField(null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'workflow_details'
 
-class LevelActionMapping(models.Model):
+class workflow_history(models.Model):
     id = models.AutoField(primary_key=True)
-    action = models.CharField(max_length=100, null=True, blank=True)
-    next_action = models.CharField(max_length=100, null=True, blank=True)
+    workflow_id = models.IntegerField(null=True, blank=True,db_column='workflow_id')
+    request_no = models.TextField(null=True, blank=True)  
     level = models.IntegerField(null=True, blank=True)
+    status = models.ForeignKey(status_master, on_delete=models.CASCADE, null=True, blank=True, related_name='status_hist_F')
+    action = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='user_hist_F')
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.CharField(max_length=100, null=True, blank=True)
+    created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
-    updated_by = models.CharField(max_length=100, null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
-        db_table = 'level_action_mapping'
-        
-class ServiceMatrix(models.Model):
-    id = models.AutoField(primary_key=True)  # Explicitly defining the id field
-    ser_id_id = models.ForeignKey('ServiceMaster', on_delete=models.CASCADE, null=True, blank=True, related_name='ser_id_id_F', db_column='ser_id_id')
+        db_table = 'workflow_history'
+
+class level_action(models.Model):
+    id = models.AutoField(primary_key=True)
+    action = models.TextField(null=True, blank=True)
+    next_action = models.TextField(null=True, blank=True)
     level = models.IntegerField(null=True, blank=True)
-    role_name = models.CharField(max_length=100, null=True, blank=True)
-    action = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.CharField(max_length=100, null=True, blank=True)
+    created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
-    updated_by = models.CharField(max_length=100, null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
-        db_table = 'service_matrix'
-        
-class CitizenDocumentFilePath(models.Model):
+        db_table = 'level_action'
+
+class citizen_document(models.Model):
     id = models.AutoField(primary_key=True) 
     user_id = models.IntegerField() 
-    file_name = models.CharField(max_length=255, null=True, blank=True)
+    file_name = models.TextField(null=True, blank=True)
     filepath = models.CharField(max_length=1000, null=True, blank=True)  # Add this field
-    document = models.ForeignKey('DocumentMaster', on_delete=models.CASCADE, null=True, blank=True, related_name='citizen_documents_f', db_column='doc_id_id')  
+    document = models.ForeignKey(document_master, on_delete=models.CASCADE, null=True, blank=True, related_name='citizen_documents_f', db_column='doc_id_id')  
     created_at = models.DateTimeField(auto_now_add=True)           
-    created_by = models.CharField(max_length=100, null=True, blank=True) 
+    created_by = models.TextField(null=True, blank=True) 
     updated_at = models.DateTimeField(null=True, blank=True)                
-    updated_by = models.CharField(max_length=100, null=True, blank=True)   
+    updated_by = models.TextField(null=True, blank=True)   
     objects = ServiceManager()
     class Meta:
         db_table = 'citizen_document'
-        
-class InternalUserDocument(models.Model):
-    request_no_id = models.ForeignKey('WorkflowDetail', on_delete=models.CASCADE, null=True, blank=True, related_name='request_no_F', db_column='request_no_id') 
-    file_name = models.CharField(max_length=255, null=True, blank=True)  
+             
+class internal_user_document(models.Model):
+    id = models.AutoField(primary_key=True) 
+    workflow = models.ForeignKey(workflow_details, on_delete=models.CASCADE, null=True, blank=True, related_name='workflow_intdoc_F') 
+    file_name = models.TextField(null=True, blank=True)  
     created_at = models.DateTimeField(auto_now_add=True)             
-    created_by = models.CharField(max_length=100, null=True, blank=True) 
+    created_by = models.TextField(null=True, blank=True) 
     updated_at = models.DateTimeField(null=True, blank=True)               
-    updated_by = models.CharField(max_length=100, null=True, blank=True) 
+    updated_by = models.TextField(null=True, blank=True) 
     objects = ServiceManager()
     class Meta:
         db_table = 'internal_user_document'
 
-        
 class Log(models.Model):
     log_text = models.TextField(null=True,blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'logs'
-        
-class FormDetail(models.Model):
-    request_no = models.CharField(max_length=100, null=True, blank=True)
-    name_of_premises = models.CharField(max_length=255, null=True, blank=True)
-    plot_no = models.CharField(max_length=100, null=True, blank=True)
-    sector_no = models.CharField(max_length=100, null=True, blank=True)
-    node = models.CharField(max_length=100, null=True, blank=True)
-    name_of_owner = models.CharField(max_length=255, null=True, blank=True)
-    address_of_owner = models.TextField(null=True, blank=True)
-    name_of_plumber = models.CharField(max_length=255, null=True, blank=True)
-    license_no_of_plumber = models.CharField(max_length=100, null=True, blank=True)
-    address_of_plumber = models.TextField(null=True, blank=True)
-    status = models.CharField(max_length=100, null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
-    plot_size = models.CharField(max_length=100, null=True, blank=True)
-    no_of_flats = models.IntegerField(null=True, blank=True)
-    no_of_shops = models.IntegerField(null=True, blank=True)
-    septic_tank_size = models.CharField(max_length=100, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    created_by = models.CharField(max_length=255, null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
-    updated_by = models.CharField(max_length=255, null=True, blank=True)
-    objects = ServiceManager()
-    class Meta:
-        db_table = "form_detail"        
+
