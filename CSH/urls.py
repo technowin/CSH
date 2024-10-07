@@ -115,4 +115,9 @@ urlpatterns = [
     
     path('citizenLoginAccount', citizenLoginAccount, name='citizenLoginAccount'), 
     path('citizenRegisterAccount', citizenRegisterAccount, name='citizenRegisterAccount'), 
+    path('OTPScreen', OTPScreen, name='OTPScreen'), 
+    path('checkmobilenumber', checkmobilenumber, name='checkmobilenumber'), 
+    path('verify_otp', verify_otp, name='verify_otp'), 
+ 
+
 ]

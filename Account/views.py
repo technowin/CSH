@@ -36,7 +36,6 @@ from django.contrib.auth.backends import ModelBackend
 from .db_utils import callproc
 from django.utils import timezone
 
-
 @csrf_exempt
 def Login(request):
     if request.method=="GET":
@@ -64,7 +63,6 @@ def Login(request):
             messages.error(request, 'Invalid Credentials')
             return redirect("Account")
 
-
 def services(request):
     try:
         if request.method =="GET":
@@ -80,11 +78,9 @@ def services(request):
         callproc("stp_error_log", [fun, str(e), request.user.id])
         messages.error(request, 'Oops...! Something went wrong!')
 
-
 def logoutView(request):
     logout(request)
     return redirect("Account")  
-                     
 
 def register_new_user(request):
     if request.method=="GET":
@@ -640,16 +636,97 @@ def tables(request):
 
 @csrf_exempt
 def citizenLoginAccount(request):
-    if request.method=="GET":
-       return render(request,'citizenAccount/citizenLogin.html')
+    if request.method == "GET":
+        service_db = request.GET.get('service_db')
+        request.session['service_db'] = service_db
+        return render(request, 'citizenAccount/citizenLogin.html')
+
+    elif request.method == "POST":
+        phone_number = request.POST.get('username', '').strip() 
+
+        try:
+            user = CustomUser.objects.get(phone=phone_number)
+            return redirect('OTPScreen') 
+
+        except CustomUser.DoesNotExist:
+            messages.warning(request, "The phone number entered is not registered. Please register yourself.")
+            return redirect('citizenRegisterAccount')  
 
 @csrf_exempt
 def citizenRegisterAccount(request):
     if request.method=="GET":
        return render(request,'citizenAccount/citizenRegister.html')
+  
+@csrf_exempt
+def OTPScreen(request):
+    if request.method=="GET":
+       return render(request,'OTPScreen/OTPScreen.html')
+
+# @csrf_exempt
+# def checkmobilenumber(request):
+#     if request.method == "POST":
+#         data = json.loads(request.body)
+#         mobile_number = data.get('mobileNumber')
+
+#         try:
+#             user = CustomUser.objects.get(phone=mobile_number)
+#             return JsonResponse({'exists': True}) 
+#         except CustomUser.DoesNotExist:
+#             return JsonResponse({'exists': False}) 
 
 
+@csrf_exempt
+def checkmobilenumber(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        mobile_number = data.get('mobileNumber')
 
+        try:
+            # Check if the mobile number exists in the CustomUser model
+            user = CustomUser.objects.get(phone=mobile_number)
+            return JsonResponse({'exists': True}) 
+        except CustomUser.DoesNotExist:
+            # Mobile number doesn't exist, proceed to send OTP
 
+            # Generate a 6-digit OTP
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+            # Send OTP via SMS (for now just simulate sending)
+            print(f"Sending OTP {otp} to {mobile_number}")  # You can replace this with actual SMS sending code
             
+            # Insert OTP into OTPVerification table
+            OTPVerification.objects.create(
+                mobile=user,  # assuming you'll need the user object
+                otp_text=otp,
+                created_at=timezone.now()
+            )
+
+            # Return success response to show OTP has been sent
+            return JsonResponse({'exists': False, 'otp_sent': True})
+        
+@csrf_exempt
+def verify_otp(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        mobile_number = data.get('mobileNumber')
+        otp_entered = data.get('otp')
+
+        try:
+            user = CustomUser.objects.get(phone=mobile_number)
+            otp_record = OTPVerification.objects.filter(user=user).last()
+
+            if otp_record and otp_record.otp_text == otp_entered:
+                # OTP matched, proceed with registration or login
+                # Delete the OTP record after successful verification
+                otp_record.delete()
+
+                # Insert user into CustomUser if this is a new registration
+                user.save()  # Or any additional logic for login
+
+                return JsonResponse({'otp_verified': True})
+
+            return JsonResponse({'otp_verified': False, 'error': 'Invalid OTP'})
+
+        except CustomUser.DoesNotExist:
+            return JsonResponse({'otp_verified': False, 'error': 'User not found'})
 

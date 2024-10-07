@@ -34,44 +34,64 @@
                     <div class="col-lg-12">
                         <div class="p-5">
                             <div class="text-center">
-                                <h1 class="h4 text-gray-900 mb-4">{% if id == '0' %}Create an Account!{% else%}Edit user Details{% endif %}</h1>
+                                <h1 class="h4 text-gray-900 mb-4">Create an Account!</h1>
                             </div>
-                            <form class="user" method="POST" action="{% url 'register_new_user' %}" onsubmit="return validateForm()">
+                            <!-- <form class="user" method="POST" action="{% url 'citizenRegisterAccount' %}" onsubmit="return validateForm()"> -->
+                            <form class="user">
                                 {% csrf_token %}
                                 
                                 <div class="form-group row">
                                     <div class="col-sm-6 mb-3 mb-sm-0">
                                         <label>First Name :-</label>
-                                        <input type="text" value="{{ first_name }}" class="form-control form-control-user" 
+                                        <input type="text" value="" class="form-control form-control-user" 
                                             id="exampleFirstName" name="firstname" placeholder="First Name" required>
                                     </div>
                                     <div class="col-sm-6">
                                         <label>Last Name :-</label>
-                                        <input type="text" value="{{ last_name }}" class="form-control form-control-user" 
+                                        <input type="text" value="" class="form-control form-control-user" 
                                             id="exampleLastName" name="lastname" placeholder="Last Name">
                                     </div>
                                 </div>
                                 
                                 <div class="form-group row">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label>Mobile :-</label>
-                                        <input type="tel" value="{{ users.phone }}" class="form-control form-control-user" 
-                                            id="exampleMobileNumber" name="mobileNumber" placeholder="Mobile Number" required>
-                                    </div>
+                                    
                                     <div class="col-sm-6">
                                         <label>Email :-</label>
-                                        <input type="email" value="{{ users.email }}" class="form-control form-control-user" 
+                                        <input type="email" value="" class="form-control form-control-user" 
                                             id="exampleInputEmail" name="email" placeholder="Email Address" required>
                                     </div>
+                                    
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <label>Mobile :-</label>
+                                        <input type="tel" value="" class="form-control form-control-user" 
+                                            id="exampleMobileNumber" name="mobileNumber" placeholder="Mobile Number" required>
+                                    </div>
+
                                 </div>
                                 
-                                <div class="text-center">
-                                    <button type="submit" class="btn btn-primary btn-user">
-                                        Register Account
+                                <div class="text-center mt-3" id="ValidatePhoneNUmber">
+                                    <button type="button" class="btn btn-primary btn-user" onclick="validateMobileNo()">
+                                        Validate Phone Number
                                     </button>
-                                </div>     
-                                <div class="text-center">
-                                    <a class="textLogin" href="citizenLoginAccount">Already have an account? Login!</a>
+                                </div> 
+                                
+                                <div class="form-group row justify-content-center" id="otpSection" style="display: none;">
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <div class="OTPInput">
+                                            <input type="number" class="form-control form-control-user" 
+                                                id="exampleInputOTP" name="OTP" placeholder="Enter OTP" required>
+                                        </div>
+                                    </div>
+                                </div>   
+                            
+                                <div class="text-center mt-3" id="submitOTPButton" style="display:none;" onclick="RegisterFormSubmit()">
+                                    <button type="submit" class="btn btn-primary btn-user">
+                                        Submit OTP
+                                    </button>
+                                </div> 
+
+                                <div class="text-center mt-3 ">
+                                    <a class="textLogin"  href="citizenLoginAccount">Already have an account? Login!</a>
                                 </div>
                             </form>
                         </div>
@@ -89,6 +109,104 @@
     <!-- Custom scripts for all pages-->
     <script src="{% static 'js/CSH.min.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        function validateMobileNo() {
+            debugger
+            const mobileNumber = document.getElementById('exampleMobileNumber').value;
+            var exampleInputEmail = $("#exampleLastName").val();
+            var exampleLastName = $("#exampleInputEmail").val();
+            var exampleFirstName = $("#exampleMobileNumber").val();
+    
+            if ( !mobileNumber || !exampleInputEmail || !exampleLastName || !exampleFirstName ) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Input Required',
+                    text: 'Please enter required field'
+                });
+                return;
+            }
+    
+            $.ajax({
+                url: 'checkmobilenumber',
+                type: 'POST',
+                data: JSON.stringify({
+                    mobileNumber: mobileNumber
+                }),
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    debugger
+                    if (data.exists) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Already Registered',
+                            text: 'You have already registered. Please login.',
+                        }).then(() => {
+                            window.location.href = "{% url 'citizenLoginAccount' %}";
+                        });
+                    } else if (data.otp_sent) {
+                        document.getElementById('otpSection').style.display = 'block';
+                        document.getElementById('submitOTPButton').style.display = 'block';
+                        document.getElementById('ValidatePhoneNUmber').style.display = 'none';
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'OTP Sent',
+                            text: 'An OTP has been sent to your registered number.',
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+    </script>
+    
+    <script>
+        
+        function RegisterFormSubmit() {
+            const mobileNumber = document.getElementById('exampleMobileNumber').value;
+            const otpEntered = document.getElementById('exampleInputOTP').value;
+        
+            $.ajax({
+                url: 'verify_otp',
+                type: 'POST',
+                data: JSON.stringify({
+                    mobileNumber: mobileNumber,
+                    otp: otpEntered
+                }),
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    if (data.otp_verified) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'OTP verified. Registration/Login successful!',
+                        }).then(() => {
+                            window.location.href = "{% url 'applicationFormIndex' %}";
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.error || 'Invalid OTP. Please try again.',
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+        
+    </script>
+
 <script>
     
     function validateForm() {
@@ -138,7 +256,6 @@
     {% endfor %}
   {% endif %}
 
-  
 </body>
 
 </html>
