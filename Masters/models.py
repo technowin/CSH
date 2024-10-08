@@ -84,6 +84,7 @@ class service_master(models.Model):
 class status_master(models.Model):
     status_id = models.AutoField(primary_key=True)
     status_name = models.TextField(null=True, blank=True)
+    status_type = models.TextField(null=True, blank=True)
     is_active = models.IntegerField(default=1)  
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     created_by = models.TextField(null=True, blank=True)

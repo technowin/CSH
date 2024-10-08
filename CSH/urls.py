@@ -22,6 +22,7 @@ from Dashboard.views import *
 # from Masters.models import site_master
 from Masters.views import *
 from Reports.views import *
+from TrackFlow.views import *
 from Masters.views import site_master as sm
 from Masters.views import company_master as cm
 from django.urls import path
@@ -49,6 +50,9 @@ urlpatterns = [
     path("reset_password",reset_password, name="reset_password"),
     path("change_password",change_password, name="change_password"),
     path("forget_password_change",forget_password_change, name="forget_password_change"),
+
+    # Masters
+    path('metrix_flow/', metrix_flow, name='metrix_flow'),
 
     # Masters
     path('masters/', masters, name='masters'),
