@@ -27,17 +27,23 @@
         background-color: #fff; /* Set background color for sticky header */
         z-index: 10; /* Ensure the header is on top of scrolling content */
     }
+    .card-body {
+        padding: 10px;
+        border: 2px solid #b3b3b3;
+        border-radius: 15px;
+        overflow: hidden; 
+    }
  
 </style>
  <!-- Begin Page Content -->
  <div>
     <!-- Page Heading -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div class="d-sm-flex align-items-center justify-content-between mb-3">
         <h1 class="h3 mb-0 text-gray-800">WorkflowX</h1>
-        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-download fa-sm text-white-50"></i> Report</a>
+        {% comment %} <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-download fa-sm text-white-50"></i> Report</a> {% endcomment %}
     </div>
 
-    <div class="row col-lg-12 mb-2" style="text-align:center">
+    <div class="row col-xl-12 col-lg-12 mb-3 shadow " style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;">
         <div class="col-md-3">
             <button type="submit" id="Btn1" class="btn btn-primary">Forward</button>
         </div>
@@ -45,7 +51,7 @@
             <button type="submit" id="Btn2" class="btn btn-primary">Send Back</button>
         </div>
         <div class="col-md-3">
-            <button type="submit" id="Btn3" class="btn btn-primary">View Documents</button>
+            <button type="submit" id="Btn3" class="btn btn-primary" data-toggle="modal"  data-target="#docs_model_id" >View Documents</button>
         </div>
         <div class="col-md-3">
             <button type="submit" id="Btn4" class="btn btn-primary">Send Forward</button>
@@ -56,73 +62,75 @@
     <div class="row">
 
         <!-- Applicant Form -->
-        <div class="col-xl-8 col-lg-7">
-            <div class="card shadow mb-4">
+        <div class="col-xl-7 col-lg-6" >
+            <div class="shadow mb-3" style="padding: 10px;border: 2px solid #b3b3b3;border-radius: 15px;">
                 <!-- Card Header -->
                 <div class="card-header"> <h6 class="m-0 font-weight-bold text-primary">Applicant Form</h6></div>
                 <!-- Card Body -->
-                <div class="card-body" style="zoom:85%">
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Name of the Premises<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Name_Premises" class="form-control" id="Name_Premises" placeholder="Enter Name of Premises" required>
+                <div class="card-body" style="zoom:85%;height:450px;">
+                    <div class="table-container">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Name of the Premises<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Name_Premises" class="form-control" id="Name_Premises" placeholder="Enter Name of Premises" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Plot_No" class="form-control" id="Plot_No" placeholder="Enter Plot No." required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Sector No.<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Sector_No" class="form-control" id="Sector_No" placeholder="Enter Sector No" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Node.<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Node" class="form-control" id="Node" placeholder="Enter Node" required>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Plot_No" class="form-control" id="Plot_No" placeholder="Enter Plot No." required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Sector No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Sector_No" class="form-control" id="Sector_No" placeholder="Enter Sector No" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Node.<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Node" class="form-control" id="Node" placeholder="Enter Node" required>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Name of the Owner<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Name_Owner" class="form-control" id="Name_Owner" placeholder="Enter Name of Owner" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Address of the Owner<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Address_Owner" class="form-control" id="Address_Owner" placeholder="Enter Address of Owner" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Name of the Plumber<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Name_Plumber" class="form-control" id="Name_Plumber" placeholder="Enter Name of Plumber" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">License No of the Plumber<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="License_No_Plumber" class="form-control" id="License_No_Plumber" placeholder="Enter License No of Plumber" required>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Address of the Plumber<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Address_of_Plumber" class="form-control" id="Address_of_Plumber" placeholder="Enter Address of Plumber" required>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Name of the Owner<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Name_Owner" class="form-control" id="Name_Owner" placeholder="Enter Name of Owner" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Address of the Owner<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Address_Owner" class="form-control" id="Address_Owner" placeholder="Enter Address of Owner" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Name of the Plumber<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Name_Plumber" class="form-control" id="Name_Plumber" placeholder="Enter Name of Plumber" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">License No of the Plumber<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="License_No_Plumber" class="form-control" id="License_No_Plumber" placeholder="Enter License No of Plumber" required>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Plot size<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Plot_size" class="form-control" id="Plot_size" placeholder="Enter Plot size" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">No of flats<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">No of shops<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Septic tank size<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Address of the Plumber<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Address_of_Plumber" class="form-control" id="Address_of_Plumber" placeholder="Enter Address of Plumber" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Plot size<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Plot_size" class="form-control" id="Plot_size" placeholder="Enter Plot size" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">No of flats<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">No of shops<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="EmployeeNumber" class="form-label">Septic tank size<span style="color:red;"> *</span> :</label>
+                                <input type="text" value="" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -130,14 +138,14 @@
         </div>
 
         <!-- Applicant Documents -->
-        <div class="col-xl-4 col-lg-5">
-            <div class="card shadow mb-4">
+        <div class="col-xl-5 col-lg-6">
+            <div class=" shadow mb-3 " style="padding: 10px; border: 2px solid #b3b3b3;border-radius: 15px;">
                 <!-- Card Header -->
                 <div class="card-header"> <h6 class="m-0 font-weight-bold text-primary">Applicant Documents</h6></div>
                 <!-- Card Body -->
-                <div class="card-body" style="zoom:85%;height:385px;">
+                <div class="card-body" style="zoom:85%;height:450px;">
                     <div class="table-container">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered" id="user_docs_id">
                         <thead>
                             <tr>
                                 <th style="font-weight:bold;">Document</th>
@@ -160,23 +168,180 @@
             </div>
         </div>
     </div>
-    <div class="row col-lg-12 mb-2" style="text-align:center">
+    <div class="row col-xl-12 col-lg-12 mb-2 shadow " style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;align-items:center;justify-items:center;">
         <div class="col-md-3">
            
         </div>
         <div class="col-md-3">
-            <textarea rows="3" cols="20" placeholder="Comments.."></textarea>
+            <textarea rows="2" cols="10" placeholder="Comments.." style="height:30%"></textarea>
+        </div>
+        <div class="col-md-3" style="">
+            <button type="submit" id="Btn3" class="btn btn-primary"  data-toggle="modal"  data-target="#comments_model_id" >Previous Comments</button>
         </div>
         <div class="col-md-3">
             <button type="submit" id="Btn3" class="btn btn-primary">Acknowledge</button>
-        </div>
-        <div class="col-md-3">
         </div>
     </div>
  
 </div>
     
 
+<!-- Comments Modal -->
+<div class="modal fade bd-example-modal-sm" id="comments_model_id" >
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document" >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color:black">Previous Comments</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container">
+                    <table class="table table-bordered" id = "comments_table_id" >
+                        <thead style="font-weight:bold;">
+                            <tr>
+                                <th>Sr.No.</th>
+                                <th>Comments</th>
+                                <th>Name</th> 
+                                <th>Role</th> 
+                                <th>Date</th> 
+                            </tr>
+                          
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td> 
+                                <td>First Comment</td>
+                                <td>Abhishek</td>
+                                <td>EE</td>
+                                <td>08-10-2024</td>
+                            </tr>
+                            <tr>
+                                <td>2</td> 
+                                <td>Second Comment</td>
+                                <td>Hrithik</td>
+                                <td>AEE</td>
+                                <td>09-10-2024</td>
+                            </tr>
+                            <tr>
+                                <td>3</td> 
+                                <td>Third Comment</td>
+                                <td>Imran</td>
+                                <td>AE</td>
+                                <td>10-10-2024</td>
+                            </tr>
+                            <tr>
+                                <td>4</td> 
+                                <td>Fourth Comment</td>
+                                <td>Kartik</td>
+                                <td>AEE</td>
+                                <td>11-10-2024</td>
+                            </tr>
+                            <tr>
+                                <td>5</td> 
+                                <td>Fifth Comment</td>
+                                <td>Aryan</td>
+                                <td>EE</td>
+                                <td>11-10-2024</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                {% comment %} <button type="submit" class="btn btn-primary" form="sample_xlsx_form" >Submit</button> {% endcomment %}
+            </div>
+        </div>
+    </div>
+  </div>
+  
+  
+<!-- Documents Modal -->
+<div class="modal fade bd-example-modal-sm" id="docs_model_id" >
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document" >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color:black">Internal Documents</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container">
+                    <table class="table table-bordered" id = "docs_id" >
+                        <thead style="font-weight:bold;">
+                            <tr>
+                                <th>Sr.No.</th>
+                                <th>Document</th>
+                                <th>Name</th> 
+                                <th>Role</th> 
+                                <th>Date</th> 
+                                <th>Download</th> 
+                            </tr>
+                          
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td> 
+                                <td>First Comment</td>
+                                <td>Abhishek</td>
+                                <td>EE</td>
+                                <td>08-10-2024</td>
+                                <td><a style="font-weight: bold; font-size: 15px" download >
+                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td> 
+                                <td>Second Comment</td>
+                                <td>Hrithik</td>
+                                <td>AEE</td>
+                                <td>09-10-2024</td>
+                                <td><a style="font-weight: bold; font-size: 15px" download >
+                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td> 
+                                <td>Third Comment</td>
+                                <td>Imran</td>
+                                <td>AE</td>
+                                <td>10-10-2024</td>
+                                <td><a style="font-weight: bold; font-size: 15px" download >
+                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>4</td> 
+                                <td>Fourth Comment</td>
+                                <td>Kartik</td>
+                                <td>AEE</td>
+                                <td>11-10-2024</td>
+                                <td><a style="font-weight: bold; font-size: 15px" download >
+                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>5</td> 
+                                <td>Fifth Comment</td>
+                                <td>Aryan</td>
+                                <td>EE</td>
+                                <td>11-10-2024</td>
+                                <td><a style="font-weight: bold; font-size: 15px" download >
+                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                {% comment %} <button type="submit" class="btn btn-primary" form="sample_xlsx_form" >Submit</button> {% endcomment %}
+            </div>
+        </div>
+    </div>
+  </div>
 
 {% if messages %}
   {% for message in messages %}
@@ -195,47 +360,33 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-      $("#dataTable").DataTable({
-        //order: [[0, 'desc']],
-        "ordering": false,
-        initComplete: function () {
-          this.api()
-            .columns()
-            .every(function () {
-              var column = this;
-              var select = $(
-                '<select style="width:100%;border-radius: 10px;background-color:whitesmoke ;color: black;"><option value="">All</option></select>'
-              )
-                .appendTo($(column.header()).empty())
-                .on("change", function () {
-                  var val = $.fn.dataTable.util.escapeRegex($(this).val());
-                  column.search(val ? "^" + val + "$" : "", true, false).draw();
-                });
-              column
-                .data()
-                .unique()
-                .sort()
-                .each(function (d, j) {
-                  var ce = d;
-                  if (
-                    ce.includes("<a") ||
-                    ce.includes("span") ||
-                    ce.includes("<input") ||
-                    ce.includes("select") ||
-                    ce.includes("textarea")
-                  ) {
-                  } else {
-                    select.append('<option value="' + d + '">' + d + "</option>");
-                  }
-                });
-            });
-        },
-        pageLength: 10,
-        lengthMenu: [
-          [5, 10, 25, 50, 100, 200, 300, 400, 500, -1],
-          [5, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
-        ],
+      $("#comments_table_id").DataTable({
+         ordering: false,
+         pageLength: 4,
+         lengthMenu: [
+           [4, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+           [4, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+         ],
       });
+
+      $("#user_docs_id").DataTable({
+        ordering: false,
+        pageLength: 4,
+        lengthMenu: [
+          [4, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+          [4, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+        ],
+     });
+
+     $("#docs_id").DataTable({
+        ordering: false,
+        pageLength: 4,
+        lengthMenu: [
+          [4, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+          [4, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+        ],
+     });
+
     });
   </script>
 
