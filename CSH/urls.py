@@ -118,6 +118,7 @@ urlpatterns = [
     path('OTPScreen', OTPScreen, name='OTPScreen'), 
     path('checkmobilenumber', checkmobilenumber, name='checkmobilenumber'), 
     path('verify_otp', verify_otp, name='verify_otp'), 
- 
+    path('OTPScreenPost', OTPScreenPost, name='OTPScreenPost'), 
+    path('OTPScreenRegistration', OTPScreenRegistration, name='OTPScreenRegistration'), 
 
 ]

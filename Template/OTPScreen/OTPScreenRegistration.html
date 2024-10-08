@@ -29,11 +29,10 @@
                     <div class="text-center">
                         <h1 class="h4 text-gray-900 mb-4">Enter OTP Here!</h1>
                     </div>
-                    <form class="user" method="POST"  action="{% url 'OTPScreenPost' %}" onsubmit="return validateForm()">
+                    <!-- <form class="user" method="POST"  action="{% url 'verify_otp' %}" onsubmit="return validateForm()"> -->
+                    <form class="user" method="POST"  action="{% url 'verify_otp' %}">
                         {% csrf_token %}
                         
-                        <!-- <input type="hidden" name="phone_number" value="{{ phone_number }}"> -->
-
                         <div class="form-group">
                             <input type="number" value="" class="form-control form-control-user" 
                                    id="exampleOTP" name="OTPHere" placeholder="Enter OTP" required>

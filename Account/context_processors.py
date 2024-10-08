@@ -14,10 +14,10 @@ def logged_in_user(request):
     if request.user.is_authenticated ==True:
         user = str(request.user.id or '')
     reports = ''    
-    result_data  = callproc("stp_get_all_reports", [user])
-    if result_data and result_data[0]: 
-        for items in result_data[0]:
-            reports = items[0]     
+    # result_data  = callproc("stp_get_all_reports", [user])
+    # if result_data and result_data[0]: 
+    #     for items in result_data[0]:
+    #         reports = items[0]     
     
     menu_data = callproc("stp_get_side_navbar_details", [user_id, role_id])
   

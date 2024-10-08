@@ -36,7 +36,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken
 from django.utils import timezone
-from .models import Log, CustomUser 
+from Account.models import *
+from Masters.models import *
 from Account.db_utils import callproc
 from django.views.decorators.csrf import csrf_exempt
 import os
@@ -595,36 +596,22 @@ def VerificationForm(request):
 # application Form Index
 def applicationFormIndex(request):
     try:
-        session_company = request.session.get("CC", "")
-        username = ""
-
-        if request.user.full_name is not None:
-            username = request.user.full_name
-            userid = request.user.id
-            useremail = request.user.id
-
-        if session_company != "":
-            companyId = decrypt_parameter(str(session_company))
-            company_name = request.session.get("CCN", "")
+        
+        phone_number = request.session.get('phone_number', None)
 
         if request.method == "GET":
-            Db.closeConnection()
-            m = Db.get_connection()
-            cursor = m.cursor()
 
-        # Get Applicant Data
-
-        getApplicantData = []
-        applicationIndex = callproc("stp_getFormDetails")
-        for items in applicationIndex:
-            item = {
-                "srno": items[0],
-                "request_no": items[1],       
-                "name_of_owner": items[2],   
-                "status": items[3],             
-                "comments": items[4]          
-            }
-            getApplicantData.append(item)
+            getApplicantData = []
+            applicationIndex = callproc("stp_getFormDetails")
+            for items in applicationIndex:
+                item = {
+                    "srno": items[0],
+                    "request_no": items[1],       
+                    "name_of_owner": items[2],   
+                    "status": items[3],             
+                    "comments": items[4]          
+                }
+                getApplicantData.append(item)
 
         return render(request,"ApplicationForm/applicationFormIndex.html",{"data": getApplicantData})
 
@@ -710,7 +697,7 @@ def application_Master_Post(request):
         if request.method == "POST":
             user = 'Pruthvi Hajare'
             
-            mandatory_documents = DocumentMaster.objects.filter(mandatory=1, isActive=1)
+            mandatory_documents = document_master.objects.filter(mandatory=1, isActive=1)
             all_uploaded = True
             missing_documents = []
 
@@ -740,7 +727,7 @@ def application_Master_Post(request):
             No_of_shops = request.POST.get('No_of_shops', '')
             Septic_tank_size = request.POST.get('Septic_tank_size', '')
 
-            FormDetail.objects.create(
+            application_form.objects.create(
                 name_of_premises=Name_Premises,
                 plot_no=Plot_No,
                 sector_no=Sector_No,
@@ -763,7 +750,7 @@ def application_Master_Post(request):
             if not os.path.exists(user_folder_path):
                 os.makedirs(user_folder_path)
 
-            for document in DocumentMaster.objects.all():
+            for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
 
                 if uploaded_file:
@@ -771,7 +758,7 @@ def application_Master_Post(request):
                     if not os.path.exists(document_folder_path):
                         os.makedirs(document_folder_path)
 
-                    existing_document = CitizenDocumentFilePath.objects.filter(
+                    existing_document = citizen_document.objects.filter(
                         user_id=user_id,
                         document=document
                     ).first()
@@ -801,7 +788,7 @@ def application_Master_Post(request):
                         existing_document.save()  # Save the updated record
                     else:
                         # Otherwise, create a new record for the uploaded document
-                        CitizenDocumentFilePath.objects.create(
+                        citizen_document.objects.create(
                             user_id=user_id,
                             file_name=file_name,
                             filepath=file_path,

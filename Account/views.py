@@ -35,6 +35,15 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.backends import ModelBackend
 from .db_utils import callproc
 from django.utils import timezone
+from Account.models import *
+from Masters.models import *
+from django.db import IntegrityError
+from django.urls import reverse
+from django.http import HttpResponseBadRequest
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def Login(request):
@@ -634,99 +643,195 @@ def charts(request):
 def tables(request):
     return render(request,'Bootstrap/tables.html')
 
-@csrf_exempt
 def citizenLoginAccount(request):
-    if request.method == "GET":
-        service_db = request.GET.get('service_db')
-        request.session['service_db'] = service_db
-        return render(request, 'citizenAccount/citizenLogin.html')
+    try:
+        if request.method == "GET":
+            request.session.flush()
+            service_db = request.GET.get('service_db', 'default')
+            # service_db = request.GET.get('service_db', 'default') 
+            request.session['service_db'] = service_db
+            
+            return render(request, 'citizenAccount/citizenLogin.html')
 
-    elif request.method == "POST":
-        phone_number = request.POST.get('username', '').strip() 
+        elif request.method == "POST":
+            service_db = request.session.get('service_db', 'default')
+            
+            phone_number = request.POST.get('username', '').strip()
 
-        try:
-            user = CustomUser.objects.get(phone=phone_number)
-            return redirect('OTPScreen') 
+            if phone_number:
+                user = CustomUser.objects.get(phone=phone_number)
+                
+                if user:  
+                    request.session['phone_number'] = phone_number
+                    return redirect('OTPScreen')
 
-        except CustomUser.DoesNotExist:
-            messages.warning(request, "The phone number entered is not registered. Please register yourself.")
-            return redirect('citizenRegisterAccount')  
+    except CustomUser.DoesNotExist:
+        messages.warning(request, "The phone number entered is not registered. Please register yourself.")
+        return redirect('citizenRegisterAccount')
+
+    except Exception as e:
+        logger.error(f"An error occurred in citizenLoginAccount: {str(e)}", exc_info=True)
+        messages.error(request, "An unexpected error occurred. Please try again.")
+        return redirect('citizenRegisterAccount')
+
+    return render(request, 'citizenAccount/citizenLogin.html')
 
 @csrf_exempt
 def citizenRegisterAccount(request):
-    if request.method=="GET":
-       return render(request,'citizenAccount/citizenRegister.html')
-  
+    context = {
+        'firstName': '',
+        'lastName': '',
+        'email': '',
+        'mobileNumber': '',
+    }
+
+    if request.method == "GET":
+        service_db = request.session.get('service_db', 'default')
+        service_db = request.GET.get('service_db')
+        request.session['service_db'] = service_db
+        return render(request, 'citizenAccount/citizenRegister.html', context)
+
+    elif request.method == "POST":
+        first_name = request.POST.get('firstname').strip()
+        last_name = request.POST.get('lastname').strip()
+        email = request.POST.get('email').strip()
+        mobile_number = request.POST.get('mobileNumber').strip()
+
+        if CustomUser.objects.filter(phone=mobile_number).exists():
+            messages.warning(request, "This mobile number is already registered. Please use a different number.")
+            return redirect('citizenRegisterAccount')  
+        else:
+            request.session['first_name'] = first_name
+            request.session['last_name'] = last_name
+            request.session['email'] = email
+            request.session['mobile_number'] = mobile_number
+
+            return redirect('OTPScreenRegistration') 
+ 
 @csrf_exempt
 def OTPScreen(request):
-    if request.method=="GET":
-       return render(request,'OTPScreen/OTPScreen.html')
+    
+    if request.method == "GET":
+        service_db = request.session.get('service_db', 'default')
+        request.session['service_db'] = service_db
 
-# @csrf_exempt
-# def checkmobilenumber(request):
-#     if request.method == "POST":
-#         data = json.loads(request.body)
-#         mobile_number = data.get('mobileNumber')
+        phone_number = request.session.get('phone_number')
 
-#         try:
-#             user = CustomUser.objects.get(phone=mobile_number)
-#             return JsonResponse({'exists': True}) 
-#         except CustomUser.DoesNotExist:
-#             return JsonResponse({'exists': False}) 
+        try:
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            OTPVerification.objects.create(
+                mobile=phone_number,
+                otp_text=otp,
+                created_at=timezone.now()
+            )
+            messages.success(request, "OTP sent successfully!")
+        except Exception as e:
+            messages.error(request, "Failed to send OTP. Please try again.")
 
+        return render(request, 'OTPScreen/OTPScreen.html')
+
+@csrf_exempt
+def OTPScreenPost(request):
+    if request.method == "POST":
+        phone_number = request.session.get('phone_number')  
+        entered_otp = request.POST.get('OTPHere')
+
+        if not phone_number:
+            messages.error(request, "Phone number not found. Please log in again.")
+            return redirect('citizenLoginAccount')
+
+        try:
+            otp_record = OTPVerification.objects.get(mobile=phone_number, otp_text=entered_otp)
+            otp_record.delete()
+
+            request.session['phone_number'] = phone_number
+            messages.success(request, "OTP verified successfully!")
+            return redirect('applicationFormIndex')
+
+        except OTPVerification.DoesNotExist:
+            messages.error(request, "Invalid OTP. Please try again.")
+            return redirect('citizenLoginAccount')
+
+    return render(request, 'citizenAccount/citizenLogin.html', {'error': 'Invalid request method.'})
 
 @csrf_exempt
 def checkmobilenumber(request):
     if request.method == "POST":
         data = json.loads(request.body)
         mobile_number = data.get('mobileNumber')
-
         try:
-            # Check if the mobile number exists in the CustomUser model
             user = CustomUser.objects.get(phone=mobile_number)
-            return JsonResponse({'exists': True}) 
+            return JsonResponse({'exists': True})
         except CustomUser.DoesNotExist:
-            # Mobile number doesn't exist, proceed to send OTP
-
-            # Generate a 6-digit OTP
             otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-
-            # Send OTP via SMS (for now just simulate sending)
-            print(f"Sending OTP {otp} to {mobile_number}")  # You can replace this with actual SMS sending code
+            print(f"Sending OTP {otp} to {mobile_number}")
             
-            # Insert OTP into OTPVerification table
             OTPVerification.objects.create(
-                mobile=user,  # assuming you'll need the user object
+                mobile=mobile_number,  
                 otp_text=otp,
                 created_at=timezone.now()
             )
 
-            # Return success response to show OTP has been sent
             return JsonResponse({'exists': False, 'otp_sent': True})
+
+# OTP For Registration
+
+@csrf_exempt
+def OTPScreenRegistration(request):
+    if request.method == "GET":
+        service_db = request.session.get('service_db', 'default')
+        request.session['service_db'] = service_db
         
+        phone_number = request.session.get('mobile_number')
+
+        if not phone_number:
+            messages.error(request, "Phone number is required.")
+            return redirect('citizenRegisterAccount')
+
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        
+        otp_record = OTPVerification.objects.create(
+            mobile=phone_number,
+            otp_text=otp,
+            created_at=timezone.now()
+        )
+
+        messages.success(request, "OTP sent successfully!")
+        return render(request, 'OTPScreen/OTPScreenRegistration.html')
+
 @csrf_exempt
 def verify_otp(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        mobile_number = data.get('mobileNumber')
-        otp_entered = data.get('otp')
+        phone_number = request.session.get('mobile_number')
+        first_name = request.session.get('first_name')
+        last_name = request.session.get('last_name')
+        email = request.session.get('email')
+        entered_otp = request.POST.get('OTPHere')
+        
+        if not phone_number:
+            messages.error(request, "Phone number not found. Please log in again.")
+            return redirect('citizenRegisterAccount')
 
         try:
-            user = CustomUser.objects.get(phone=mobile_number)
-            otp_record = OTPVerification.objects.filter(user=user).last()
+            otp_record = OTPVerification.objects.get(mobile=phone_number, otp_text=entered_otp)
 
-            if otp_record and otp_record.otp_text == otp_entered:
-                # OTP matched, proceed with registration or login
-                # Delete the OTP record after successful verification
-                otp_record.delete()
+            otp_record.delete()
+            
+            user = CustomUser.objects.create(
+                full_name=f"{first_name} {last_name}",
+                email=email,
+                phone=phone_number,
+                first_time_login=1  
+            )
+            
+            request.session['user_id'] = user.id  # Store the newly created user's ID
+            request.session['phone_number'] = phone_number
 
-                # Insert user into CustomUser if this is a new registration
-                user.save()  # Or any additional logic for login
+            messages.success(request, "Registered successfully! OTP verified.")
+            return redirect('citizenLoginAccount')  
 
-                return JsonResponse({'otp_verified': True})
+        except OTPVerification.DoesNotExist:
+            messages.error(request, "Invalid OTP. Please try again.")
+            return redirect('citizenRegisterAccount')
 
-            return JsonResponse({'otp_verified': False, 'error': 'Invalid OTP'})
-
-        except CustomUser.DoesNotExist:
-            return JsonResponse({'otp_verified': False, 'error': 'User not found'})
-
+    return render(request, 'OTPScreen/OTPScreenRegistration.html', {'error': 'Invalid request method.'})
