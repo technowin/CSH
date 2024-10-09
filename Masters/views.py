@@ -41,6 +41,7 @@ from Masters.models import *
 from Account.db_utils import callproc
 from django.views.decorators.csrf import csrf_exempt
 import os
+from django.urls import reverse
 
 @login_required
 def masters(request):
@@ -598,9 +599,12 @@ def applicationFormIndex(request):
     try:
         
         phone_number = request.session.get('phone_number', None)
-
+        
         if request.method == "GET":
-
+            
+            service_db = request.session.get('service_db', 'default')
+            request.session['service_db'] = service_db
+            
             getApplicantData = []
             applicationIndex = callproc("stp_getFormDetails")
             for items in applicationIndex:
@@ -677,7 +681,7 @@ def applicationMasterCrate(request):
             m = Db.get_connection()
             cursor = m.cursor()
 
-        getDocumentData = DocumentMaster.objects.filter(isActive=1) 
+        getDocumentData = document_master.objects.filter(is_active=1) 
 
         return render(request, 'ApplicationForm/applicationForm.html', {'documents': getDocumentData}) 
     
@@ -690,14 +694,28 @@ def applicationMasterCrate(request):
 # application Form Create Post
 
 def application_Master_Post(request):
-    m = Db.get_connection()
-    cursor = m.cursor()
-    global user
     try:
+        # Establish a database connection
+        m = Db.get_connection()
+        cursor = m.cursor()
+        
+        # Set the global variable for the user
+        global user
+        
         if request.method == "POST":
-            user = 'Pruthvi Hajare'
-            
-            mandatory_documents = document_master.objects.filter(mandatory=1, isActive=1)
+            # Set session for service database
+            # service_db = request.GET.get('service_db', 'default')
+            service_db = request.session.get('service_db', 'default')
+            request.session['service_db'] = service_db
+
+            # Retrieve user from session
+            phone_number = request.session.get('phone_number')
+            user = CustomUser.objects.get(phone=phone_number)
+            full_name_session = request.session['full_name'] = user.full_name
+            user_id = user.id
+
+            # Check for mandatory documents
+            mandatory_documents = document_master.objects.filter(mandatory=1, is_active=1)
             all_uploaded = True
             missing_documents = []
 
@@ -707,121 +725,97 @@ def application_Master_Post(request):
                     missing_documents.append(document.doc_name)
 
             if not all_uploaded:
-                missing_docs = ', '.join(missing_documents)
-                messages.error(request, f'Please upload the mandatory document.')
-                # messages.error(request, f'Please upload the mandatory document(s): {missing_docs}.')
+                messages.error(request, 'Please upload the mandatory documents.')
                 return redirect('applicationMasterCrate')
-            
-            # Collecting form data
-            Name_Premises = request.POST.get('Name_Premises', '')
-            Plot_No = request.POST.get('Plot_No', '')
-            Sector_No = request.POST.get('Sector_No', '')
-            Node = request.POST.get('Node', '')
-            Name_Owner = request.POST.get('Name_Owner', '')
-            Address_Owner = request.POST.get('Address_Owner', '')
-            Name_Plumber = request.POST.get('Name_Plumber', '')
-            License_No_Plumber = request.POST.get('License_No_Plumber', '')
-            Address_of_Plumber = request.POST.get('Address_of_Plumber', '')
-            Plot_size = request.POST.get('Plot_size', '')
-            No_of_flats = request.POST.get('No_of_flats', '')
-            No_of_shops = request.POST.get('No_of_shops', '')
-            Septic_tank_size = request.POST.get('Septic_tank_size', '')
 
-            application_form.objects.create(
-                name_of_premises=Name_Premises,
-                plot_no=Plot_No,
-                sector_no=Sector_No,
-                node=Node,
-                name_of_owner=Name_Owner,
-                address_of_owner=Address_Owner,
-                name_of_plumber=Name_Plumber,
-                license_no_of_plumber=License_No_Plumber,
-                address_of_plumber=Address_of_Plumber,
-                status='New',
-                plot_size=Plot_size,
-                no_of_flats=No_of_flats,
-                no_of_shops=No_of_shops,
-                septic_tank_size=Septic_tank_size,
-                created_by=user
-            )
+            # Retrieve the "New" status from status_master
+            status_new = status_master.objects.get(status_id=1)
             
-            user_id = 3 
+            # Collect and save form data
+            application_form.objects.create(
+                name_of_premises=request.POST.get('Name_Premises', ''),
+                plot_no=request.POST.get('Plot_No', ''),
+                sector_no=request.POST.get('Sector_No', ''),
+                node=request.POST.get('Node', ''),
+                name_of_owner=request.POST.get('Name_Owner', ''),
+                address_of_owner=request.POST.get('Address_Owner', ''),
+                name_of_plumber=request.POST.get('Name_Plumber', ''),
+                license_no_of_plumber=request.POST.get('License_No_Plumber', ''),
+                address_of_plumber=request.POST.get('Address_of_Plumber', ''),
+                status=status_new,  
+                plot_size=request.POST.get('Plot_size', ''),
+                no_of_flats=request.POST.get('No_of_flats', ''),
+                no_of_shops=request.POST.get('No_of_shops', ''),
+                septic_tank_size=request.POST.get('Septic_tank_size', ''),
+                created_by=full_name_session
+            )
+
+            # Set up user folder path and handle document uploads
             user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
-            if not os.path.exists(user_folder_path):
-                os.makedirs(user_folder_path)
+            os.makedirs(user_folder_path, exist_ok=True)
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
-
                 if uploaded_file:
                     document_folder_path = os.path.join(user_folder_path, f'document_{document.doc_id}')
-                    if not os.path.exists(document_folder_path):
-                        os.makedirs(document_folder_path)
+                    os.makedirs(document_folder_path, exist_ok=True)
 
-                    existing_document = citizen_document.objects.filter(
-                        user_id=user_id,
-                        document=document
-                    ).first()
+                    # Check for existing document and remove old file if exists
+                    existing_document = citizen_document.objects.filter(user_id=user_id, document=document).first()
 
-                    if existing_document:
-                        old_file_path = existing_document.filepath
-                        if os.path.exists(old_file_path):
-                            os.remove(old_file_path) 
+                    if existing_document and os.path.exists(existing_document.filepath):
+                        os.remove(existing_document.filepath)
 
-                    # Generate the new file name with a timestamp
+                    # Generate new file name with a timestamp and save file
                     current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
                     file_name = f"{current_time}_{uploaded_file.name}"
-
-                    # Set the full file path for the new document
                     file_path = os.path.join(document_folder_path, file_name)
 
-                    # Save the uploaded file to the file system
+                    # Save uploaded file
                     with open(file_path, 'wb+') as destination:
                         for chunk in uploaded_file.chunks():
                             destination.write(chunk)
 
-                    # If the document already exists, update the record
+                    # Save or update document record in the database
                     if existing_document:
                         existing_document.file_name = file_name
                         existing_document.filepath = file_path
-                        existing_document.updated_by = user
-                        existing_document.save()  # Save the updated record
+                        existing_document.updated_by = full_name_session
+                        existing_document.save()
                     else:
-                        # Otherwise, create a new record for the uploaded document
                         citizen_document.objects.create(
                             user_id=user_id,
                             file_name=file_name,
                             filepath=file_path,
                             document=document,
-                            created_by=user,
-                            updated_by=user
+                            created_by=full_name_session,
+                            updated_by=full_name_session
                         )
 
             # Commit the transaction to the database
             m.commit()
             messages.success(request, 'Data and files uploaded successfully!')
 
-        cursor.close()
-        m.close()
+        cursor.close()  # Close the cursor
+        m.close()  # Close the connection
 
-        return redirect('applicationFormIndex')
+        base_url = reverse('applicationFormIndex')
+        return redirect(f'{base_url}?service_db=1')
     
-
     except Exception as e:
+        # Handle and log the exception
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        cursor.callproc("stp_error_log", [fun, str(e), user])
-        print(f"Error in {fun}: {str(e)}")
-        messages.error(request, 'Oops...! Something went wrong!')
-        m.rollback()
-
-    finally:
+        callproc("stp_error_log", [fun, str(e), user])
+        messages.error(request, 'Oops...! Something went wrong.')
+        
         if cursor:
-            cursor.close()
+            cursor.close()  # Ensure the cursor is closed
         if m:
-            m.close()
+            m.close()  # Ensure the connection is closed
 
-    return redirect('applicationFormIndex')
+        base_url = reverse('applicationFormIndex')
+        return redirect(f'{base_url}?service_db=1')
 
 # Main Index For Internal User
 
@@ -832,7 +826,7 @@ def InternalUserIndex(request):
 
         service_db = request.session.get('service_db', 'default')    
         
-        service = ServiceMaster.objects.get(ser_id= service_db)
+        service = service_master.objects.get(ser_id= service_db)
         service_name = service.ser_name
         
         if request.method == "GET":

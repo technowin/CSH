@@ -225,3 +225,33 @@ class Log(models.Model):
     class Meta:
         db_table = 'logs'
 
+
+class smstext(models.Model):
+    id = models.AutoField(primary_key=True)
+    template_name = models.TextField(null=True, blank=True) 
+    template_id = models.TextField(null=True, blank=True)  
+    sms_id_number = models.TextField(null=True, blank=True) 
+    created_at = models.DateTimeField(auto_now_add=True) 
+
+    class Meta:
+        db_table = 'smstext'
+        
+class smslog(models.Model):
+    mobile = models.CharField(max_length=20)  
+    message = models.TextField(null=True, blank=True) 
+    user_id = models.CharField(max_length=50) 
+    content = models.TextField(null=True, blank=True) 
+    status = models.CharField(max_length=20)  
+    unique_id = models.CharField(max_length=50, null=True, blank=True) 
+    content_type = models.CharField(max_length=50) 
+    response_status = models.CharField(max_length=20)
+    is_successful = models.BooleanField(default=False)  
+    response_url = models.TextField(null=True, blank=True)  
+    status_description = models.TextField(null=True, blank=True)  
+    template_id = models.CharField(max_length=50)  
+    created_at = models.DateTimeField(auto_now_add=True)  
+
+    class Meta:
+        db_table = 'smslog'
+
+    
