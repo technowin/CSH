@@ -32,7 +32,7 @@
                 
             </div>
          
-          <div class="table-responsive">
+        <div class="table-responsive">
              <table style="width: 100%; margin-top:2%;"  class="table"  id="dataTable">   
                 <thead>
                     <tr>
@@ -50,7 +50,8 @@
                       <td>{{ row.srno }}</td>
                       <td>{{ row.request_no }}</td>
                       <td>{{ row.name_of_owner }}</td>
-                      <td>{{ row.status }}</td>
+                      <td><span style='background-color:green; padding:2%; border-radius:10px; color:white'>{{ row.status }}</span></td>
+                      {% comment %} <td><span class="badge badge-primary">{{ row.status }}</span></td> {% endcomment %}
                       <td>{{ row.comments }}</td>
                       <td>
                         <a class="edit-link" href="EditAct?act_id={{ row.act_id }}">

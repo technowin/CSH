@@ -18,7 +18,8 @@
 
     <!-- Custom styles for this template-->
     <link href="{% static 'css/CSH.min.css' %}" rel="stylesheet">
-    <link href="{% static 'css/citizenLogin.css' %}" rel="stylesheet">
+    {% comment %} <link href="{% static 'css/citizenLogin.css' %}" rel="stylesheet"> {% endcomment %}
+    <link href="{% static 'css/OTPScreenRegistration.css' %}" rel="stylesheet">
 
 </head>
 
@@ -36,19 +37,18 @@
                             <div class="text-center">
                                 <h1 class="h4 text-gray-900 mb-4">Create an Account!</h1>
                             </div>
-                            <!-- <form class="user" method="POST" action="{% url 'citizenRegisterAccount' %}" onsubmit="return validateForm()"> -->
-                            <form class="user">
+                            <form class="user" method="post" action="{% url 'citizenRegisterAccount' %}" onsubmit="return validateMobileNumber()">
                                 {% csrf_token %}
                                 
                                 <div class="form-group row">
                                     <div class="col-sm-6 mb-3 mb-sm-0">
                                         <label>First Name :-</label>
-                                        <input type="text" value="" class="form-control form-control-user" 
+                                        <input type="text" value="{{firstName}}" class="form-control form-control-user" 
                                             id="exampleFirstName" name="firstname" placeholder="First Name" required>
                                     </div>
                                     <div class="col-sm-6">
                                         <label>Last Name :-</label>
-                                        <input type="text" value="" class="form-control form-control-user" 
+                                        <input type="text" value="{{lastName}}" class="form-control form-control-user" 
                                             id="exampleLastName" name="lastname" placeholder="Last Name">
                                     </div>
                                 </div>
@@ -57,41 +57,26 @@
                                     
                                     <div class="col-sm-6">
                                         <label>Email :-</label>
-                                        <input type="email" value="" class="form-control form-control-user" 
+                                        <input type="email" value="{{email}}" class="form-control form-control-user" 
                                             id="exampleInputEmail" name="email" placeholder="Email Address" required>
                                     </div>
                                     
                                     <div class="col-sm-6 mb-3 mb-sm-0">
                                         <label>Mobile :-</label>
-                                        <input type="tel" value="" class="form-control form-control-user" 
+                                        <input type="tel" value="{{mobileNumber}}" class="form-control form-control-user" 
                                             id="exampleMobileNumber" name="mobileNumber" placeholder="Mobile Number" required>
                                     </div>
 
                                 </div>
                                 
-                                <div class="text-center mt-3" id="ValidatePhoneNUmber">
-                                    <button type="button" class="btn btn-primary btn-user" onclick="validateMobileNo()">
-                                        Validate Phone Number
-                                    </button>
-                                </div> 
-                                
-                                <div class="form-group row justify-content-center" id="otpSection" style="display: none;">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <div class="OTPInput">
-                                            <input type="number" class="form-control form-control-user" 
-                                                id="exampleInputOTP" name="OTP" placeholder="Enter OTP" required>
-                                        </div>
-                                    </div>
-                                </div>   
-                            
-                                <div class="text-center mt-3" id="submitOTPButton" style="display:none;" onclick="RegisterFormSubmit()">
+                                <div class="text-center mt-3" id="submitOTPButton">
                                     <button type="submit" class="btn btn-primary btn-user">
-                                        Submit OTP
+                                        Validate Phone Number
                                     </button>
                                 </div> 
 
                                 <div class="text-center mt-3 ">
-                                    <a class="textLogin"  href="citizenLoginAccount">Already have an account? Login!</a>
+                                    <a class="textLogin"  href="citizenLoginAccount?service_db=1">Already have an account? Login!</a>
                                 </div>
                             </form>
                         </div>
@@ -111,22 +96,35 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        
         function validateMobileNo() {
             debugger
             const mobileNumber = document.getElementById('exampleMobileNumber').value;
             var exampleInputEmail = $("#exampleLastName").val();
             var exampleLastName = $("#exampleInputEmail").val();
             var exampleFirstName = $("#exampleMobileNumber").val();
-    
+            
+            // Mobile number validation: Only 10 digits allowed
+            const mobileNumberPattern = /^[0-9]{10}$/;
+            
             if ( !mobileNumber || !exampleInputEmail || !exampleLastName || !exampleFirstName ) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Input Required',
-                    text: 'Please enter required field'
+                    text: 'Please enter required fields'
                 });
                 return;
             }
-    
+            
+            if (!mobileNumberPattern.test(mobileNumber)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Mobile Number',
+                    text: 'Please enter a valid 10-digit mobile number.'
+                });
+                return;
+            }
+        
             $.ajax({
                 url: 'checkmobilenumber',
                 type: 'POST',
@@ -163,11 +161,59 @@
                 }
             });
         }
+        
+        
     </script>
     
     <script>
-        
+
         function RegisterFormSubmit() {
+            debugger;
+            const mobileNumber = document.getElementById('exampleMobileNumber').value;
+            const otpEntered = document.getElementById('exampleInputOTP').value;
+            const firstName = document.getElementById('exampleFirstName').value;
+            const lastName = document.getElementById('exampleLastName').value;
+            const email = document.getElementById('exampleInputEmail').value;
+        
+            $.ajax({
+                url: 'verify_otp',
+                type: 'POST',
+                data: JSON.stringify({
+                    mobileNumber: mobileNumber,
+                    otp: otpEntered,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email
+                }),
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    debugger;
+                    if (data.otp_verified) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'OTP verified. Registration/Login successful!',
+                        }).then(() => {
+                            window.location.href = "{% url 'citizenLoginAccount' %}";
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.error || 'Invalid OTP. Please try again.',
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+
+        /*function RegisterFormSubmit() {
             const mobileNumber = document.getElementById('exampleMobileNumber').value;
             const otpEntered = document.getElementById('exampleInputOTP').value;
         
@@ -183,6 +229,7 @@
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
                 success: function(data) {
+                    debugger
                     if (data.otp_verified) {
                         Swal.fire({
                             icon: 'success',
@@ -203,59 +250,45 @@
                     console.error('AJAX Error:', status, error);
                 }
             });
-        }
+        }*/
         
     </script>
 
-<script>
-    
-    function validateForm() {
-        var firstName = document.getElementById('exampleFirstName').value;
-        var lastName = document.getElementById('exampleLastName').value;
-        var mobileNumber = document.getElementById('exampleMobileNumber').value;
-        var email = document.getElementById('exampleInputEmail').value;
-
-        var spacePattern = /\s/;
-        var phonePattern = /^[0-9]{10}$/;
-
-        if (spacePattern.test(firstName) || spacePattern.test(lastName) || spacePattern.test(email)) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Invalid Input',
-                text: 'Fields cannot contain any spaces.',
-                confirmButtonText: 'OK'
-            });
-            return false;  // Prevent form submission
-        }
-
-        if (!phonePattern.test(mobileNumber)) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Invalid Mobile Number',
-                text: 'Please enter a valid 10-digit mobile number without spaces.',
-                confirmButtonText: 'OK'
-            });
-            return false;  
-        }
-
-        return true; 
-         
-    }
-</script>
-
     {% if messages %}
-    {% for message in messages %}
-      <script>
-      Swal.fire({
-        title: "{{ message.tags }}",
-        text: "{{ message }}",
-        icon: "{{ message.tags }}",
-        confirmButtonText: "OK",
-      });
-    </script>
-    {% endfor %}
-  {% endif %}
+        {% for message in messages %}
+        <script>
+        Swal.fire({
+            title: "{{ message.tags }}",
+            text: "{{ message }}",
+            icon: "{{ message.tags }}",
+            confirmButtonText: "OK",
+        });
+        </script>
+        {% endfor %}
+    {% endif %}
 
+    <script>
+        function validateMobileNumber() {
+            const mobileInput = document.getElementById('exampleMobileNumber');
+            const mobileNumber = mobileInput.value.trim();
+        
+            const mobilePattern = /^[0-9]{10}$/; 
+        
+            if (!mobilePattern.test(mobileNumber)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Mobile Number',
+                    text: 'Please enter a valid 10-digit mobile number.',
+                    confirmButtonText: 'Okay'
+                });
+                mobileInput.focus();
+                return false; 
+            }
+        
+            return true; 
+        }
+    </script>
+    
 </body>
 
 </html>

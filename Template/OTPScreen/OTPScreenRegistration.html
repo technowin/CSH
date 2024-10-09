@@ -18,10 +18,10 @@
     <!-- Custom styles for this template-->
     <link href="{% static 'css/CSH.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/OTPScreenRegistration.css' %}" rel="stylesheet">
-    {% comment %} <link href="{% static 'css/citizenLogin.css' %}" rel="stylesheet"> {% endcomment %}
 </head>
 
-<body class="bg-gradient-primary">
+{% comment %} <body class="container-fluid bg-body-tertiary d-block bg-gradient-primary"> {% endcomment %}
+<body class="container-fluid bg-gradient-primary">
 
     <div class="row justify-content-center">
         <div class="col-12 col-md-6 col-lg-4" style="min-width: 500px;">
@@ -29,7 +29,7 @@
                 <div class="card-body p-5 text-center">
                     <h4>Verify</h4>
                     <p>Your code was sent to you via SMS</p>
-                    <form class="user" method="POST"  action="{% url 'OTPScreenPost' %}" onsubmit="return handleSubmit();">
+                    <form class="user" method="POST"  action="{% url 'verify_otp' %}" onsubmit="return handleSubmit();">
                         {% csrf_token %}
                         
                         <div class="otp-field mb-4">
@@ -49,7 +49,7 @@
                     </form>
                     
                     <p class="resend text-muted mb-0">
-                        Didn't receive code? <a  href="OTPScreen?service_db=1" >Request again</a>
+                        Didn't receive code? <a href="OTPScreenRegistration?service_db=1">Request again</a>
                     </p>
                 </div>
             </div>
