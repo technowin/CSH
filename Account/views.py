@@ -887,7 +887,7 @@ def OTPScreenRegistration(request):
                 
                 message = format_message(message, otp, action, service)
                 
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
@@ -924,10 +924,10 @@ def verify_otp(request):
                 otp_record.delete()
 
                 CustomUser.objects.using('default').create(
-                        full_name=f"{first_name} {last_name}",
-                        email=email,
-                        phone=phone_number,
-                        first_time_login=True
+                    full_name=f"{first_name} {last_name}",
+                    email=email,
+                    phone=phone_number,
+                    first_time_login=True
                 )
 
                 user = CustomUser.objects.using(service_db).create(
