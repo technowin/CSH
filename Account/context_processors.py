@@ -3,6 +3,7 @@ from CSH.encryption import decrypt_parameter
 import Db
 from .db_utils import callproc
 from django.utils import timezone
+from Masters.models import service_master
 def logged_in_user(request):
     user =''
     session_cookie_age_seconds = settings.AUTO_LOGOUT['IDLE_TIME']
@@ -37,9 +38,11 @@ def logged_in_user(request):
             menu_dict[item['parent_id']] = []
         menu_dict[item['parent_id']].append(item)
     
-    menu_items = menu_dict.get(-1, [])   
-    service_db = request.session.get('service_db')  
-    service = ''
-    if service_db =='1':
-        service = 'Drainage Connection'
+    menu_items = menu_dict.get(-1, []) 
+    service = ''  
+    service_db = request.session.get('service_db') 
+    if service_db: 
+        service1 = service_master.objects.using('default').filter(ser_id=service_db).first()
+        service = service1.ser_name
+
     return {'username':username,'full_name':full_name,'session_timeout_minutes':session_timeout_minutes,'reports':reports, 'menu_items': menu_items, 'service': service}
