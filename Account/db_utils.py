@@ -10,6 +10,8 @@ class Db:
         Get the database connection based on the alias provided (e.g., 'default', 'service1_db').
         """
         service_alias = get_current_service()  # Fetch dynamically from thread-local storage
+        if service_alias is None:
+            service_alias = "default"
         return connections[service_alias]
 
     @staticmethod
@@ -18,6 +20,8 @@ class Db:
         Close the database connection if it's open.
         """
         service_alias = get_current_service()
+        if service_alias is None:
+            service_alias = "default"
         connection = connections[service_alias]
         if connection and not connection.closed_in_transaction:
             connection.close()

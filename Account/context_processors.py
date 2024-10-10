@@ -37,5 +37,9 @@ def logged_in_user(request):
             menu_dict[item['parent_id']] = []
         menu_dict[item['parent_id']].append(item)
     
-    menu_items = menu_dict.get(-1, [])      
-    return {'username':username,'full_name':full_name,'session_timeout_minutes':session_timeout_minutes,'reports':reports, 'menu_items': menu_items}
+    menu_items = menu_dict.get(-1, [])   
+    service_db = request.session.get('service_db')  
+    service = ''
+    if service_db =='1':
+        service = 'Drainage Connection'
+    return {'username':username,'full_name':full_name,'session_timeout_minutes':session_timeout_minutes,'reports':reports, 'menu_items': menu_items, 'service': service}
