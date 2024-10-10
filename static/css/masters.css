@@ -395,7 +395,7 @@ input[type="time"]:focus,
 input[type="checkbox"]:focus, 
 input[type="file"]:focus, 
 select[name="company_id"]:focus {
-    border-color: #8b0000; 
+    border-color: rgb(53,95,218); 
     outline: none; 
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); 
     color: #000;
@@ -415,7 +415,7 @@ select[name="company_id"],select[name="roster_type"] ,select[name="employee_stat
 }
 
 select[name="company_id"]:focus,select[name="roster_type"]:focus {
-    border-color: #8b0000; 
+    border-color: rgb(53,95,218); 
     outline: none; 
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); 
     color: #000;
@@ -507,7 +507,7 @@ select[name="company_id"]:focus,select[name="roster_type"]:focus {
 }
 
 #dropdown:focus,#fa-icons-dropdown:focus,#MenuDropdown:focus {
-  border-color: #8b0000; 
+  border-color: rgb(53,95,218); 
   outline: none; 
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); 
   color: #000;
