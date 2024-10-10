@@ -654,7 +654,7 @@ def citizenLoginAccount(request):
             return render(request, 'citizenAccount/citizenLogin.html')
 
         elif request.method == "POST":
-            service_db = request.session.get('service_db', 'default')
+            service_db = request.session.get('service_db')
             phone_number = request.POST.get('username', '').strip()
 
             if phone_number:
@@ -931,7 +931,7 @@ def verify_otp(request):
                     email=email,
                     phone=phone_number,
                     first_time_login=True,
-                    role=role_id
+                    role_id=role_id.id
                 )
 
                 user = CustomUser.objects.using(service_db).create(
@@ -939,14 +939,14 @@ def verify_otp(request):
                     email=email,
                     phone=phone_number,
                     first_time_login=True,
-                    role=role_id
+                    role_id=role_id.id
                 )
-                assigned_menus = RoleMenuMaster.objects.filter(role_id=role_id)
+                assigned_menus = RoleMenuMaster.objects.filter(role_id=role_id.id)
                 for menu in assigned_menus:
                     UserMenuDetails.objects.create(
                         user_id=user.id,
                         menu_id=menu.menu_id,
-                        role_id=role_id
+                        role_id=user.role_id
                 )
                 request.session['user_id'] = user.id
                 request.session['phone_number'] = phone_number
