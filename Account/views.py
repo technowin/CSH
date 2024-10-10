@@ -706,6 +706,7 @@ def citizenRegisterAccount(request):
             request.session['last_name'] = last_name
             request.session['email'] = email
             request.session['mobile_number'] = mobile_number
+            request.session['service_db'] = '1'
 
             return redirect('OTPScreenRegistration') 
  
@@ -886,7 +887,7 @@ def OTPScreenRegistration(request):
                 
                 message = format_message(message, otp, action, service)
                 
-                send_sms(phone_number, message, template_id)
+                # send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
@@ -897,9 +898,13 @@ def OTPScreenRegistration(request):
         
         return render(request, 'OTPScreen/OTPScreenRegistration.html')
 
+
 @csrf_exempt
 def verify_otp(request):
     if request.method == "POST":
+        
+        service_db = request.session.get('service_db', 'default')
+        request.session['service_db'] = service_db
         phone_number = request.session.get('mobile_number')
         first_name = request.session.get('first_name')
         last_name = request.session.get('last_name')
@@ -918,13 +923,20 @@ def verify_otp(request):
 
                 otp_record.delete()
 
-                user = CustomUser.objects.create(
+                CustomUser.objects.using('default').create(
+                        full_name=f"{first_name} {last_name}",
+                        email=email,
+                        phone=phone_number,
+                        first_time_login=True
+                )
+
+                user = CustomUser.objects.using(service_db).create(
                     full_name=f"{first_name} {last_name}",
                     email=email,
                     phone=phone_number,
-                    first_time_login=1 
+                    first_time_login=True
                 )
-
+                
                 request.session['user_id'] = user.id
                 request.session['phone_number'] = phone_number
 
@@ -953,3 +965,68 @@ def verify_otp(request):
             return render(request, 'citizenAccount/citizenRegister.html', context)
     
     return render(request, 'OTPScreenOTPScreenRegistration.html', {'error': 'Invalid request method.'})
+
+# @csrf_exempt
+# def verify_otp(request):
+#     if request.method == "POST":
+#         phone_number = request.session.get('mobile_number')
+#         first_name = request.session.get('first_name')
+#         last_name = request.session.get('last_name')
+#         email = request.session.get('email')
+#         entered_otp = request.POST.get('otp')
+        
+#         if not phone_number:
+#             messages.error(request, "Phone number not found. Please log in again.")
+#             return redirect('citizenRegisterAccount')
+
+#         try:
+
+#             otp_record = OTPVerification.objects.filter(mobile=phone_number).order_by('-id').first()
+            
+#             if otp_record and otp_record.otp_text == entered_otp:
+
+#                 otp_record.delete()
+
+#                 user = CustomUser.objects.create(
+#                     full_name=f"{first_name} {last_name}",
+#                     email=email,
+#                     phone=phone_number,
+#                     first_time_login=1 
+#                 )
+                
+#                 CustomUser.objects.using('default').create(
+#                         full_name=f"{first_name} {last_name}",
+#                         email=email,
+#                         phone=phone_number,
+#                         first_time_login=True
+#                 )
+
+#                 request.session['user_id'] = user.id
+#                 request.session['phone_number'] = phone_number
+
+#                 messages.success(request, "Registered successfully! OTP verified.")
+#                 return redirect('citizenLoginAccount')
+
+#             else:
+#                 messages.error(request, "Invalid OTP. Please try again.")
+#                 context = {
+#                     'firstName': first_name,
+#                     'lastName': last_name,
+#                     'email': email,
+#                     'mobileNumber': phone_number,
+#                 }
+#                 return render(request, 'citizenAccount/citizenRegister.html', context)
+
+#         except OTPVerification.DoesNotExist:
+
+#             messages.error(request, "Invalid OTP. Please try again.")
+#             context = {
+#                 'firstName': first_name,
+#                 'lastName': last_name,
+#                 'email': email,
+#                 'mobileNumber': phone_number,
+#             }
+#             return render(request, 'citizenAccount/citizenRegister.html', context)
+    
+#     return render(request, 'OTPScreenOTPScreenRegistration.html', {'error': 'Invalid request method.'})
+
