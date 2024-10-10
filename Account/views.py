@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 @csrf_exempt
 def Login(request):
     if request.method=="GET":
+       request.session.flush()
        return render(request,'Account/login.html')
     
     if request.method=="POST":
