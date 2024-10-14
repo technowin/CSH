@@ -30,15 +30,8 @@ from django.urls import path
 urlpatterns = [
     path('admin/', admin.site.urls),
     # APP URLS
-    # Dashboard
-    path("newdashboard",newdashboard,name='newdashboard'),
-    path("get_sites",get_sites,name='get_sites'),
-    path("updateGraph",updateGraph, name="updateGraph"),
-    path("get_roster_data",get_roster_data, name="get_roster_data"),
-    path("get_roster_data_tommorow",get_roster_data_tommorow, name="get_roster_data_tommorow"),
 
     # Account
-
     path("", Login,name='Account'),
     path("Login", Login,name='Login'),
     path("services/", services,name='services'),
@@ -51,7 +44,15 @@ urlpatterns = [
     path("change_password",change_password, name="change_password"),
     path("forget_password_change",forget_password_change, name="forget_password_change"),
 
-    # Masters
+    # Dashboard
+    path("newdashboard",newdashboard,name='newdashboard'),
+    path("get_sites",get_sites,name='get_sites'),
+    path("updateGraph",updateGraph, name="updateGraph"),
+    path("get_roster_data",get_roster_data, name="get_roster_data"),
+    path("get_roster_data_tommorow",get_roster_data_tommorow, name="get_roster_data_tommorow"),
+
+    # TrackFlow
+    path('index/', index, name='index'),
     path('metrix_flow/', metrix_flow, name='metrix_flow'),
 
     # Masters
