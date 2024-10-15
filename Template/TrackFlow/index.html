@@ -49,12 +49,12 @@
                         <tr style="color:black">
                             <td>{{ forloop.counter }}</td>
                             {% for cell in row %}
-                                {% if not forloop.first %}
+                                {% if forloop.counter > 2 %}
                                     <td>
-                                        {% if forloop.counter == 6 and entity == "wf"  %}
+                                        {% if forloop.counter == 7 %}
                                             <span  class="badge badge-danger" style="font-size: 16px;">{{ cell }}</span>
-                                        {% elif forloop.counter == 7 and entity == "wf"  %}
-                                            <a href="{% url 'metrix_flow' %}" class="btn btn-primary">{{ cell }} </a>
+                                        {% elif forloop.counter == 8 %}
+                                            <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}" class="btn btn-primary" >{{ cell }} </a>
                                         {% else %}
                                             {% if cell|length > 60 %}
                                                 <!-- <textarea rows="4" readonly>{{ cell }}</textarea>  -->
