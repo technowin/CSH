@@ -784,7 +784,9 @@ def application_Master_Post(request):
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
 
                     if existing_document:
                         existing_document.file_name = file_name
@@ -1074,7 +1076,9 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
 
                     if existing_document:
                         existing_document.file_name = file_name
@@ -1217,7 +1221,9 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
 
                     if existing_document:
                         existing_document.file_name = file_name
