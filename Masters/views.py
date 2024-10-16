@@ -626,8 +626,8 @@ def applicationFormIndex(request):
                     }
                     getApplicantData.append(item)
                     
-                    if items[4] == 'Refused':
-                        show_apply_button = True
+                    # if items[4] == 'Refused' or items[4] == 'New':
+                    show_apply_button = True
 
         return render(request, "ApplicationForm/applicationFormIndex.html", {
             "data": getApplicantData,
@@ -637,7 +637,6 @@ def applicationFormIndex(request):
     except Exception as e:
         print(f"Error fetching data: {e}")
         return JsonResponse({"error": "Failed to fetch data"}, status=500)
-
 
 # application Form Index Aple Sarkar
 @csrf_exempt
@@ -753,16 +752,23 @@ def application_Master_Post(request):
             )
 
             user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
-            os.makedirs(user_folder_path, exist_ok=True)
+            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            os.makedirs(application_folder_path, exist_ok=True)
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
                 if uploaded_file:
-                    document_folder_path = os.path.join(user_folder_path, f'document_{document.doc_id}')
+                    # Create the document folder path within the application folder
+                    document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
                     os.makedirs(document_folder_path, exist_ok=True)
 
-                    existing_document = citizen_document.objects.filter(user_id=user_id, document=document).first()
+                    existing_document = citizen_document.objects.filter(
+                        user_id=user_id,
+                        document=document,
+                        application_id=application
+                    ).first()
 
+                    # Remove existing file if it exists
                     if existing_document and os.path.exists(existing_document.filepath):
                         os.remove(existing_document.filepath)
 
@@ -770,11 +776,13 @@ def application_Master_Post(request):
                     file_name = f"{current_time}_{uploaded_file.name}"
                     file_path = os.path.join(document_folder_path, file_name)
 
+                    # Save the uploaded file
                     with open(file_path, 'wb+') as destination:
                         for chunk in uploaded_file.chunks():
                             destination.write(chunk)
 
-                    relative_file_path = os.path.join(f'user_{user_id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # Prepare the relative file path for database storage
+                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
 
                     if existing_document:
                         existing_document.file_name = file_name
@@ -787,15 +795,14 @@ def application_Master_Post(request):
                             file_name=file_name,
                             filepath=relative_file_path, 
                             document=document,
+                            application_id=application, 
                             created_by=full_name_session,
                             updated_by=full_name_session
                         )
-
+                        
             m.commit()
             messages.success(request, 'Data and files uploaded successfully!')
             return redirect('viewapplicationform', row_id=application.id, new_id=0)  
-            # url = reverse('viewapplicationform', kwargs={'row_id': application.id, 'new_id': 0})
-            # return redirect(url)
 
         cursor.close()  
         m.close()  
@@ -810,8 +817,9 @@ def application_Master_Post(request):
         messages.error(request, 'Oops...! Something went wrong!')
         context['error_message'] = 'An error occurred while processing your request.'
 
-    finally:
-        return redirect('viewapplicationform', row_id=application.id, new_id=0) 
+    # finally:
+    #     return redirect('viewapplicationform', row_id=application.id, new_id=0) 
+
 
 # Main Index For Internal User
 def InternalUserIndex(request):
@@ -868,7 +876,7 @@ def viewapplicationform(request, row_id, new_id):
             user_id = None 
             
         application = get_object_or_404(application_form, pk=row_id)
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
 
         context = {
             'application': application,
@@ -904,7 +912,15 @@ def application_Form_Final_Submit(request):
             application.status_id = 1
             application.save()
             
-            
+            workflow = workflow_details(
+                level=1,  
+                status=application.status,  
+                form_user=user,  
+                form_id=application,  
+                created_by=user_id,  
+                created_at=timezone.now()  
+            )
+            workflow.save()
             
             return redirect('applicationFormIndex')
 
@@ -931,7 +947,7 @@ def EditApplicationForm(request, row_id, row_id_status):
         
         application = get_object_or_404(application_form, pk=row_id)
 
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
 
         uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
 
@@ -998,16 +1014,23 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
             application.save()
 
             user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
-            os.makedirs(user_folder_path, exist_ok=True)
+            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            os.makedirs(application_folder_path, exist_ok=True)
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
                 if uploaded_file:
-                    document_folder_path = os.path.join(user_folder_path, f'document_{document.doc_id}')
+                    # Create the document folder path within the application folder
+                    document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
                     os.makedirs(document_folder_path, exist_ok=True)
 
-                    existing_document = citizen_document.objects.filter(user_id=user_id, document=document).first()
+                    existing_document = citizen_document.objects.filter(
+                        user_id=user_id,
+                        document=document,
+                        application_id=application
+                    ).first()
 
+                    # Remove existing file if it exists
                     if existing_document and os.path.exists(existing_document.filepath):
                         os.remove(existing_document.filepath)
 
@@ -1015,11 +1038,13 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
                     file_name = f"{current_time}_{uploaded_file.name}"
                     file_path = os.path.join(document_folder_path, file_name)
 
+                    # Save the uploaded file
                     with open(file_path, 'wb+') as destination:
                         for chunk in uploaded_file.chunks():
                             destination.write(chunk)
 
-                    relative_file_path = os.path.join(f'user_{user_id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # Prepare the relative file path for database storage
+                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
 
                     if existing_document:
                         existing_document.file_name = file_name
@@ -1032,6 +1057,7 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
                             file_name=file_name,
                             filepath=relative_file_path, 
                             document=document,
+                            application_id=application, 
                             created_by=full_name_session,
                             updated_by=full_name_session
                         )
@@ -1060,7 +1086,7 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
         
         application = get_object_or_404(application_form, pk=row_id)
 
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
 
         uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
 
@@ -1127,16 +1153,23 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
             application.save()
 
             user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
-            os.makedirs(user_folder_path, exist_ok=True)
+            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            os.makedirs(application_folder_path, exist_ok=True)
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
                 if uploaded_file:
-                    document_folder_path = os.path.join(user_folder_path, f'document_{document.doc_id}')
+                    # Create the document folder path within the application folder
+                    document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
                     os.makedirs(document_folder_path, exist_ok=True)
 
-                    existing_document = citizen_document.objects.filter(user_id=user_id, document=document).first()
+                    existing_document = citizen_document.objects.filter(
+                        user_id=user_id,
+                        document=document,
+                        application_id=application
+                    ).first()
 
+                    # Remove existing file if it exists
                     if existing_document and os.path.exists(existing_document.filepath):
                         os.remove(existing_document.filepath)
 
@@ -1144,11 +1177,13 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
                     file_name = f"{current_time}_{uploaded_file.name}"
                     file_path = os.path.join(document_folder_path, file_name)
 
+                    # Save the uploaded file
                     with open(file_path, 'wb+') as destination:
                         for chunk in uploaded_file.chunks():
                             destination.write(chunk)
 
-                    relative_file_path = os.path.join(f'user_{user_id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # Prepare the relative file path for database storage
+                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
 
                     if existing_document:
                         existing_document.file_name = file_name
@@ -1161,6 +1196,7 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
                             file_name=file_name,
                             filepath=relative_file_path, 
                             document=document,
+                            application_id=application, 
                             created_by=full_name_session,
                             updated_by=full_name_session
                         )

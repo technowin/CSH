@@ -202,7 +202,8 @@ class citizen_document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)           
     created_by = models.TextField(null=True, blank=True) 
     updated_at = models.DateTimeField(null=True, blank=True)                
-    updated_by = models.TextField(null=True, blank=True)   
+    updated_by = models.TextField(null=True, blank=True)
+    application_id = models.ForeignKey(application_form, on_delete=models.CASCADE, null=True, blank=True, related_name='application_id_F', db_column='application_id')   
     objects = ServiceManager()
     class Meta:
         db_table = 'citizen_document'
