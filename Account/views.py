@@ -903,29 +903,34 @@ def OTPScreenRegistration(request):
 @csrf_exempt
 def verify_otp(request):
     if request.method == "POST":
-        
         service_db = request.session.get('service_db')
-        # request.session['service_db'] = service_db
         phone_number = request.session.get('mobile_number')
         first_name = request.session.get('first_name')
         last_name = request.session.get('last_name')
         email = request.session.get('email')
         entered_otp = request.POST.get('otp')
-        
+
         if not phone_number:
             messages.error(request, "Phone number not found. Please log in again.")
             return redirect('citizenRegisterAccount')
 
         try:
-
             otp_record = OTPVerification.objects.filter(mobile=phone_number).order_by('-id').first()
-            
+
             if otp_record and otp_record.otp_text == entered_otp:
-
                 otp_record.delete()
-
                 role_id = roles.objects.get(id=2)
-                
+
+                if CustomUser.objects.filter(email=email).exists():
+                    messages.error(request, "An account with this email already exists.")
+                    context = {
+                        'firstName': first_name,
+                        'lastName': last_name,
+                        'email': email,
+                        'mobileNumber': phone_number,
+                    }
+                    return render(request, 'citizenAccount/citizenRegister.html', context)
+
                 CustomUser.objects.using('default').create(
                     full_name=f"{first_name} {last_name}",
                     email=email,
@@ -941,13 +946,15 @@ def verify_otp(request):
                     first_time_login=True,
                     role_id=role_id.id
                 )
+
                 assigned_menus = RoleMenuMaster.objects.filter(role_id=role_id.id)
                 for menu in assigned_menus:
                     UserMenuDetails.objects.create(
                         user_id=user.id,
                         menu_id=menu.menu_id,
                         role_id=user.role_id
-                )
+                    )
+
                 request.session['user_id'] = user.id
                 request.session['phone_number'] = phone_number
 
@@ -965,7 +972,6 @@ def verify_otp(request):
                 return render(request, 'citizenAccount/citizenRegister.html', context)
 
         except OTPVerification.DoesNotExist:
-
             messages.error(request, "Invalid OTP. Please try again.")
             context = {
                 'firstName': first_name,
@@ -974,5 +980,23 @@ def verify_otp(request):
                 'mobileNumber': phone_number,
             }
             return render(request, 'citizenAccount/citizenRegister.html', context)
-    
+        except IntegrityError:
+            messages.error(request, "An account with this email already exists.")
+            context = {
+                'firstName': first_name,
+                'lastName': last_name,
+                'email': email,
+                'mobileNumber': phone_number,
+            }
+            return render(request, 'citizenAccount/citizenRegister.html', context)
+        except Exception as e:
+            messages.error(request, "An unexpected error occurred. Please try again.")
+            context = {
+                'firstName': first_name,
+                'lastName': last_name,
+                'email': email,
+                'mobileNumber': phone_number,
+            }
+            return render(request, 'citizenAccount/citizenRegister.html', context)
+
     return render(request, 'OTPScreenOTPScreenRegistration.html', {'error': 'Invalid request method.'})
