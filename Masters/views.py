@@ -2,7 +2,7 @@ import json
 import pydoc
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth import authenticate, login ,logout,get_user_model
 from Account.forms import RegistrationForm
 from Account.models import *
@@ -42,6 +42,7 @@ from Account.db_utils import callproc
 from django.views.decorators.csrf import csrf_exempt
 import os
 from django.urls import reverse
+
 
 @login_required
 def masters(request):
@@ -597,34 +598,46 @@ def VerificationForm(request):
 # application Form Index
 def applicationFormIndex(request):
     try:
+        full_name = request.session.get('full_name')
         
-        phone_number = request.session.get('phone_number', None)
-        
-        if request.method == "GET":
-            
-            service_db = request.session.get('service_db', 'default')
-            request.session['service_db'] = service_db
-            
-            getApplicantData = []
-            applicationIndex = callproc("stp_getFormDetails")
-            for items in applicationIndex:
-                item = {
-                    "srno": items[0],
-                    "request_no": items[1],       
-                    "name_of_owner": items[2],   
-                    "status": items[3],             
-                    "comments": items[4]          
-                }
-                getApplicantData.append(item)
+        if full_name:
+            user = get_object_or_404(CustomUser, full_name=full_name)
+            user_id = user.id
+        else:
+            user_id = None 
 
-        return render(request,"ApplicationForm/applicationFormIndex.html",{"data": getApplicantData})
+        getApplicantData = []
+        show_apply_button = False  
+
+        if request.method == "GET":
+            applicationIndex = callproc("stp_getFormDetails", [user_id])
+            
+            if not applicationIndex:
+                show_apply_button = True
+            else:
+                for items in applicationIndex:
+                    item = {
+                        "srno": items[0],
+                        "id": items[1],
+                        "request_no": items[2],       
+                        "name_of_owner": items[3],   
+                        "status": items[4],          
+                        "comments": items[5]          
+                    }
+                    getApplicantData.append(item)
+                    
+                    if items[4] == 'Refused':
+                        show_apply_button = True
+
+        return render(request, "ApplicationForm/applicationFormIndex.html", {
+            "data": getApplicantData,
+            "show_apply_button": show_apply_button  # Pass to template
+        })
 
     except Exception as e:
         print(f"Error fetching data: {e}")
         return JsonResponse({"error": "Failed to fetch data"}, status=500)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return HttpResponse("An error occurred while rendering the page.", status=500)
+
 
 # application Form Index Aple Sarkar
 @csrf_exempt
@@ -692,29 +705,23 @@ def applicationMasterCrate(request):
         return HttpResponse("An error occurred while rendering the page.", status=500)
 
 # application Form Create Post
-
 def application_Master_Post(request):
+    context = {}  
     try:
-        # Establish a database connection
         m = Db.get_connection()
         cursor = m.cursor()
         
-        # Set the global variable for the user
         global user
         
         if request.method == "POST":
-            # Set session for service database
-            # service_db = request.GET.get('service_db', 'default')
             service_db = request.session.get('service_db', 'default')
             request.session['service_db'] = service_db
 
-            # Retrieve user from session
             phone_number = request.session.get('phone_number')
             user = CustomUser.objects.get(phone=phone_number)
             full_name_session = request.session['full_name'] = user.full_name
             user_id = user.id
 
-            # Check for mandatory documents
             mandatory_documents = document_master.objects.filter(mandatory=1, is_active=1)
             all_uploaded = True
             missing_documents = []
@@ -728,11 +735,7 @@ def application_Master_Post(request):
                 messages.error(request, 'Please upload the mandatory documents.')
                 return redirect('applicationMasterCrate')
 
-            # Retrieve the "New" status from status_master
-            status_new = status_master.objects.get(status_id=1)
-            
-            # Collect and save form data
-            application_form.objects.create(
+            application = application_form.objects.create(
                 name_of_premises=request.POST.get('Name_Premises', ''),
                 plot_no=request.POST.get('Plot_No', ''),
                 sector_no=request.POST.get('Sector_No', ''),
@@ -742,15 +745,13 @@ def application_Master_Post(request):
                 name_of_plumber=request.POST.get('Name_Plumber', ''),
                 license_no_of_plumber=request.POST.get('License_No_Plumber', ''),
                 address_of_plumber=request.POST.get('Address_of_Plumber', ''),
-                status=status_new,  
                 plot_size=request.POST.get('Plot_size', ''),
                 no_of_flats=request.POST.get('No_of_flats', ''),
                 no_of_shops=request.POST.get('No_of_shops', ''),
                 septic_tank_size=request.POST.get('Septic_tank_size', ''),
-                created_by=full_name_session
+                created_by=user_id
             )
 
-            # Set up user folder path and handle document uploads
             user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
             os.makedirs(user_folder_path, exist_ok=True)
 
@@ -760,65 +761,59 @@ def application_Master_Post(request):
                     document_folder_path = os.path.join(user_folder_path, f'document_{document.doc_id}')
                     os.makedirs(document_folder_path, exist_ok=True)
 
-                    # Check for existing document and remove old file if exists
                     existing_document = citizen_document.objects.filter(user_id=user_id, document=document).first()
 
                     if existing_document and os.path.exists(existing_document.filepath):
                         os.remove(existing_document.filepath)
 
-                    # Generate new file name with a timestamp and save file
                     current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
                     file_name = f"{current_time}_{uploaded_file.name}"
                     file_path = os.path.join(document_folder_path, file_name)
 
-                    # Save uploaded file
                     with open(file_path, 'wb+') as destination:
                         for chunk in uploaded_file.chunks():
                             destination.write(chunk)
 
-                    # Save or update document record in the database
+                    relative_file_path = os.path.join(f'user_{user_id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+
                     if existing_document:
                         existing_document.file_name = file_name
-                        existing_document.filepath = file_path
+                        existing_document.filepath = relative_file_path 
                         existing_document.updated_by = full_name_session
                         existing_document.save()
                     else:
                         citizen_document.objects.create(
                             user_id=user_id,
                             file_name=file_name,
-                            filepath=file_path,
+                            filepath=relative_file_path, 
                             document=document,
                             created_by=full_name_session,
                             updated_by=full_name_session
                         )
 
-            # Commit the transaction to the database
             m.commit()
             messages.success(request, 'Data and files uploaded successfully!')
+            return redirect('viewapplicationform', row_id=application.id, new_id=0)  
+            # url = reverse('viewapplicationform', kwargs={'row_id': application.id, 'new_id': 0})
+            # return redirect(url)
 
-        cursor.close()  # Close the cursor
-        m.close()  # Close the connection
-
-        base_url = reverse('applicationFormIndex')
-        return redirect(f'{base_url}?service_db=1')
+        cursor.close()  
+        m.close()  
+        
+        return redirect('viewapplicationform', row_id=application.id, new_id=0) 
     
     except Exception as e:
-        # Handle and log the exception
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
+        user = request.user  
         callproc("stp_error_log", [fun, str(e), user])
-        messages.error(request, 'Oops...! Something went wrong.')
-        
-        if cursor:
-            cursor.close()  # Ensure the cursor is closed
-        if m:
-            m.close()  # Ensure the connection is closed
+        messages.error(request, 'Oops...! Something went wrong!')
+        context['error_message'] = 'An error occurred while processing your request.'
 
-        base_url = reverse('applicationFormIndex')
-        return redirect(f'{base_url}?service_db=1')
+    finally:
+        return redirect('viewapplicationform', row_id=application.id, new_id=0) 
 
 # Main Index For Internal User
-
 def InternalUserIndex(request):
     try:
         session_company = request.session.get("CC", "")
@@ -838,7 +833,7 @@ def InternalUserIndex(request):
 
         getApplicantData = []
 
-        applicationIndex = callproc("stp_getFormDetails")
+        applicationIndex = callproc("stp_getFormDetailsForInternalUser")
         for items in applicationIndex:
             item = {
                 "srno": items[0],
@@ -855,5 +850,323 @@ def InternalUserIndex(request):
         print(f"Error fetching data: {e}")
         return JsonResponse({"error": "Failed to fetch data"}, status=500)
     except Exception as e:
+        
         print(f"An error occurred: {e}")
         return HttpResponse("An error occurred while rendering the page.", status=500)  
+    
+# View Application Form 
+def viewapplicationform(request, row_id, new_id):
+    try:
+        context = {} 
+        
+        full_name = request.session.get('full_name')
+        
+        if full_name:
+            user = get_object_or_404(CustomUser, full_name=full_name)
+            user_id = user.id
+        else:
+            user_id = None 
+            
+        application = get_object_or_404(application_form, pk=row_id)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id)
+
+        context = {
+            'application': application,
+            'uploaded_documents': uploaded_documents,
+            'new_id': new_id,
+            'MEDIA_URL': settings.MEDIA_URL
+        }
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        user = request.user
+        callproc("stp_error_log", [fun, str(e), user])
+        messages.error(request, 'Oops...! Something went wrong!')
+
+    finally:
+        return render(request, 'ApplicationForm/viewapplicationform.html', context)     
+
+# Application Form Final Submit    
+def application_Form_Final_Submit(request):
+    if request.method == "POST":
+        try:
+            
+            full_name = request.session.get('full_name')
+
+            if full_name:
+                user = get_object_or_404(CustomUser, full_name=full_name)
+                user_id = user.id
+            else:
+                user_id = None
+                
+            application_id = request.POST.get('application_id')
+            application = get_object_or_404(application_form, id=application_id)
+            application.status_id = 1
+            application.save()
+            
+            
+            
+            return redirect('applicationFormIndex')
+
+        except application_form.DoesNotExist:
+            return JsonResponse({"error": "Application not found."}, status=404)
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return JsonResponse({"error": "An unexpected error occurred."}, status=500)
+
+    return render(request, "ApplicationForm/applicationFormIndex.html")
+
+# Edit Application Form
+def EditApplicationForm(request, row_id, row_id_status):
+    context = {}
+
+    try:
+        full_name = request.session.get('full_name')
+
+        if full_name:
+            user = get_object_or_404(CustomUser, full_name=full_name)
+            user_id = user.id
+        else:
+            user_id = None
+        
+        application = get_object_or_404(application_form, pk=row_id)
+
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id)
+
+        uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
+
+        all_documents = document_master.objects.all()
+
+        not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
+
+        context = {
+            'application': application,
+            'uploaded_documents': uploaded_documents,
+            'not_uploaded_documents': not_uploaded_documents,
+            'MEDIA_URL': settings.MEDIA_URL,
+            'row_id_status': row_id_status,
+        }
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        user = request.user
+        callproc("stp_error_log", [fun, str(e), user])
+        messages.error(request, 'Oops...! Something went wrong!')
+
+    return render(request, 'ApplicationForm/EditApplicationForm.html', context)
+   
+# Edit Post Here          
+def edit_Post_Application_Master(request, application_id, row_id_status):
+    try:
+        application = get_object_or_404(application_form, id=application_id)
+        
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number)
+        full_name_session = request.session['full_name'] = user.full_name
+        user_id = user.id
+
+        if request.method == 'POST':
+            name_of_premises = request.POST.get('Name_Premises')
+            plot_no = request.POST.get('Plot_No')
+            sector_no = request.POST.get('Sector_No')
+            node = request.POST.get('Node')
+            name_of_owner = request.POST.get('Name_Owner')
+            address_of_owner = request.POST.get('Address_Owner')
+            name_of_plumber = request.POST.get('Name_Plumber')
+            license_no_plumber = request.POST.get('License_No_Plumber')
+            address_of_plumber = request.POST.get('Address_of_Plumber')
+            plot_size = request.POST.get('Plot_size')
+            no_of_flats = request.POST.get('No_of_flats')
+            no_of_shops = request.POST.get('No_of_shops')
+            septic_tank_size = request.POST.get('Septic_tank_size')
+
+            application.name_of_premises = name_of_premises
+            application.plot_no = plot_no
+            application.sector_no = sector_no
+            application.node = node
+            application.name_of_owner = name_of_owner
+            application.address_of_owner = address_of_owner
+            application.name_of_plumber = name_of_plumber
+            application.license_no_of_plumber = license_no_plumber
+            application.address_of_plumber = address_of_plumber
+            application.plot_size = plot_size
+            application.no_of_flats = no_of_flats
+            application.no_of_shops = no_of_shops
+            application.septic_tank_size = septic_tank_size
+
+            application.save()
+
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            for document in document_master.objects.all():
+                uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+                if uploaded_file:
+                    document_folder_path = os.path.join(user_folder_path, f'document_{document.doc_id}')
+                    os.makedirs(document_folder_path, exist_ok=True)
+
+                    existing_document = citizen_document.objects.filter(user_id=user_id, document=document).first()
+
+                    if existing_document and os.path.exists(existing_document.filepath):
+                        os.remove(existing_document.filepath)
+
+                    current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
+                    file_name = f"{current_time}_{uploaded_file.name}"
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    relative_file_path = os.path.join(f'user_{user_id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+
+                    if existing_document:
+                        existing_document.file_name = file_name
+                        existing_document.filepath = relative_file_path 
+                        existing_document.updated_by = full_name_session
+                        existing_document.save()
+                    else:
+                        citizen_document.objects.create(
+                            user_id=user_id,
+                            file_name=file_name,
+                            filepath=relative_file_path, 
+                            document=document,
+                            created_by=full_name_session,
+                            updated_by=full_name_session
+                        )
+
+            if row_id_status == 1: 
+                return redirect('viewapplicationform', row_id=application_id, new_id=0)
+            else:
+                return redirect('applicationFormIndex') 
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return render(request, "ApplicationForm/applicationFormIndex.html")
+
+# Edit Application Form Final Submit
+def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
+    context = {}
+
+    try:
+        full_name = request.session.get('full_name')
+
+        if full_name:
+            user = get_object_or_404(CustomUser, full_name=full_name)
+            user_id = user.id
+        else:
+            user_id = None
+        
+        application = get_object_or_404(application_form, pk=row_id)
+
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id)
+
+        uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
+
+        all_documents = document_master.objects.all()
+
+        not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
+
+        context = {
+            'application': application,
+            'uploaded_documents': uploaded_documents,
+            'not_uploaded_documents': not_uploaded_documents,
+            'MEDIA_URL': settings.MEDIA_URL,
+            'row_id_status': row_id_status,
+        }
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        user = request.user
+        callproc("stp_error_log", [fun, str(e), user])
+        messages.error(request, 'Oops...! Something went wrong!')
+
+    return render(request, 'ApplicationForm/EditApplicationFormFinalSubmit.html', context)
+
+# Edit Post Here Final Submit        
+def edit_Post_Application_Master_final_submit(request, application_id, row_id_status):
+    try:
+        application = get_object_or_404(application_form, id=application_id)
+        
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number)
+        full_name_session = request.session['full_name'] = user.full_name
+        user_id = user.id
+
+        if request.method == 'POST':
+            name_of_premises = request.POST.get('Name_Premises')
+            plot_no = request.POST.get('Plot_No')
+            sector_no = request.POST.get('Sector_No')
+            node = request.POST.get('Node')
+            name_of_owner = request.POST.get('Name_Owner')
+            address_of_owner = request.POST.get('Address_Owner')
+            name_of_plumber = request.POST.get('Name_Plumber')
+            license_no_plumber = request.POST.get('License_No_Plumber')
+            address_of_plumber = request.POST.get('Address_of_Plumber')
+            plot_size = request.POST.get('Plot_size')
+            no_of_flats = request.POST.get('No_of_flats')
+            no_of_shops = request.POST.get('No_of_shops')
+            septic_tank_size = request.POST.get('Septic_tank_size')
+
+            application.name_of_premises = name_of_premises
+            application.plot_no = plot_no
+            application.sector_no = sector_no
+            application.node = node
+            application.name_of_owner = name_of_owner
+            application.address_of_owner = address_of_owner
+            application.name_of_plumber = name_of_plumber
+            application.license_no_of_plumber = license_no_plumber
+            application.address_of_plumber = address_of_plumber
+            application.plot_size = plot_size
+            application.no_of_flats = no_of_flats
+            application.no_of_shops = no_of_shops
+            application.septic_tank_size = septic_tank_size
+
+            application.save()
+
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            for document in document_master.objects.all():
+                uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+                if uploaded_file:
+                    document_folder_path = os.path.join(user_folder_path, f'document_{document.doc_id}')
+                    os.makedirs(document_folder_path, exist_ok=True)
+
+                    existing_document = citizen_document.objects.filter(user_id=user_id, document=document).first()
+
+                    if existing_document and os.path.exists(existing_document.filepath):
+                        os.remove(existing_document.filepath)
+
+                    current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
+                    file_name = f"{current_time}_{uploaded_file.name}"
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    relative_file_path = os.path.join(f'user_{user_id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+
+                    if existing_document:
+                        existing_document.file_name = file_name
+                        existing_document.filepath = relative_file_path 
+                        existing_document.updated_by = full_name_session
+                        existing_document.save()
+                    else:
+                        citizen_document.objects.create(
+                            user_id=user_id,
+                            file_name=file_name,
+                            filepath=relative_file_path, 
+                            document=document,
+                            created_by=full_name_session,
+                            updated_by=full_name_session
+                        )
+
+            return redirect('viewapplicationform', row_id=application_id, new_id=0)
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return render(request, "ApplicationForm/applicationFormIndex.html")
