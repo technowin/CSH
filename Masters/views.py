@@ -880,6 +880,9 @@ def download_doc(request, filepath):
             return HttpResponse("File not found", status=404)
 
     except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log",[fun,str(e),user])  
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
         
