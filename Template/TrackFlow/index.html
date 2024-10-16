@@ -54,11 +54,11 @@
                                         {% if forloop.counter == 7 %}
                                             <span  class="badge badge-danger" style="font-size: 16px;">{{ cell }}</span>
                                         {% elif forloop.counter == 8 %}
-                                            <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}" class="btn btn-primary" >{{ cell }} </a>
+                                            <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
                                         {% else %}
                                             {% if cell|length > 60 %}
                                                 <!-- <textarea rows="4" readonly>{{ cell }}</textarea>  -->
-                                                {{ cell }}
+                                                {{ cell }} 
                                             {% else %}
                                                 {{ cell }}
                                             {% endif %}
