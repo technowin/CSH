@@ -153,7 +153,7 @@ CORS_ORIGIN_WHITELIST = [
     'http://13.202.157.7',
 ]
 AUTO_LOGOUT = {
-    'IDLE_TIME': 600,
+    'IDLE_TIME': 3600,
     'REDIRECT_TO_LOGIN_IMMEDIATELY': True,
     'MESSAGE': 'The session has expired. Please login again to continue.',
 }
