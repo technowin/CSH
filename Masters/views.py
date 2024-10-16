@@ -799,9 +799,7 @@ def application_Master_Post(request):
                             created_by=full_name_session,
                             updated_by=full_name_session
                         )
-
-
-
+                        
             m.commit()
             messages.success(request, 'Data and files uploaded successfully!')
             return redirect('viewapplicationform', row_id=application.id, new_id=0)  
@@ -819,8 +817,8 @@ def application_Master_Post(request):
         messages.error(request, 'Oops...! Something went wrong!')
         context['error_message'] = 'An error occurred while processing your request.'
 
-    finally:
-        return redirect('viewapplicationform', row_id=application.id, new_id=0) 
+    # finally:
+    #     return redirect('viewapplicationform', row_id=application.id, new_id=0) 
 
 
 # Main Index For Internal User
