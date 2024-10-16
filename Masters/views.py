@@ -42,7 +42,9 @@ from Account.db_utils import callproc
 from django.views.decorators.csrf import csrf_exempt
 import os
 from django.urls import reverse
-
+from CSH.settings import *
+import logging
+logger = logging.getLogger(__name__)
 
 @login_required
 def masters(request):
@@ -782,7 +784,9 @@ def application_Master_Post(request):
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
 
                     if existing_document:
                         existing_document.file_name = file_name
@@ -861,7 +865,29 @@ def InternalUserIndex(request):
         
         print(f"An error occurred: {e}")
         return HttpResponse("An error occurred while rendering the page.", status=500)  
-    
+
+ 
+def download_doc(request, filepath):
+    file = decrypt_parameter(filepath)
+    file_path = os.path.join(settings.MEDIA_ROOT, file)
+    file_name = os.path.basename(file_path)
+    file_part, file_extension = os.path.splitext(file_path)
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as file:
+                response = HttpResponse(file.read(), content_type='application/pdf')
+                response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_name)}"'
+                return response
+        else:
+            return HttpResponse("File not found", status=404)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log",[fun,str(e),user])  
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+        
 # View Application Form 
 def viewapplicationform(request, row_id, new_id):
     try:
@@ -877,12 +903,15 @@ def viewapplicationform(request, row_id, new_id):
             
         application = get_object_or_404(application_form, pk=row_id)
         uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
-
+        for row in uploaded_documents:
+                encrypted_filepath = encrypt_parameter(str(row.filepath))
+                row.filepath = encrypted_filepath
+                
         context = {
             'application': application,
             'uploaded_documents': uploaded_documents,
             'new_id': new_id,
-            'MEDIA_URL': settings.MEDIA_URL
+            'MEDIA_URL': MEDIA_ROOT
         }
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -948,6 +977,9 @@ def EditApplicationForm(request, row_id, row_id_status):
         application = get_object_or_404(application_form, pk=row_id)
 
         uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
+        for row in uploaded_documents:
+                encrypted_filepath = encrypt_parameter(str(row.filepath))
+                row.filepath = encrypted_filepath
 
         uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
 
@@ -1044,7 +1076,9 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
 
                     if existing_document:
                         existing_document.file_name = file_name
@@ -1087,7 +1121,11 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
         application = get_object_or_404(application_form, pk=row_id)
 
         uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
-
+        
+        for row in uploaded_documents:
+                encrypted_filepath = encrypt_parameter(str(row.filepath))
+                row.filepath = encrypted_filepath
+                
         uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
 
         all_documents = document_master.objects.all()
@@ -1098,7 +1136,7 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
             'application': application,
             'uploaded_documents': uploaded_documents,
             'not_uploaded_documents': not_uploaded_documents,
-            'MEDIA_URL': settings.MEDIA_URL,
+            'MEDIA_URL': MEDIA_ROOT,
             'row_id_status': row_id_status,
         }
 
@@ -1183,7 +1221,9 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
 
                     if existing_document:
                         existing_document.file_name = file_name

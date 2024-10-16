@@ -106,7 +106,7 @@
                                         <span style="color: red;">*</span>
                                     {% endif %}
                                 </td>
-                                <td>
+                                {% comment %} <td>
                                     {% if document.filepath %}
                                         <a class="edit-link" href="{{ MEDIA_URL }}{{ document.filepath }}" id="viewFile_{{ forloop.counter }}" 
                                             target="_blank" onclick="openInNewTab(this.href)">
@@ -116,8 +116,17 @@
                                     {% else %}
                                         <span>No file uploaded</span>
                                     {% endif %}
+                                </td> {% endcomment %}
+                                <td>
+                                    {% if document.filepath %}
+                                        <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ forloop.counter }}" target="_blank">
+                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                            <span class="edit-text">View</span>
+                                        </a>
+                                    {% else %}
+                                        <span>No file uploaded</span>
+                                    {% endif %}
                                 </td>
-                                
                             </tr>
                             {% endfor %}
                         </tbody>
