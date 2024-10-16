@@ -113,8 +113,16 @@
                                     <input type="file" name="upload_{{ document.document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.document.doc_id }})">
                                 </td>
                                 <td>
-                                    {% if document.filepath %}
+                                    {% comment %} {% if document.filepath %}
                                         <a class="edit-link" href="{{ MEDIA_URL }}{{ document.filepath }}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
+                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                            <span class="edit-text">View</span>
+                                        </a>
+                                    {% else %}
+                                        <span>No file uploaded</span>
+                                    {% endif %} {% endcomment %}
+                                    {% if document.filepath %}
+                                        <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
                                             <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
                                             <span class="edit-text">View</span>
                                         </a>
