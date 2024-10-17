@@ -5,7 +5,8 @@ import traceback
 from Account.db_utils import callproc
 from django.contrib import messages
 from CSH.encryption import *
-
+import os
+from CSH.settings import *
 # Create your views here.
 
 
@@ -45,7 +46,22 @@ def matrix_flow(request):
         if request.method == "GET":
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.GET.get('wf', '')) else ''
             form_id = decrypt_parameter(form_id) if (form_id := request.GET.get('af', '')) else ''
-            docs = document_master.objects.filter(is_active=1)
+            # docs = document_master.objects.filter(is_active=1)
+            citizen_docs = citizen_document.objects.filter(application_id=form_id)
+            for doc_master in document_master.objects.all():
+                matching_doc = citizen_docs.filter(document=doc_master).first()
+                doc_entry = {
+                    'doc_name': doc_master.doc_name,'file_path': None, 'file_name': None  
+                }
+                if matching_doc and matching_doc.filepath:
+                    full_filepath = os.path.join(MEDIA_ROOT, matching_doc.filepath)
+                    file_name = os.path.basename(full_filepath)
+                    if os.path.exists(full_filepath):
+                        encrypted_path = encrypt_parameter(matching_doc.filepath)
+                        doc_entry['file_path'] = encrypted_path
+                        doc_entry['file_name'] = file_name
+
+                docs.append(doc_entry)
             label = callproc("stp_get_masters", ['fm','','header',form_id])
             label = [l[0] for l in label]
             input = callproc("stp_get_masters",['fm','','data',form_id])
