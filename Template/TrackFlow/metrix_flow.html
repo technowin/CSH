@@ -50,6 +50,7 @@
     </div> -->
 
     <div class="row col-lg-12 mb-2 shadow " style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;">
+        <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
         <div class="col-md-3">
             {% comment %} <button type="submit" id="Btn1" class="btn btn-primary">Forward</button> {% endcomment %}
             <div class="dropdown">
@@ -282,7 +283,7 @@
             <div class="modal-header">
                 
                 <h5 class="modal-title" style="color:black">Internal Documents &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button class="buttonu" type="button" id="uploadButton">
+                <button class="buttonu" type="button" id="uploadButton"  onclick ="bulk_upload(this.id,'.pdf')">
                     <span class="btn__icon">
                         <svg stroke-linejoin="round" stroke-linecap="round" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" height="24" width="24" xmlns="http://www.w3.org/2000/svg">
                             <path fill="none" d="M0 0h24v24H0z" stroke="none"></path>
@@ -385,7 +386,7 @@
   </script>
   {% endfor %}
 {% endif %}
-
+{% comment %} 
 <script>
     document.getElementById('uploadButton').onclick = function() {
         Swal.fire({
@@ -416,8 +417,109 @@
             }
         });
     };
-    </script>
+</script> {% endcomment %}
+
+<script>
+    function bulk_upload(id,type) {
+        show_bulkupload_dialog(id,type).then(result => {
+            if (result.isConfirmed && result.value) {
+              handle_bulk_upload(result.value,id,type);
+            }
+        });
+    }
+    function show_bulkupload_dialog(id,type) {
+      return new Promise(function(resolve, reject) { 
+        Swal.fire({
+            title: 'Upload File',
+            input: 'file',
+            inputAttributes: {
+                accept: '*/*', // Accept all files
+                'aria-label': 'Upload your file',"name": "files",  "id": "file-input",  
+                "type": "file","required": true, "multiple": true,
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Upload',
+            cancelButtonText: 'Cancel',
+            customClass: {
+                confirmButton: 'swal2-confirm',
+            },
+        }).then(result => {
+          resolve(result);
+        });
+      });
+    }
+  
+  function handle_bulk_upload(fileInput,id,type) {
+    return new Promise(function(resolve, reject) {
+      var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const formData = new FormData();
+      debugger;
+      if (fileInput.length > 0) {
+        for (var i = 0; i < fileInput.length; i++) {
+          formData.append('files[]', fileInput[i]);
+           }
+      }else{
+        Swal.fire({
+          icon: 'error',
+          title: 'Please select the files',
+          text: 'try again.',
+          timer: 3000, 
+          showConfirmButton: false
+        });
+      }
+      var wfh_id = $('#wfh_id').val();
+      formData.append("wf_id", wfh_id);
+
+      fetch('/matrix_flow', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken 
+        },
+        body: formData
+      })
+      .then(response => {
+        debugger;
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Failed to upload files');
+        }
+      })
+      .then(data => {
+        debugger;
+        if (data != "") {
+          Swal.fire({
+            icon: 'success',
+            title: 'File uploaded successfully!',
+            showConfirmButton: false,
+            timer: 3000
+          });
     
+          resolve();
+        } else {
+    
+          throw new Error('File upload failed');
+        }
+        resolve();
+      })
+      .catch(error => {
+        debugger;
+        console.error('Error uploading files:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'File upload failed',
+          text: 'Please try again.',
+          timer: 3000, 
+          showConfirmButton: false
+        });
+        reject(error);
+      });
+      
+    });
+  }
+  
+  </script>
+
 
 <script type="text/javascript">
     $(document).ready(function () {

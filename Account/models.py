@@ -45,6 +45,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True)
     # is_staff = models.BooleanField(default=False)
+    superior_id =  models.BigIntegerField(null=True, blank=True)
     role = models.ForeignKey('Masters.Roles', on_delete=models.CASCADE, related_name='role_idd', blank=True, null=True)
     device_token = models.CharField(max_length=255, null=True, blank=True)
     objects = CustomUserManager()

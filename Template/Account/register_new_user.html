@@ -1,27 +1,8 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
 {% load static %}
+{% csrf_token %}
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    {% csrf_token %}
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <title>{% block title %} CSH {% endblock %}</title>
-
-    <!-- Custom fonts for this template-->
-    <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
-
-    <!-- Custom styles for this template-->
-    <link href="{% static 'css/CSH.min.css' %}" rel="stylesheet">
-
-</head>
-
-<body class="bg-gradient-primary">
 
     <div class="container">
         <div class="card o-hidden border-0 shadow-lg my-5" style="width: 70%; margin: 0 auto;">
@@ -53,7 +34,7 @@
                                     </div>
                                     <div class="col-sm-6">
                                         <label>Last Name :-</label>
-                                        <input type="text" value="{{ last_name }}" class="form-control form-control-user" id="exampleLastName" name="lastname" placeholder="Last Name" >
+                                        <input type="text" value="{{ last_name }}" class="form-control form-control-user" id="exampleLastName" name="lastname" placeholder="Last Name" required>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -66,10 +47,11 @@
                                         <input type="email"  value="{{ users.email }}" class="form-control form-control-user" id="exampleInputEmail" name="email" placeholder="Email Address" required>
                                     </div>
                                 </div>
+                              
                                 <div class="form-group row">
                                     <div class="col-sm-6 mb-3 mb-sm-0">
                                         <label>Department :-</label>
-                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="department" id="department_id" class="form-control">
+                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="department" id="department_id" class="form-control" required>
                                             <option value="" Selected disabled>Select Department</option>
                                             {% for item in department %}
                                                 <option value="{{ item.0 }}" {% if item.0 == user_dept_ser.department_id %}selected{% endif %}>{{ item.1 }}</option>
@@ -78,12 +60,36 @@
                                     </div>
                                     <div class="col-sm-6 mb-3 mb-sm-0">
                                         <label>Services :-</label>
-                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="service" id="service_id" class="form-control" >
+                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="service" id="service_id" class="form-control" required >
                                             <option value="" Selected disabled>Select Services</option>
                                             {% for item in service %}
                                                 <option value="{{ item.0 }}" {% if item.0 == user_dept_ser.service_id %}selected{% endif %}>{{ item.1 }}</option>
                                             {% endfor %}
                                         </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <label>Role :-</label>
+                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="role_id" id="role_id" class="form-control" required>
+                                            {% if not users.role_id %}
+                                                <option value="" Selected disabled>Select Role</option>
+                                            {% endif %}
+                                            {% for item in roles %}
+                                                <option value="{{ item.0 }}" {% if item.0 == users.role_id %}selected{% endif %}>{{ item.1 }}</option>
+                                            {% endfor %}
+                                        </select>                                    
+                                    </div>
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <label>Superior :-</label>
+                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="superior_id" id="superior_id" class="form-control" required>
+                                            {% if not users.superior_id %}
+                                                <option value="" Selected disabled>Select Superior</option>
+                                            {% endif %}
+                                            {% for item in user_list %}
+                                                <option value="{{ item.0 }}" {% if item.0 == users.superior_id %}selected{% endif %}>{{ item.1 }}</option>
+                                            {% endfor %}
+                                        </select>                                    
                                     </div>
                                 </div>
                                 {% if id == '0'%}
@@ -152,7 +158,7 @@
         return true;  // Allow form submission
     }
 </script>
-</body>
 
-</html>
 
+<!-- End of Main Content -->
+{% endblock %}

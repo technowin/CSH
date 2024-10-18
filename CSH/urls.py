@@ -53,7 +53,7 @@ urlpatterns = [
 
     # TrackFlow
     path('index/', index, name='index'),
-    path('matrix_flow/', matrix_flow, name='matrix_flow'),
+    path('matrix_flow', matrix_flow, name='matrix_flow'),
 
     # Masters
     path('masters/', masters, name='masters'),

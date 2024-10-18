@@ -212,6 +212,7 @@ class internal_user_document(models.Model):
     id = models.AutoField(primary_key=True) 
     workflow = models.ForeignKey(workflow_details, on_delete=models.CASCADE, null=True, blank=True, related_name='workflow_intdoc_F') 
     file_name = models.TextField(null=True, blank=True)  
+    file_path = models.TextField(null=True, blank=True)  
     created_at = models.DateTimeField(auto_now_add=True)             
     created_by = models.TextField(null=True, blank=True) 
     updated_at = models.DateTimeField(null=True, blank=True)               

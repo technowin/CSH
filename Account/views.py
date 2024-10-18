@@ -97,20 +97,21 @@ def register_new_user(request):
     if request.method=="GET":
         id = request.GET.get('id', '0')
         roles = callproc("stp_get_dropdown_values",['roles'])
+        user_list = callproc("stp_get_dropdown_values",['user'])
         department = callproc("stp_get_dropdown_values",['department'])
         service = callproc("stp_get_dropdown_values",['service'])
         
         if id != '0':
             id1 = decrypt_parameter(id)
             users = get_object_or_404(CustomUser, id=id1)
-            user_dept_ser = get_object_or_404(user_dept_services.objects.using('default'), user_id=id1)
+            user_dept_ser =user_dept_services.objects.using('default').filter(user_id=id1) 
             full_name = users.full_name.split(" ", 1) 
             first_name = full_name[0] 
             last_name = full_name[1] if len(full_name) > 1 else ""  
-            context = {'users':users,'first_name':first_name,'last_name':last_name,'roles':roles,'department':department,'service':service,'user_dept_ser':user_dept_ser}
+            context = {'users':users,'first_name':first_name,'last_name':last_name,'roles':roles,'user_list':user_list,'department':department,'service':service,'user_dept_ser':user_dept_ser}
             
         else:
-            context = {'id':id,'roles': roles,'department':department,'service':service}
+            context = {'id':id,'roles': roles,'department':department,'service':service,'user_list':user_list}
         return render(request,'Account/register_new_user.html',context)
 
     if request.method == "POST":
@@ -123,13 +124,13 @@ def register_new_user(request):
                 password = request.POST.get('password') 
                 phone = request.POST.get('mobileNumber')
                 role_id = request.POST.get('role_id')
+                superior_id = request.POST.get('superior_id')
                 department = request.POST.get('department')
                 service_db = request.POST.get('service', 'default')
                 full_name = f"{firstname} {lastname}"
 
                 user = CustomUser(
-                    full_name=full_name, email=email, phone=phone,
-                    role_id=role_id,
+                    full_name=full_name,email=email,phone=phone,superior_id=superior_id,role_id=role_id
                 )
                 user.username = user.email
                 user.is_active = True 
@@ -166,12 +167,14 @@ def register_new_user(request):
                 full_name = f"{firstname} {lastname}"
                 phone = request.POST.get('mobileNumber')
                 role_id = request.POST.get('role_id')
+                superior_id = request.POST.get('superior_id')
 
                 user = CustomUser.objects.get(id=id)
                 user.full_name = full_name
                 user.email = email
                 user.phone = phone
                 user.role_id = role_id
+                user.superior_id = superior_id
                 user.save()
 
                 messages.success(request, "User details updated successfully!")
