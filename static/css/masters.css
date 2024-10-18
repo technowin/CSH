@@ -582,16 +582,17 @@ color: black;
 
 /* edit css */
 
-
 .edit-link,
-.Delete-link {
+.delete-link,
+.download-link { /* Added download-link here */
   text-decoration: none;
   position: relative;
   display: inline-block;
 }
 
 .edit-text,
-.Delete-text {
+.delete-text,
+.download-text { /* Added download-text here */
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -600,18 +601,27 @@ color: black;
   padding: 5px 10px;
   background-color: #ffffff;
   border: 1px solid black;
-  pointer-events: none;
+  pointer-events: none; /* Prevents mouse events on the text */
   z-index: 1; /* Ensure text is above icon */
 }
 
-.edit-link:hover .edit-text {
+.edit-link:hover .edit-text,
+.delete-link:hover .delete-text,
+.download-link:hover .download-text { /* Added hover for download-link */
   opacity: 1;
 }
 
-.Delete-link:hover .Delete-text {
-  opacity: 1;
+.edit-link .fa-pen-to-square,
+.delete-link .fa-trash, /* Add the correct icon class for delete */
+.download-link .fa-download { /* Ensure icon is above text */
+  z-index: 2; /* Ensure icon is above text */
 }
 
-.edit-link .fa-pen-to-square {
-  z-index: 2; /* Ensure icon is above Delete icon */
+
+.edit-link,
+.Delete-link,
+.download-link {
+  text-decoration: none;
+  position: relative;
+  display: inline-block;
 }

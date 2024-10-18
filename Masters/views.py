@@ -961,7 +961,12 @@ def application_Form_Final_Submit(request):
                 
             application_id = request.POST.get('application_id')
             application = get_object_or_404(application_form, id=application_id)
-            application.status_id = 1
+            
+            if application.status_id == 4:
+                application.status_id = 9
+            else:
+                application.status_id = 1 
+                
             application.save()
             
             workflow = workflow_details(

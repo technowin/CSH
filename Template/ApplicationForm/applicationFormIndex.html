@@ -79,13 +79,18 @@
                                     <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="edit-text">Edit</span>
                                 </a>
+                                
+                            {% elif row.status == 'Issue Certificate'  %}
+                                <a class="download-link" href="">
+                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="download-text">Download Certificate</span>
+                                </a> 
                             {% comment %} {% elif row.status == 'Rejected'  %}
                                 <a class="edit-link" href="{% url 'EditApplicationForm' row.id encrypted_new_id_Value %}">
                                     <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="edit-text">Edit</span>
-                                </a> {% endcomment %}
+                                </a>     {% endcomment %}
                             {% endif %}
-
                         </td>
                     </tr>
                     {% endfor %}       

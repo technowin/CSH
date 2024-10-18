@@ -130,6 +130,12 @@ class application_form(models.Model):
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     updated_by = models.TextField(null=True, blank=True)
+    
+    rejected_reason = models.TextField(null=True, blank=True)
+    refused_reason = models.TextField(null=True, blank=True)
+    approved_remark = models.TextField(null=True, blank=True)
+    issued_certificate_remark = models.TextField(null=True, blank=True)
+    
     objects = ServiceManager()
     class Meta:
         db_table = "application_form"     
