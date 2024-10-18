@@ -136,8 +136,11 @@
                             {% for doc in docs %}
                             <tr>
                                 <td>{{ doc.doc_name }}</td>
-                                <td><a style="font-weight: bold; font-size: 15px" download >
-                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                <td> 
+                                    {% if doc.file_path %}
+                                        <a href="{% url 'download_doc' doc.file_path %}" style="font-weight: bold; font-size: 15px" download >
+                                        <img src={% static 'images/download2.png' %}  width="42" height = "42" title="{{doc.file_name}}" target="_blank"></a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -244,7 +247,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" style="color:black" >Roster Upload</h5>
+                <h5 class="modal-title" style="color:black" > Upload</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span>
                 </button>
             </div>
@@ -315,7 +318,7 @@
                                 <td>EE</td>
                                 <td>08-10-2024</td>
                                 <td><a style="font-weight: bold; font-size: 15px" download >
-                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                    <img src={% static 'images/download2.png' %}  width="42" height = "42" target="_blank"></a>
                                 </td>
                             </tr>
                             <tr>
@@ -325,7 +328,7 @@
                                 <td>AEE</td>
                                 <td>09-10-2024</td>
                                 <td><a style="font-weight: bold; font-size: 15px" download >
-                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                    <img src={% static 'images/download2.png' %}  width="42" height = "42" target="_blank"></a>
                                 </td>
                             </tr>
                             <tr>
@@ -335,7 +338,7 @@
                                 <td>AE</td>
                                 <td>10-10-2024</td>
                                 <td><a style="font-weight: bold; font-size: 15px" download >
-                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                    <img src={% static 'images/download2.png' %}  width="42" height = "42" target="_blank"></a>
                                 </td>
                             </tr>
                             <tr>
@@ -345,7 +348,7 @@
                                 <td>AEE</td>
                                 <td>11-10-2024</td>
                                 <td><a style="font-weight: bold; font-size: 15px" download >
-                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                    <img src={% static 'images/download2.png' %}  width="42" height = "42" target="_blank"></a>
                                 </td>
                             </tr>
                             <tr>
@@ -355,7 +358,7 @@
                                 <td>EE</td>
                                 <td>11-10-2024</td>
                                 <td><a style="font-weight: bold; font-size: 15px" download >
-                                    <img src={% static 'images/pdf.png' %}  width="38" height = "38" target="_blank"></a>
+                                    <img src={% static 'images/download2.png' %}  width="42" height = "42" target="_blank"></a>
                                 </td>
                             </tr>
                         </tbody>
