@@ -134,13 +134,14 @@
 
                     <div class="text-center">   
                         
-                        {% if new_id == 0 %}
+                        {% if new_id == '0' %}
                             <button type="submit" id="submitBtn" class="btn btn-primary">Final Submit</button>
                         {% endif %}
                         
-                        {% if new_id == 0 %}
+                        {% if new_id == '0' %}
                             {% comment %} <a href="{% url 'EditApplicationForm' row_id=application.id row_id_status=1 %}" class="btn btn-secondary">Go Back</a> {% endcomment %}
-                            <a href="{% url 'EditApplicationFormFinalSubmit' row_id=application.id row_id_status=1 %}" class="btn btn-secondary">Go Back</a>
+                            {% comment %} <a href="{% url 'EditApplicationFormFinalSubmit' row_id=application.id row_id_status=1 %}" class="btn btn-secondary">Go Back</a> {% endcomment %}
+                            <a href="{% url 'EditApplicationFormFinalSubmit' row_id row_id_status %}" class="btn btn-secondary">Go Back</a>
                         {% else %}
                             <a href="{% url 'applicationFormIndex' %}" class="btn btn-secondary">Go Back</a>
                         {% endif %}

@@ -105,13 +105,16 @@ urlpatterns = [
     path('applicationMasterCrate', applicationMasterCrate, name='applicationMasterCrate'), 
     path('application_Master_Post', application_Master_Post, name='application_Master_Post'), 
     path('application_Form_Final_Submit', application_Form_Final_Submit, name='application_Form_Final_Submit'), 
-    # path('EditApplicationForm/<int:row_id>/', EditApplicationForm, name='EditApplicationForm'),
-    path('EditApplicationForm/<int:row_id>/<int:row_id_status>/', EditApplicationForm, name='EditApplicationForm'),
-    path('EditApplicationFormFinalSubmit/<int:row_id>/<int:row_id_status>/', EditApplicationFormFinalSubmit, name='EditApplicationFormFinalSubmit'),
-    path('viewapplicationform/<int:row_id>/<int:new_id>/', viewapplicationform, name='viewapplicationform'),
+    path('EditApplicationForm/<str:row_id>/<str:row_id_status>/', EditApplicationForm, name='EditApplicationForm'),
+    path('EditApplicationFormFinalSubmit/<str:row_id>/<str:row_id_status>/', EditApplicationFormFinalSubmit, name='EditApplicationFormFinalSubmit'),
+    path('viewapplicationform/<str:row_id>/<str:new_id>/', viewapplicationform, name='viewapplicationform'),
     path('edit_Post_Application_Master/<int:application_id>/<int:row_id_status>/', edit_Post_Application_Master, name='edit_Post_Application_Master'),
     path('edit_Post_Application_Master_final_submit/<int:application_id>/<int:row_id_status>/', edit_Post_Application_Master_final_submit, name='edit_Post_Application_Master_final_submit'),
-
+    
+    # path('EditApplicationFormFinalSubmit/<int:row_id>/<int:row_id_status>/', EditApplicationFormFinalSubmit, name='EditApplicationFormFinalSubmit'),
+    # path('viewapplicationform/<int:row_id>/<int:new_id>/', viewapplicationform, name='viewapplicationform'),
+    # path('EditApplicationForm/<int:row_id>/<int:row_id_status>/', EditApplicationForm, name='EditApplicationForm'),
+    
     # Verification Screen 
     
     path('VerificationForm', VerificationForm, name='VerificationForm'), 

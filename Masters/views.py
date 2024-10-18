@@ -608,6 +608,11 @@ def applicationFormIndex(request):
         else:
             user_id = None 
 
+        new_id = 1
+        new_id_Value = 0
+        encrypted_new_id = encrypt_parameter(str(new_id))
+        encrypted_new_id_Value = encrypt_parameter(str(new_id_Value))
+        
         getApplicantData = []
         show_apply_button = False  
 
@@ -618,14 +623,16 @@ def applicationFormIndex(request):
                 show_apply_button = True
             else:
                 for items in applicationIndex:
+                    encrypted_id = encrypt_parameter(str(items[1]))
                     item = {
                         "srno": items[0],
-                        "id": items[1],
+                        "id": encrypted_id,
                         "request_no": items[2],       
                         "name_of_owner": items[3],   
                         "status": items[4],          
                         "comments": items[5]          
                     }
+                    
                     getApplicantData.append(item)
                     
                     # if items[4] == 'Refused' or items[4] == 'New':
@@ -633,7 +640,9 @@ def applicationFormIndex(request):
 
         return render(request, "ApplicationForm/applicationFormIndex.html", {
             "data": getApplicantData,
-            "show_apply_button": show_apply_button  # Pass to template
+            "show_apply_button": show_apply_button,  
+            "encrypted_new_id": encrypted_new_id,  
+            "encrypted_new_id_Value": encrypted_new_id_Value 
         })
 
     except Exception as e:
@@ -759,59 +768,67 @@ def application_Master_Post(request):
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+                
                 if uploaded_file:
                     # Create the document folder path within the application folder
                     document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
                     os.makedirs(document_folder_path, exist_ok=True)
 
+                    # Remove all files in the document folder (if any)
+                    for file_name in os.listdir(document_folder_path):
+                        file_path = os.path.join(document_folder_path, file_name)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)  # Delete the file
+
+                    # Construct the file name and file path for the new file
+                    file_name = uploaded_file.name
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    # Save the uploaded file in chunks
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    # Prepare the relative file path for database storage
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
+                    # Update the existing document or create a new record in the database
                     existing_document = citizen_document.objects.filter(
                         user_id=user_id,
                         document=document,
                         application_id=application
                     ).first()
 
-                    # Remove existing file if it exists
-                    if existing_document and os.path.exists(existing_document.filepath):
-                        os.remove(existing_document.filepath)
-
-                    current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
-                    file_name = f"{current_time}_{uploaded_file.name}"
-                    file_path = os.path.join(document_folder_path, file_name)
-
-                    # Save the uploaded file
-                    with open(file_path, 'wb+') as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
-
-                    # Prepare the relative file path for database storage
-                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
-                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
-
-
                     if existing_document:
                         existing_document.file_name = file_name
-                        existing_document.filepath = relative_file_path 
+                        existing_document.filepath = relative_file_path
                         existing_document.updated_by = full_name_session
+                        existing_document.updated_at = timezone.now()  # Update the timestamp
                         existing_document.save()
                     else:
                         citizen_document.objects.create(
                             user_id=user_id,
                             file_name=file_name,
-                            filepath=relative_file_path, 
+                            filepath=relative_file_path,
                             document=document,
-                            application_id=application, 
+                            application_id=application,
                             created_by=full_name_session,
-                            updated_by=full_name_session
+                            updated_by=full_name_session,
                         )
-                        
+            
+            new_id = 0
+            new_id = encrypt_parameter(str(new_id))
+            row_id = encrypt_parameter(str(application.id))
+                                    
             m.commit()
             messages.success(request, 'Data and files uploaded successfully!')
-            return redirect('viewapplicationform', row_id=application.id, new_id=0)  
+            return redirect('viewapplicationform', row_id, new_id)  
+            # return redirect('viewapplicationform', row_id=application.id, new_id=0)  
 
         cursor.close()  
         m.close()  
         
-        return redirect('viewapplicationform', row_id=application.id, new_id=0) 
+        # return redirect('viewapplicationform', row_id=application.id, new_id=0) 
     
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -823,7 +840,6 @@ def application_Master_Post(request):
 
     # finally:
     #     return redirect('viewapplicationform', row_id=application.id, new_id=0) 
-
 
 # Main Index For Internal User
 def InternalUserIndex(request):
@@ -865,7 +881,6 @@ def InternalUserIndex(request):
         
         print(f"An error occurred: {e}")
         return HttpResponse("An error occurred while rendering the page.", status=500)  
-
  
 def download_doc(request, filepath):
     file = decrypt_parameter(filepath)
@@ -893,6 +908,9 @@ def viewapplicationform(request, row_id, new_id):
     try:
         context = {} 
         
+        row_id = decrypt_parameter(row_id)
+        new_id = decrypt_parameter(new_id)
+        
         full_name = request.session.get('full_name')
         
         if full_name:
@@ -906,12 +924,17 @@ def viewapplicationform(request, row_id, new_id):
         for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
                 row.filepath = encrypted_filepath
-                
+        
+        row_id = encrypt_parameter(str(row_id))
+        row_id_status = encrypt_parameter(str(1))
+                        
         context = {
             'application': application,
             'uploaded_documents': uploaded_documents,
             'new_id': new_id,
-            'MEDIA_URL': MEDIA_ROOT
+            'MEDIA_URL': MEDIA_ROOT,
+            'row_id' : row_id,
+            'row_id_status' : row_id_status,
         }
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -973,6 +996,9 @@ def EditApplicationForm(request, row_id, row_id_status):
             user_id = user.id
         else:
             user_id = None
+        
+        row_id = decrypt_parameter(row_id)
+        row_id_status = decrypt_parameter(row_id_status)
         
         application = get_object_or_404(application_form, pk=row_id)
 
@@ -1051,53 +1077,61 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+                
                 if uploaded_file:
                     # Create the document folder path within the application folder
                     document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
                     os.makedirs(document_folder_path, exist_ok=True)
 
+                    # Remove all files in the document folder (if any)
+                    for file_name in os.listdir(document_folder_path):
+                        file_path = os.path.join(document_folder_path, file_name)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)  # Delete the file
+
+                    # Construct the file name and file path for the new file
+                    file_name = uploaded_file.name
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    # Save the uploaded file in chunks
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    # Prepare the relative file path for database storage
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
+                    # Update the existing document or create a new record in the database
                     existing_document = citizen_document.objects.filter(
                         user_id=user_id,
                         document=document,
                         application_id=application
                     ).first()
 
-                    # Remove existing file if it exists
-                    if existing_document and os.path.exists(existing_document.filepath):
-                        os.remove(existing_document.filepath)
-
-                    current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
-                    file_name = f"{current_time}_{uploaded_file.name}"
-                    file_path = os.path.join(document_folder_path, file_name)
-
-                    # Save the uploaded file
-                    with open(file_path, 'wb+') as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
-
-                    # Prepare the relative file path for database storage
-                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
-                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
-
-
                     if existing_document:
                         existing_document.file_name = file_name
-                        existing_document.filepath = relative_file_path 
+                        existing_document.filepath = relative_file_path
                         existing_document.updated_by = full_name_session
+                        existing_document.updated_at = timezone.now()  # Update the timestamp
                         existing_document.save()
                     else:
                         citizen_document.objects.create(
                             user_id=user_id,
                             file_name=file_name,
-                            filepath=relative_file_path, 
+                            filepath=relative_file_path,
                             document=document,
-                            application_id=application, 
+                            application_id=application,
                             created_by=full_name_session,
-                            updated_by=full_name_session
+                            updated_by=full_name_session,
                         )
 
+            new_id = 0
+            new_id = encrypt_parameter(str(new_id))
+            row_id = encrypt_parameter(str(application.id))
+            
             if row_id_status == 1: 
-                return redirect('viewapplicationform', row_id=application_id, new_id=0)
+                return redirect('viewapplicationform', row_id, new_id)
+                # return redirect('viewapplicationform', row_id=application_id, new_id=0)
             else:
                 return redirect('applicationFormIndex') 
 
@@ -1117,6 +1151,9 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
             user_id = user.id
         else:
             user_id = None
+        
+        row_id = decrypt_parameter(row_id)
+        row_id_status = decrypt_parameter(row_id_status)
         
         application = get_object_or_404(application_form, pk=row_id)
 
@@ -1196,52 +1233,60 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+                
                 if uploaded_file:
                     # Create the document folder path within the application folder
                     document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
                     os.makedirs(document_folder_path, exist_ok=True)
 
+                    # Remove all files in the document folder (if any)
+                    for file_name in os.listdir(document_folder_path):
+                        file_path = os.path.join(document_folder_path, file_name)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)  # Delete the file
+
+                    # Construct the file name and file path for the new file
+                    file_name = uploaded_file.name
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    # Save the uploaded file in chunks
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    # Prepare the relative file path for database storage
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
+                    # Update the existing document or create a new record in the database
                     existing_document = citizen_document.objects.filter(
                         user_id=user_id,
                         document=document,
                         application_id=application
                     ).first()
 
-                    # Remove existing file if it exists
-                    if existing_document and os.path.exists(existing_document.filepath):
-                        os.remove(existing_document.filepath)
-
-                    current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
-                    file_name = f"{current_time}_{uploaded_file.name}"
-                    file_path = os.path.join(document_folder_path, file_name)
-
-                    # Save the uploaded file
-                    with open(file_path, 'wb+') as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
-
-                    # Prepare the relative file path for database storage
-                    # relative_file_path = os.path.join(f'user_{user_id}', f'application_{application.id}', f'document_{document.doc_id}', file_name).replace('/', '\\')
-                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
-
-
                     if existing_document:
                         existing_document.file_name = file_name
-                        existing_document.filepath = relative_file_path 
+                        existing_document.filepath = relative_file_path
                         existing_document.updated_by = full_name_session
+                        existing_document.updated_at = timezone.now()  # Update the timestamp
                         existing_document.save()
                     else:
                         citizen_document.objects.create(
                             user_id=user_id,
                             file_name=file_name,
-                            filepath=relative_file_path, 
+                            filepath=relative_file_path,
                             document=document,
-                            application_id=application, 
+                            application_id=application,
                             created_by=full_name_session,
-                            updated_by=full_name_session
+                            updated_by=full_name_session,
                         )
-
-            return redirect('viewapplicationform', row_id=application_id, new_id=0)
+            
+            new_id = 0
+            new_id = encrypt_parameter(str(new_id))
+            row_id = encrypt_parameter(str(application.id))
+            
+            return redirect('viewapplicationform', row_id, new_id)
+            # return redirect('viewapplicationform', row_id=application_id, new_id=0)
 
     except Exception as e:
         print(f"Error: {e}")
