@@ -827,8 +827,6 @@ def OTPScreenPost(request):
                 request.session['full_name'] = user.full_name
                 
                 messages.success(request, "OTP verified successfully!")
-                # base_url = reverse('applicationFormIndex')
-                # return redirect(f'{base_url}?service_db=1')
                 return redirect('home')
             else:
                 messages.error(request, "Invalid OTP. Please try again.")

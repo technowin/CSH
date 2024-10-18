@@ -68,23 +68,29 @@
                         </td>
                         <td>{{ row.comments }}</td>
                         <td>
-                            <a class="edit-link" href="{% url 'viewapplicationform' row.id 1 %}">
+                            <a class="edit-link" href="{% url 'viewapplicationform' row.id encrypted_new_id  %}">
                                 <i class="fa-solid fa-eye" style="font-size: 30px; color: #274FC2; margin-right: 8px"></i>
                                 <span class="edit-text">View</span>
                             </a>
             
-                            {% if row.status == 'Application Pending' %}
-                                <a class="edit-link" href="{% url 'EditApplicationFormFinalSubmit' row.id 1 %}">
-                                    <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
-                                    <span class="edit-text">Edit</span>
-                                </a>
-                            {% elif row.status == 'Refused'  %}
-                                <a class="edit-link" href="{% url 'EditApplicationForm' row.id 0 %}">
-                                    <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
-                                    <span class="edit-text">Edit</span>
-                                </a>
-                            {% endif %}
+                            {% if row.status == 'Application Pending' or row.status == 'Rejected' %}
 
+                                <a class="edit-link" href="{% url 'EditApplicationFormFinalSubmit' row.id encrypted_new_id %}">
+                                    <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="edit-text">Edit</span>
+                                </a>
+                                
+                            {% elif row.status == 'Issue Certificate'  %}
+                                <a class="download-link" href="">
+                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="download-text">Download Certificate</span>
+                                </a> 
+                            {% comment %} {% elif row.status == 'Rejected'  %}
+                                <a class="edit-link" href="{% url 'EditApplicationForm' row.id encrypted_new_id_Value %}">
+                                    <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="edit-text">Edit</span>
+                                </a>     {% endcomment %}
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}       
