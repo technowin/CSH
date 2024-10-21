@@ -20,7 +20,8 @@ def index(request):
     try:
         if request.user.is_authenticated ==True:                
                 global user
-                user = request.user.id   
+                user = request.user.id    
+                role_id = request.user.role_id
         if request.method == "GET":
             datalist1= callproc("stp_get_masters",['wf','','name',user])
             name = datalist1[0][0]
@@ -30,7 +31,7 @@ def index(request):
                 encrypted_id0 = encrypt_parameter(str(row[0]))
                 encrypted_id1 = encrypt_parameter(str(row[1]))
                 data.append((encrypted_id0,encrypted_id1) + row[2:])
-        context = {'name':name,'header':header,'data':data,'pre_url':pre_url}
+        context = {'role_id':role_id,'name':name,'header':header,'data':data,'pre_url':pre_url}
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
@@ -41,7 +42,7 @@ def index(request):
 
 @login_required    
 def matrix_flow(request):
-    docs,label,input = [],[],[]
+    docs,label,input,data = [],[],[],[]
     form_id,context  = '',''
     try:
         if request.user.is_authenticated ==True:                
@@ -51,6 +52,9 @@ def matrix_flow(request):
         if request.method == "GET":
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.GET.get('wf', '')) else ''
             form_id = decrypt_parameter(form_id) if (form_id := request.GET.get('af', '')) else ''
+            ac = request.GET.get('ac', '')
+            subordinates = callproc("stp_get_subordinates",[form_id,user])
+            user_list = callproc("stp_get_dropdown_values",['user'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
             for doc_master in document_master.objects.all():
                 matching_doc = citizen_docs.filter(document=doc_master).first()
@@ -67,16 +71,36 @@ def matrix_flow(request):
             label = [l[0] for l in label]
             input = callproc("stp_get_masters",['fm','','data',form_id])
             fields = list(zip(label, input[0]))
-            context = {'docs':docs,'fields': fields,'wf_id':encrypt_parameter(wf_id),'form_id': encrypt_parameter(form_id)}
+            header = callproc("stp_get_masters", ['iud','','header',wf_id])
+            rows = callproc("stp_get_masters",['iud','','data',wf_id])
+            for row in rows:
+                if os.path.exists(os.path.join(MEDIA_ROOT, str(row[4]))):
+                    encrypted_id = encrypt_parameter(str(row[4]))
+                else: encrypted_id = None
+                new_row = row[:4] + (encrypted_id,)
+                data.append(new_row)
+            header1 = callproc("stp_get_masters", ['iuc','','header',wf_id])
+            data1 = callproc("stp_get_masters",['iuc','','data',wf_id])
+            context = {'role_id':role_id,'docs':docs,'fields': fields,'header': header,'data': data,'header1': header1,
+                       'data1': data1,'subordinates':subordinates,'user_list':user_list,'ac':ac,
+                       'wf_id':encrypt_parameter(wf_id),'form_id': encrypt_parameter(form_id)}
         if request.method == "POST":
+            response = None
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.POST.get('wf_id', '')) else ''
-            files = request.FILES.getlist('files[]')
             workflow_instance = workflow_details.objects.get(id=wf_id)
-            file_resp = ''
+            files = request.FILES.getlist('files[]')
+            comment =  request.POST.get('comment', '')
+            if comment!='':
+                internal_user_comments.objects.create(
+                        workflow=workflow_instance, comments=comment,
+                        created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                )  
+            response = f"Your comment has been submitted: '{comment}'"
+           
+           
             for file in files:
                 role = roles.objects.get(id=role_id)
-                role_name = role.role_name
-                sub_path = f'{role_name}/user_{user}/{file.name}'
+                sub_path = f'{role.role_name}/user_{user}/{file.name}'
                 full_path = os.path.join(MEDIA_ROOT, sub_path)
                 folder_path = os.path.dirname(full_path)
                 if not os.path.exists(folder_path):
@@ -88,7 +112,10 @@ def matrix_flow(request):
                     document.updated_at = datetime.now()
                     document.updated_by = str(user)
                     document.save()
-                    file_resp =  f"File '{file.name}' has been updated."
+                    with open(full_path, 'wb+') as destination:
+                        for chunk in file.chunks():
+                            destination.write(chunk)
+                    response =  f"File '{file.name}' has been updated."
                 else:
                     with open(full_path, 'wb+') as destination:
                         for chunk in file.chunks():
@@ -97,9 +124,9 @@ def matrix_flow(request):
                         workflow=workflow_instance, file_name=file.name,file_path=sub_path,
                         created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
                     )  
-                    file_resp =  f"File '{file.name}' has been inserted."
-            if files:
-                return JsonResponse(file_resp, safe=False)
+                    response =  f"File '{file.name}' has been inserted."
+            if response:
+                return JsonResponse(response, safe=False)
              
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)

@@ -49,12 +49,24 @@
                         <tr style="color:black">
                             <td>{{ forloop.counter }}</td>
                             {% for cell in row %}
-                                {% if forloop.counter > 2 %}
+                                {% if forloop.counter > 3 %}
                                     <td>
-                                        {% if forloop.counter == 7 %}
+                                        {% if forloop.counter == 8 %}
                                             <span  class="badge badge-danger" style="font-size: 16px;">{{ cell }}</span>
-                                        {% elif forloop.counter == 8 %}
-                                            <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
+                                        {% elif forloop.counter == 9 %}
+                                            {% if role_id == 3 %}
+                                              {% if row.2 == 1 or row.2 == 7 or row.2 == 9 %}
+                                                 <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
+                                              {% endif %}   
+                                            {% elif role_id == 4 and row.2 == 2 %}
+                                              <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
+                                            {% elif role_id == 5 %}
+                                              {% if row.2 == 3 and row.2 == 4 and row.2 == 5 and row.2 == 6  %}
+                                                 <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
+                                              {% endif %}   
+                                            {% else %}
+                                              <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;"class="btn btn-sm btn-primary" >View </a>
+                                            {% endif %}
                                         {% else %}
                                             {% if cell|length > 60 %}
                                                 <!-- <textarea rows="4" readonly>{{ cell }}</textarea>  -->

@@ -82,7 +82,7 @@ def services(request):
         if request.method == "POST":
             service_db = request.POST.get('service')
             request.session['service_db'] = service_db
-            return redirect('home') 
+            return redirect('index') 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
@@ -653,50 +653,45 @@ def citizenLoginAccount(request):
         if request.method == "GET":
             request.session.flush()            
             service_db = request.GET.get('service_db')
-            if 'service_db' not in request.session:
-                request.session['service_db'] = service_db
-            return render(request, 'citizenAccount/citizenLogin.html')
+            request.session['service_db'] = service_db
+            return render(request, 'citizenAccount/citizenLogin.html',{'service_db':service_db})
 
         elif request.method == "POST":
-            service_db = request.session.get('service_db')
+            service_db = request.POST.get('service_db')
+            request.session['service_db'] = service_db
             phone_number = request.POST.get('username', '').strip()
+
 
             if phone_number:
                 if CustomUser.objects.filter(phone=phone_number).exists():
                     request.session['phone_number'] = phone_number
-                    return redirect('OTPScreen')
+                    return redirect(f'/OTPScreen?service_db={service_db}')
                 else:
                     messages.warning(request, "The phone number entered is not registered. Please register yourself.")
-                    return redirect('citizenRegisterAccount')
+                    return redirect(f'/citizenRegisterAccount?service_db={service_db}')
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
-        # logger.error("An error occurred in citizenLoginAccount: %s", str(e), exc_info=True)
-        # messages.error(request, "An unexpected error occurred. Please try again.")
-        return redirect('citizenRegisterAccount')
+        return redirect(f'/citizenRegisterAccount?service_db={service_db}')
         
-
-    return render(request, 'citizenAccount/citizenLogin.html')
-
 @csrf_exempt
 def citizenRegisterAccount(request):
     context = {
-        'firstName': '',
-        'lastName': '',
-        'email': '',
-        'mobileNumber': '',
+        'firstName': '','lastName': '','email': '', 'mobileNumber': ''
     }
 
     if request.method == "GET":
         service_db = request.GET.get('service_db')
-        if 'service_db' not in request.session:
-           request.session['service_db'] = service_db
+        request.session['service_db'] = service_db
+        context['service_db'] = service_db
         return render(request, 'citizenAccount/citizenRegister.html', context)
 
     elif request.method == "POST":
+        service_db = request.POST.get('service_db')
+        request.session['service_db'] = service_db
         first_name = request.POST.get('firstname').strip()
         last_name = request.POST.get('lastname').strip()
         email = request.POST.get('email').strip()
@@ -704,21 +699,20 @@ def citizenRegisterAccount(request):
 
         if CustomUser.objects.filter(phone=mobile_number).exists():
             messages.warning(request, "This mobile number is already registered. Please LogIn.")
-            return redirect('citizenRegisterAccount')  
+            return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
         else:
             request.session['first_name'] = first_name
             request.session['last_name'] = last_name
             request.session['email'] = email
             request.session['mobile_number'] = mobile_number
-            return redirect('OTPScreenRegistration') 
+            return redirect(f'/OTPScreenRegistration?service_db={service_db}')
  
 @csrf_exempt
 def OTPScreen(request):
     
     if request.method == "GET":
-        # service_db = request.session.get('service_db', 'default')
-        # request.session['service_db'] = service_db
-
+        service_db = request.GET.get('service_db')
+        request.session['service_db'] = service_db
         phone_number = request.session.get('phone_number')
         sms_templates = smstext.objects.all()
         
@@ -745,7 +739,7 @@ def OTPScreen(request):
         except Exception as e:
             messages.error(request, "Failed to send OTP. Please try again.")
 
-        return render(request, 'OTPScreen/OTPScreen.html')
+        return render(request, 'OTPScreen/OTPScreen.html',{'service_db':service_db})
 
 def format_message(template, otp_value, action, service):
     message = template.replace("@otp", otp_value)
@@ -808,10 +802,12 @@ def OTPScreenPost(request):
     if request.method == "POST":
         phone_number = request.session.get('phone_number')  
         entered_otp = request.POST.get('otp')
+        service_db = request.POST.get('service_db')
+        request.session['service_db'] = service_db
 
         if not phone_number:
             messages.error(request, "Phone number not found. Please log in again.")
-            return redirect('citizenLoginAccount')
+            return redirect(f'/citizenLoginAccount?service_db={service_db}')
 
         try:
             otp_record = OTPVerification.objects.filter(mobile=phone_number).order_by('-id').first()
@@ -825,18 +821,17 @@ def OTPScreenPost(request):
                 request.session["user_id"]=(str(user.id))
                 request.session["role_id"] = str(user.role_id)
                 request.session['full_name'] = user.full_name
-                
                 messages.success(request, "OTP verified successfully!")
                 return redirect('home')
             else:
                 messages.error(request, "Invalid OTP. Please try again.")
-                return redirect('citizenLoginAccount')
+                return redirect(f'/citizenLoginAccount?service_db={service_db}')
 
         except OTPVerification.DoesNotExist:
             messages.error(request, "No OTP record found. Please request a new OTP.")
-            return redirect('citizenLoginAccount')
+            return redirect(f'/citizenLoginAccount?service_db={service_db}')
 
-    return render(request, 'citizenAccount/citizenLogin.html', {'error': 'Invalid request method.'})
+    return render(request, 'citizenAccount/citizenLogin.html', {'error': 'Invalid request method.','service_db':service_db})
 
 @csrf_exempt
 def checkmobilenumber(request):
@@ -862,15 +857,14 @@ def checkmobilenumber(request):
 @csrf_exempt
 def OTPScreenRegistration(request):
     if request.method == "GET":
-        # service_db = request.session.get('service_db', 'default')
-        # request.session['service_db'] = service_db
-        
+        service_db = request.GET.get('service_db')
+        request.session['service_db'] = service_db
         phone_number = request.session.get('mobile_number')
         sms_templates = smstext.objects.all()
         
         if not phone_number:
             messages.error(request, "Phone number is required.")
-            return redirect('citizenRegisterAccount')
+            return redirect(f'/citizenRegisterAccount?service_db={service_db}')
 
         otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
 
@@ -899,21 +893,21 @@ def OTPScreenRegistration(request):
             callproc("stp_error_log", [fun, str(e), user])  
             messages.error(request, f"Failed to send OTP. Error: {str(e)}")
         
-        return render(request, 'OTPScreen/OTPScreenRegistration.html')
+        return render(request, 'OTPScreen/OTPScreenRegistration.html',{'service_db':service_db})
 
 @csrf_exempt
 def verify_otp(request):
     if request.method == "POST":
-        service_db = request.session.get('service_db')
         phone_number = request.session.get('mobile_number')
         first_name = request.session.get('first_name')
         last_name = request.session.get('last_name')
         email = request.session.get('email')
         entered_otp = request.POST.get('otp')
-
+        service_db = request.POST.get('service_db')
+        request.session['service_db'] = service_db
         if not phone_number:
             messages.error(request, "Phone number not found. Please log in again.")
-            return redirect('citizenRegisterAccount')
+            return redirect(f'/citizenRegisterAccount?service_db={service_db}')
 
         try:
             otp_record = OTPVerification.objects.filter(mobile=phone_number).order_by('-id').first()
@@ -928,7 +922,7 @@ def verify_otp(request):
                         'firstName': first_name,
                         'lastName': last_name,
                         'email': email,
-                        'mobileNumber': phone_number,
+                        'mobileNumber': phone_number,'service_db':service_db
                     }
                     return render(request, 'citizenAccount/citizenRegister.html', context)
 
@@ -960,7 +954,7 @@ def verify_otp(request):
                 request.session['phone_number'] = phone_number
 
                 messages.success(request, "Registered successfully! OTP verified.")
-                return redirect('citizenLoginAccount')
+                return redirect(f'/citizenLoginAccount?service_db={service_db}')
 
             else:
                 messages.error(request, "Invalid OTP. Please try again.")
@@ -968,7 +962,7 @@ def verify_otp(request):
                     'firstName': first_name,
                     'lastName': last_name,
                     'email': email,
-                    'mobileNumber': phone_number,
+                    'mobileNumber': phone_number,'service_db':service_db
                 }
                 return render(request, 'citizenAccount/citizenRegister.html', context)
 
@@ -978,7 +972,7 @@ def verify_otp(request):
                 'firstName': first_name,
                 'lastName': last_name,
                 'email': email,
-                'mobileNumber': phone_number,
+                'mobileNumber': phone_number,'service_db':service_db
             }
             return render(request, 'citizenAccount/citizenRegister.html', context)
         except IntegrityError:
@@ -987,7 +981,7 @@ def verify_otp(request):
                 'firstName': first_name,
                 'lastName': last_name,
                 'email': email,
-                'mobileNumber': phone_number,
+                'mobileNumber': phone_number,'service_db':service_db
             }
             return render(request, 'citizenAccount/citizenRegister.html', context)
         except Exception as e:
@@ -996,8 +990,8 @@ def verify_otp(request):
                 'firstName': first_name,
                 'lastName': last_name,
                 'email': email,
-                'mobileNumber': phone_number,
+                'mobileNumber': phone_number,'service_db':service_db
             }
             return render(request, 'citizenAccount/citizenRegister.html', context)
 
-    return render(request, 'OTPScreenOTPScreenRegistration.html', {'error': 'Invalid request method.'})
+    return render(request, 'OTPScreen/OTPScreenRegistration.html', {'error': 'Invalid request method.','service_db':service_db})

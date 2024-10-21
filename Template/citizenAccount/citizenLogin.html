@@ -59,6 +59,7 @@
 
                                     <form class="user" action="citizenLoginAccount" method="post" onsubmit="return validatePhoneNumber()">
                                         {% csrf_token %}
+                                        <input type="hidden" id="service_db" name="service_db" value="{{service_db}}" />
                                         <div class="form-group">
                                             <input type="text" class="form-control form-control-user"
                                                 id="exampleInputPhone" name="username" aria-describedby="phoneHelp"
@@ -67,8 +68,8 @@
                                         <button type="submit" class="btn btn-primary btn-user btn-block">
                                             Login
                                         </button>
-                                        <a class="textSignUp" href="citizenRegisterAccount">SignUp Now</a>
-                                        {% comment %} <a class="textSignUp" href="citizenRegisterAccount?service_db=1">SignUp Now</a> {% endcomment %}
+                                        {% comment %} <a class="textSignUp" href="citizenRegisterAccount">SignUp Now</a> {% endcomment %}
+                                        <a class="textSignUp" href="citizenRegisterAccount?service_db={{service_db}}">SignUp Now</a> 
                                     </form>
                                 </div>
                             </div>

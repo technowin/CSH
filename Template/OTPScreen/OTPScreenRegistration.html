@@ -31,7 +31,7 @@
                     <p>Your code was sent to you via SMS</p>
                     <form class="user" method="POST"  action="{% url 'verify_otp' %}" onsubmit="return handleSubmit();">
                         {% csrf_token %}
-                        
+                        <input type="hidden" id="service_db" name="service_db" value="{{service_db}}" />
                         <div class="otp-field mb-4">
                             <input type="number" name="digit1" />
                             <input type="number" name="digit2" disabled />
