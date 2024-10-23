@@ -700,6 +700,9 @@ def citizenRegisterAccount(request):
         if CustomUser.objects.filter(phone=mobile_number).exists():
             messages.warning(request, "This mobile number is already registered. Please LogIn.")
             return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
+        elif CustomUser.objects.filter(email=email).exists():
+            messages.warning(request, "This emailId is already registered. ")
+            return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
         else:
             request.session['first_name'] = first_name
             request.session['last_name'] = last_name
