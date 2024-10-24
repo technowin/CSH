@@ -8,6 +8,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
 <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
 <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/checkbox.css' %}" rel="stylesheet" type="text/css" >
 <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
@@ -51,6 +52,9 @@
 
     <div class="row col-lg-12 mb-2 shadow " style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;">
         <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
+        <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
+        <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
+
         <div class="col-md-3">
             {% comment %} <button type="submit" id="Btn1" class="btn btn-primary">Forward</button> {% endcomment %}
             <div class="dropdown">
@@ -162,25 +166,195 @@
             <button type="submit" id="Btn3" class="btn btn-primary"  data-toggle="modal"  data-target="#comments_model_id" >Comments</button>
         </div>
         <div class="col-md-3">
-            <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" %} disabled {% endif %} >Acknowledge</button>
+            <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
         </div>
         <div class="col-md-2">
             <a type="button" href="/index" id="Btn3" class="btn btn-primary">Back</a>
         </div>
     </div>
- 
 </div>
     
-
+  <!-- Common Modal -->
+  <div class="modal fade" id="{{matrix.reference}}">
+    <form id="model_form" method="POST" enctype="multipart/form-data"  action="{% url 'matrix_flow' %}">
+        {% csrf_token %}
+        <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
+        <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
+        <input type="hidden" id="matrixh_ref" name="matrix_ref" value="{{ matrix.reference|enc }}">
+        <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
+        <input type="hidden" id="btnclkid" name="btnclk" value="">
+        <div class="modal-dialog modal-{{matrix.model}}  modal-dialog-scrollable" role="common">
+          <div class="modal-content">
+        
+            {% if matrix.reference == "acknowledge" %}
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold" >Are you sure?</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                      Are you sure you want to proceed? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="ack" onclick ="btn_confirm(this.id,'btnclk')" >Yes, Acknowledge </button>
+                </div>  
+            {% elif matrix.reference == "scrutiny" %}
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold" >Scrutiny</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font:size:16px;">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="user_docs_id1">
+                            <thead>
+                                <tr> 
+                                    <th style="font-weight:bold;">Sr.No.</th>
+                                    <th style="font-weight:bold;width:100px;">Document</th>
+                                    <th style="font-weight:bold;">Download</th>
+                                    <th style="font-weight:bold;">Correct</th>
+                                    <th style="font-weight:bold;">Incorrect</th>
+                                    <th style="font-weight:bold;width:30px;">Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in docs %}
+                                <input type="hidden" id="doc_id" name="doc_id" value="{{id}}" />
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ doc.doc_name }}</td>
+                                    <td> 
+                                        {% if doc.file_path %}
+                                            <a  href="{% url 'download_doc' doc.file_path %}" style=" font-size: 15px" download >
+                                            <img src={% static 'images/download2.png' %}  width="48" height = "48" title="{{doc.file_name}}" target="_blank"></a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if doc.id %}
+                                            <div class="mt-1 checkbox-wrapper">
+                                                <input id="correct_{{ forloop.counter }}" name="correct" class="toggle-checkbox"  type="checkbox">
+                                                <label for="correct_{{ forloop.counter }}">
+                                                  <div class="tick_mark"></div>
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if doc.id %}
+                                            <div class="mt-1 reject-checkbox">
+                                              <div class="text-center">
+                                                <div class="checkbox-wrapper">
+                                                  <input name="incorrect" class="form-check-label custom-radio-label toggle-checkbox" id="incorrect_{{ forloop.counter }}"type="checkbox" />
+                                                  <label for="incorrect_{{ forloop.counter }}"><div class="tick_mark"><div class="cross"></div></div></label>
+                                                </div>
+                                              </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <textarea rows="3" cols="10" placeholder="Write your comments here..." class="form-control" style="height:30%; border-color: black; border-radius: 10px; "></textarea>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="scru_c" onclick ="btn_confirm(this.id,'btnclk')">Approve </button>
+                    <button type="submit" class="btn btn-danger" id="scru_r" onclick ="btn_confirm(this.id,'btnclk')">Reject </button>
+                </div>
+            {% elif matrix.reference == "inspection" %} 
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold" >Inspection</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                    <div class="col-md-12 row">
+                        <div class="col-md-6 formupl">
+                            <button type="submit" class="btn btn-sm btn-primary" id="dochk" onclick ="btn_confirm(this.id,'btnclk')">Download Checklist</button>
+                            <hr>
+                            <span class="formupl-title">Upload Checklist</span>
+                            <p class="formupl-paragraph">
+                                Upload your file
+                              </p>
+                             <label for="file-input" class="drop-container">
+                            <span class="drop-title">Drop files here</span>
+                            or
+                            <input type="file" id="file-input" name="roster_file" accept=".xlsx, .xls" required >
+                          </label>
+                            {% comment %} <button type="submit" class="btn btn-sm btn-primary" id="upchk" onclick ="btn_confirm(this.id,'btnclk')">Upload Checklist</button> {% endcomment %}
+                        </div>
+                        <div class="col-md-6 formupl">
+                            <button type="submit" class="btn btn-sm btn-primary" id="doinsp" onclick ="btn_confirm(this.id,'btnclk')">Download Inspection </button>
+                            <hr>
+                            <span class="formupl-title">Upload Inspection</span>
+                            <p class="formupl-paragraph">
+                                Upload your file
+                              </p>
+                             <label for="file-input" class="drop-container">
+                            <span class="drop-title">Drop files here</span>
+                            or
+                            <input type="file" id="file-input" name="roster_file" accept=".xlsx, .xls" required >
+                          </label>
+                            {% comment %} <button type="submit" class="btn btn-sm btn-primary" id="upinsp" onclick ="btn_confirm(this.id,'btnclk')">Upload Inspection </button> {% endcomment %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="insp" onclick ="btn_confirm(this.id,'btnclk')" >Submit</button>
+                </div>
+            {% elif matrix.reference == "certificate" %} 
+            <div class="modal-header">
+                <h5 class="modal-title" style="color:black;font-weight:bold" >Issue Certificate</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                <div class="formupl">
+                        <span class="formupl-title">Upload Certificate</span>
+                        <p class="formupl-paragraph">
+                            Upload your file
+                          </p>
+                         <label for="file-input" class="drop-container">
+                        <span class="drop-title">Drop files here</span>
+                        or
+                        <input type="file" id="file-input" name="roster_file" accept=".xlsx, .xls" required >
+                      </label>
+                        {% comment %} <button type="submit" class="btn btn-sm btn-primary" id="upchk" onclick ="btn_confirm(this.id,'btnclk')">Upload Checklist</button> {% endcomment %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="iss" onclick ="btn_confirm(this.id,'btnclk')" >Submit</button>
+            </div>
+            {% elif matrix.reference == "approve" %} 
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold" >Are you sure?</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                      Are you sure you want to proceed? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="app" onclick ="btn_confirm(this.id,'btnclk')">Approve </button>
+                    <button type="submit" class="btn btn-danger" id="ref" onclick ="btn_confirm(this.id,'btnclk')">Refuse </button>
+                </div>  
+            {% endif %}
+      
+          </div>
+        </div>
+    </form>
+  </div>
 <!-- Comments Modal -->
-<div class="modal fade bd-example-modal-sm" id="comments_model_id" >
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document" >
+<div class="modal fade" id="comments_model_id" >
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document" >
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="color:black">Comments  &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
                 <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')"  {% if ac == "view" %} disabled {% endif %} >Add Comments</button>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span>
-                </button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="table-container">
@@ -216,8 +390,8 @@
   
 
 <!-- Documents Modal -->
-<div class="modal fade bd-example-modal-sm" id="docs_model_id" >
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document" >
+<div class="modal fade" id="docs_model_id" >
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document" >
         <div class="modal-content">
             <div class="modal-header">
                 
@@ -278,6 +452,32 @@
   {% endfor %}
 {% endif %}
 
+<script>
+    $(document).ready(function() {
+        $('.toggle-checkbox').on('change', function() {
+          // Get the row (closest 'tr') that contains the clicked checkbox
+          var $row = $(this).closest('tr');
+          // Uncheck and enable the other checkbox in the same row
+          $row.find('.toggle-checkbox').not(this).prop('checked', false).prop('disabled', false);
+          // If the clicked checkbox is checked, disable the other one in the same row
+          if ($(this).is(':checked')) {
+            $row.find('.toggle-checkbox').not(this).prop('disabled', true);
+          }
+        });
+      });      
+</script>
+<script>
+    function btn_confirm(chk, set) {
+        const values = {
+            "ack": 2,"scru_c": 3,"scru_r": 4,"dochk": 'dochk',"doinsp": 'doinsp',"insp": 5,
+            "app": 6,"ref": 7,"senbak": 8,"iss": 10
+        };
+        
+        if (values.hasOwnProperty(chk)) {
+            $("#" + set).val(values[chk]);
+        }
+    }
+</script>
 <script>
     function sweet_popup(id,type) {
         show_sweet_popup(id,type).then(result => {
@@ -348,7 +548,9 @@
       }
 
       var wfh_id = $('#wfh_id').val();
+      var formh_id = $('#formh_id').val();
       formData.append("wf_id", wfh_id);
+      formData.append("form_id", formh_id);
 
       fetch('/matrix_flow', {
         method: 'POST',
@@ -414,10 +616,10 @@
     $(document).ready(function () {
       $("#comments_table_id").DataTable({
          ordering: false,
-         pageLength: 4,
+         pageLength: 6,
          lengthMenu: [
-           [4, 10, 25, 50, 100, 200, 300, 400, 500, -1],
-           [4, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+           [6, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+           [6, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
          ],
       });
 
@@ -428,14 +630,23 @@
           [4, 10, 25, 50, 100, 200, 300, 400, 500, -1],
           [4, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
         ],
-     });
+     });    
 
-     $("#docs_id").DataTable({
+     $("#user_docs_id1").DataTable({
         ordering: false,
         pageLength: 4,
         lengthMenu: [
           [4, 10, 25, 50, 100, 200, 300, 400, 500, -1],
           [4, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+        ],
+     });
+
+     $("#docs_id").DataTable({
+        ordering: false,
+        pageLength: 6,
+        lengthMenu: [
+          [6, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+          [6, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
         ],
      });
 

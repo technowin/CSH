@@ -135,3 +135,7 @@ python manage.py makemigrations
 2. Apply the migrations: Next, apply the generated migrations to update your database schema.
 
 python manage.py migrate
+
+
+
+sudo vim /etc/nginx/nginx.conf
