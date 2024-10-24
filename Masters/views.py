@@ -600,10 +600,12 @@ def VerificationForm(request):
 # application Form Index
 def applicationFormIndex(request):
     try:
-        full_name = request.session.get('full_name')
+        # full_name = request.session.get('full_name')
+        phone_number = request.session['phone_number']
+          
         
-        if full_name:
-            user = get_object_or_404(CustomUser, full_name=full_name)
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number)
             user_id = user.id
         else:
             user_id = None 
@@ -705,7 +707,9 @@ def applicationMasterCrate(request):
             cursor = m.cursor()
 
         getDocumentData = document_master.objects.filter(is_active=1) 
-
+        
+        # success_message = request.session.pop('success_message', None)
+        
         return render(request, 'ApplicationForm/applicationForm.html', {'documents': getDocumentData}) 
     
     except Exception as e:
@@ -821,7 +825,8 @@ def application_Master_Post(request):
             row_id = encrypt_parameter(str(application.id))
                                     
             m.commit()
-            messages.success(request, 'Data and files uploaded successfully!')
+            # messages.success(request, 'Data and files uploaded successfully!')
+            # request.session['success_message'] = 'Data and files uploaded successfully!'
             return redirect('viewapplicationform', row_id, new_id)  
             # return redirect('viewapplicationform', row_id=application.id, new_id=0)  
 

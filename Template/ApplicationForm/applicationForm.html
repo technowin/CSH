@@ -163,22 +163,43 @@
         }
 
     </script>
+    
+    {% comment %} <script>
+        $(document).ready(function() {
+            const successMessage = "{{ success_message|default:'' }}";  // Use the passed context variable
+            if (successMessage) {
+                new Noty({
+                    type: 'success',
+                    layout: 'topRight',
+                    text: successMessage,
+                    timeout: 3000,
+                    progressBar: true
+                }).show();
+            }
+        });
+    </script> {% endcomment %}
+    
 
     <!-- If Document Not Uploaded Show Alert -->
-     
-    {% if messages %}
-        {% for message in messages %}
-            <script>
-                debugger
-                Swal.fire({
-                    title: "{{ message.tags }}",
-                    text: "{{ message }}",
-                    icon: "{{ message.tags }}",
-                    confirmButtonText: "OK",
-                });
-            </script>
-        {% endfor %}
-    {% endif %} 
+{% comment %}      
+    <sctip>
+
+        {% if messages %}
+            {% for message in messages %}
+                <script>
+                    debugger
+                    Swal.fire({
+                        title: "{{ message.tags }}",
+                        text: "{{ message }}",
+                        icon: "{{ message.tags }}",
+                        confirmButtonText: "OK",
+                    });
+                </script>
+            {% endfor %}
+        {% endif %} 
+
+    </script> {% endcomment %}
+
     
 </body>
 {% endblock %}
