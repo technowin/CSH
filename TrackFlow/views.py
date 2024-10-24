@@ -99,7 +99,7 @@ def matrix_flow(request):
                         workflow=wf, comments=comment,
                         created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
                 )  
-            response = f"Your comment has been submitted: '{comment}'"
+                response = f"Your comment has been submitted: '{comment}'"
             for file in files:
                  response =  internal_docs_upload(file,role_id,user,wf)
                 
@@ -113,7 +113,7 @@ def matrix_flow(request):
             if status.isdigit():
                 status = int(status)
                 file_resp= None
-                if (status == 3 or status == 4) and (ref == 'scru_c' or ref == 'scru_r'):
+                if (status == 3 or status == 4) and (ref == 'scrutiny'):
                     doc_id = request.POST.getlist('doc_id')
                     correct = request.POST.getlist('correct')
                     incorrect = request.POST.getlist('incorrect')
@@ -122,12 +122,21 @@ def matrix_flow(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                elif status == 5 and ref == 'insp':
+                elif status == 5 and ref == 'inspection':
                     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
                     inspection_upl_file = request.FILES.get('cheklist_upl_file')
                     if cheklist_upl_file and inspection_upl_file:
                         file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf)
                         file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf)
+
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                elif status == 10 and ref == 'certificate':
+                    certificate_upl_file = request.FILES.get('certificate_upl_file')
+                    if certificate_upl_file:
+                        file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf)
                         
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     if r[0][0] not in (""):
@@ -138,10 +147,11 @@ def matrix_flow(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                return redirect(f'/matrix_flow?wf_id={wf_id}&form_id={form_id}&ac={ac}')
+                return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
             else:
                 messages.success(request, "Success!")
-                return redirect(f'/matrix_flow?wf_id={wf_id}&form_id={form_id}&ac={ac}')
+                return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+
 
                 
 

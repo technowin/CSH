@@ -25,3 +25,18 @@ class ServiceDatabaseMiddleware(MiddlewareMixin):
         set_current_service(service_db)
         # Store the selected service for later use in database routing
         request.service_db = service_db
+
+
+from django.shortcuts import render
+
+class CustomErrorMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            response = self.get_response(request)
+            return response
+        except Exception as e:
+            # Redirect to custom error page
+            return render(request, 'Account/error.html', {"message": "An unexpected error occurred."})
