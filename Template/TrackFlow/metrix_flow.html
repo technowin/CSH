@@ -182,8 +182,7 @@
         {% csrf_token %}
         <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
         <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
-        {% comment %} <input type="hidden" id="matrixh_ref" name="matrix_ref" value="{% if matrix.reference %}{{ matrix.reference|enc }}{% endif %}"> {% endcomment %}
-        <input type="hidden" id="matrixh_ref" name="matrix_ref" value="{{ matrix.reference|enc }}">
+        <input type="hidden" id="matrixh_ref" name="matrix_ref" value="{% if matrix.reference %}{{ matrix.reference|enc }}{% endif %}">
         <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
         <input type="hidden" id="btnclkid" name="btnclk" value="">
         <div class="modal-dialog modal-{{matrix.model}}  modal-dialog-scrollable" role="common">
