@@ -208,7 +208,6 @@ class citizen_document(models.Model):
     filepath = models.CharField(max_length=1000, null=True, blank=True)  # Add this field
     document = models.ForeignKey(document_master, on_delete=models.CASCADE, null=True, blank=True, related_name='citizen_documents_f', db_column='doc_id_id')  
     correct_mark = models.TextField(null=True, blank=True)
-    incorrect_mark = models.TextField(null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)           
     created_by = models.TextField(null=True, blank=True) 

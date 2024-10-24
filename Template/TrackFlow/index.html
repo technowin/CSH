@@ -54,7 +54,7 @@
                                         {% if forloop.counter == 8 %}
                                             <span class="badge badge-danger" style="font-size: 16px;">{{ cell }}</span>
                                         {% elif forloop.counter == 9 %}
-                                            {% if role_id == 3 %}
+                                            {% comment %} {% if role_id == 3 %}
                                               {% if row.2 == 1 or row.2 == 7 or row.2 == 9 %}
                                                  <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
                                               {% endif %}   
@@ -66,7 +66,8 @@
                                               {% endif %}   
                                             {% else %}
                                               <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;"class="btn btn-sm btn-primary" >View </a>
-                                            {% endif %}
+                                            {% endif %} {% endcomment %}
+                                            <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
                                         {% else %}
                                             {% if cell|length > 60 %}
                                                 <!-- <textarea rows="4" readonly>{{ cell }}</textarea>  -->
