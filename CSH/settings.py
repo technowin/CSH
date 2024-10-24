@@ -144,7 +144,6 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'axes.middleware.AxesMiddleware',
     'Account.middleware.ServiceDatabaseMiddleware',
-    'Account.middleware.CustomErrorMiddleware',
 ]
 CORS_ALLOWED_ORIGINS = [
     'http://13.202.157.7'
