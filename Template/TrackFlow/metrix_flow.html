@@ -166,7 +166,9 @@
             <button type="submit" id="Btn3" class="btn btn-primary"  data-toggle="modal"  data-target="#comments_model_id" >Comments</button>
         </div>
         <div class="col-md-3">
-            <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+            {% if matrix.action %}
+                <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+            {% endif %}
         </div>
         <div class="col-md-2">
             <a type="button" href="/index" id="Btn3" class="btn btn-primary">Back</a>
@@ -180,7 +182,7 @@
         {% csrf_token %}
         <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
         <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
-        <input type="hidden" id="matrixh_ref" name="matrix_ref" value="{{ matrix.reference|enc }}">
+        <input type="hidden" id="matrixh_ref" name="matrix_ref" value="{% if matrix.reference %}{{ matrix.reference|enc }}{% endif %}">
         <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
         <input type="hidden" id="btnclkid" name="btnclk" value="">
         <div class="modal-dialog modal-{{matrix.model}}  modal-dialog-scrollable" role="common">
@@ -356,7 +358,7 @@
             </div>
             <div class="modal-body">
                 <div class="table-container">
-                    <table class="table table-bordered" id = "comments_table_id" >
+                    <table class="table table-bordered" id = "comments_table_id">
                         <thead style="font-weight:bold;">
                             <tr>
                                 {% for col in header1 %}

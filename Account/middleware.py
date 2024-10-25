@@ -25,3 +25,4 @@ class ServiceDatabaseMiddleware(MiddlewareMixin):
         set_current_service(service_db)
         # Store the selected service for later use in database routing
         request.service_db = service_db
+
