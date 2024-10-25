@@ -602,7 +602,6 @@ def applicationFormIndex(request):
     try:
         # full_name = request.session.get('full_name')
         phone_number = request.session['phone_number']
-          
         
         if phone_number:
             user = get_object_or_404(CustomUser, phone=phone_number)
@@ -637,8 +636,8 @@ def applicationFormIndex(request):
                     
                     getApplicantData.append(item)
                     
-                    # if items[4] == 'Refused' or items[4] == 'New':
-                    show_apply_button = True
+                    if items[4] == 'Refused':
+                        show_apply_button = True
 
         return render(request, "ApplicationForm/applicationFormIndex.html", {
             "data": getApplicantData,
