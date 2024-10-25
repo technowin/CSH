@@ -705,7 +705,7 @@ def applicationMasterCrate(request):
             Db.closeConnection()
             m = Db.get_connection()
             cursor = m.cursor()
-
+        
         getDocumentData = document_master.objects.filter(is_active=1) 
         
         # success_message = request.session.pop('success_message', None)
@@ -744,7 +744,7 @@ def application_Master_Post(request):
                 if not request.FILES.get(f'upload_{document.doc_id}'):
                     all_uploaded = False
                     missing_documents.append(document.doc_name)
-
+                    
             if not all_uploaded:
                 messages.error(request, 'Please upload the mandatory documents.')
                 return redirect('applicationMasterCrate')
@@ -1169,6 +1169,11 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
 
         uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
         
+        # for doc in uploaded_documents:
+        #     print(f"Document ID: {doc.id}, File Name: {doc.file_name}, "
+        #           f"File Path: {doc.filepath}, Comment: {doc.comment}, "
+        #           f"Created At: {doc.created_at}, User ID: {doc.user_id}")
+            
         for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
                 row.filepath = encrypted_filepath

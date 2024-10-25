@@ -90,13 +90,23 @@
                             <input type="text" value="{{ application.septic_tank_size }}" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
                         </div>
                     </div>
-                
+                    
+                    {% if application.status_id == 4 %}
+                        <p style="color:red">
+                            Rejected Reason :- {{application.rejected_reason}}
+                        </p>
+                    {% endif %} 
+
                     <table class="table table-bordered">
                         <thead>
                             <tr>
                                 <th>Document Name</th>
                                 <th>ReUpload Document</th>
                                 <th>Uploaded Document</th>
+                                {% if application.status_id == 4 %}
+                                <th>Remark</th>
+                                <th>Comment</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -113,14 +123,6 @@
                                     <input type="file" name="upload_{{ document.document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.document.doc_id }})">
                                 </td>
                                 <td>
-                                    {% comment %} {% if document.filepath %}
-                                        <a class="edit-link" href="{{ MEDIA_URL }}{{ document.filepath }}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
-                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
-                                            <span class="edit-text">View</span>
-                                        </a>
-                                    {% else %}
-                                        <span>No file uploaded</span>
-                                    {% endif %} {% endcomment %}
                                     {% if document.filepath %}
                                         <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
                                             <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
@@ -130,6 +132,30 @@
                                         <span>No file uploaded</span>
                                     {% endif %}
                                 </td>
+
+                                {% if application.status_id == 4 %}
+                                    {% if document.correct_mark == '0' %}
+                                        <td>
+                                            <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
+                                        </td>
+                                    {% elif document.correct_mark == '1' %}
+                                        <td>
+                                            <i class="fa-solid fa-check" style="font-size: 24px; color: green;"></i>
+                                        </td>
+                                    {% else %}   
+                                        <td></td>
+                                    {% endif %}    
+                                {% endif %}
+
+                                {% if application.status_id == 4 %}
+                                    {% if document.comment != null %}
+                                        <td style="color:red;">
+                                            {{ document.comment }}
+                                        </td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                {% endif %}
                             </tr>
                             {% endfor %}
                     
@@ -152,6 +178,10 @@
                                         <span class="edit-text">View</span>
                                     </a>
                                 </td>
+                                {% if application.status_id == 4 %}
+                                    <td></td>
+                                    <td></td>
+                                {% endif %}
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -171,6 +201,10 @@
   <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'sweetalert2/dist/sweetalert2.min.js' %}"></script>
 
     <script>
         
@@ -199,7 +233,12 @@
 
     </script>
 
-    
+    <script>
+        $("#dt").dataTable({
+          pageLength: 4,
+          order: []
+        });
+    </script>
 
 </body>
 {% endblock %}
