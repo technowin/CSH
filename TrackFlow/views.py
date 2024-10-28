@@ -207,7 +207,7 @@ def internal_docs_upload(file,role_id,user,wf):
     file_exists_in_folder = os.path.exists(full_path)
     file_exists_in_db = internal_user_document.objects.filter(file_path=sub_path).exists()
     if file_exists_in_db:
-        document = internal_user_document.objects.filter(file_path=sub_path).first()
+        document = internal_user_document.objects.filter(file_path=sub_path,workflow=wf).first()
         document.updated_at = datetime.now()
         document.updated_by = str(user)
         document.save()
