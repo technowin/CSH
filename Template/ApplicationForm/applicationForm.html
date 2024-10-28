@@ -135,6 +135,9 @@
   <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'sweetalert2/dist/sweetalert2.min.js' %}"></script>
 
     <script>
         
@@ -162,6 +165,13 @@
             }
         }
 
+    </script>
+
+    <script>
+        $("#dt").dataTable({
+          pageLength: 4,
+          order: []
+        });
     </script>
     
     {% comment %} <script>

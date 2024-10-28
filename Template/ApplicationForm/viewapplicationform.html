@@ -90,12 +90,23 @@
                             <input type="text" value="{{ application.septic_tank_size }}" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required readonly disabled>
                         </div>
                     </div>
+
+                    {% if application.status_id == 4 %}
+                        <p style="color:red;">
+                            Rejected Reason: {{ application.rejected_reason }} Please edit your application form.
+                        </p>
+                    {% endif %}
+
                     {% comment %} <p>Media URL: {{ MEDIA_URL }}</p> {% endcomment %}
                     <table class="table table-bordered">
                         <thead>
                             <tr>
                                 <th>Document Name</th>
                                 <th>Uploaded Document</th>
+                                {% if application.status_id == 4 %}
+                                    <th>Remark</th>
+                                    <th>Comment</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -127,6 +138,30 @@
                                         <span>No file uploaded</span>
                                     {% endif %}
                                 </td>
+                                {% if application.status_id == 4 %}
+                                    {% if document.correct_mark == '0' %}
+                                        <td>
+                                            <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
+                                        </td>
+                                    {% elif document.correct_mark == '1' %}
+                                        <td>
+                                            <i class="fa-solid fa-check" style="font-size: 24px; color: green;"></i>
+                                        </td>
+                                    {% else %}   
+                                        <td></td>
+                                    {% endif %}
+                                {% endif %}
+
+
+                                {% if application.status_id == 4 %}
+                                    {% if document.comment != null %}
+                                        <td style="color:red;">
+                                            {{ document.comment }}
+                                        </td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                {% endif %}
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -159,8 +194,11 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-    <script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'sweetalert2/dist/sweetalert2.min.js' %}"></script>
+    
+  <script>
         document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("submitBtn").addEventListener("click", function(event) {
                 event.preventDefault(); 
@@ -186,6 +224,12 @@
         });
     </script>
 
+    <script>
+        $("#dt").dataTable({
+          pageLength: 4,
+          order: []
+        });
+    </script>
 
 </body>
 {% endblock %}

@@ -166,3 +166,78 @@
 .modal-content{
 	width: 130% !important;
 }
+
+
+table.dataTable.stripe tbody tr.odd,
+table.dataTable.display tbody tr.odd {
+  background: rgb(255, 255, 255);
+}
+
+th {
+  background-color: #a48dee;
+  color: white; /* Optional: change text color for better readability */
+  font-size: 18px;
+  border: 0.5px solid #a48dee;
+}
+
+td {
+  font-size: 17px; /* Adjust the size as needed */
+  border: 0.5px solid #a48dee !important;
+}
+
+table {
+  border-collapse: collapse !important;
+}
+
+.dataTables_wrapper .dataTables_filter {
+  float: right;
+  text-align: right;
+  margin-bottom: 1em;
+}
+.dataTables_wrapper .dataTables_length {
+  float: left;
+}
+.dataTables_wrapper .dataTables_paginate {
+  float: right;
+  margin-top: 10px;
+}
+.dataTables_wrapper .dataTables_info {
+  float: left;
+  margin-top: 10px;
+}
+.dataTables_wrapper .row {
+  display: flex;
+  align-items: center;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+  display: flex;
+  align-items: center;
+}
+.dataTables_wrapper .dataTables_filter label input {
+  margin-left: 0.5em;
+  background-color: white;
+  border: 1px solid #ddd;
+  height: 35px; /* Adjust the height of the search box */
+  padding: 0.25em 0.5em; /* Adjust padding for the input */
+}
+
+/* Style the pagination buttons */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  padding: 0.3em 0.8em;
+  margin-left: 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 0.25em;
+  background-color: #f8f9fa;
+  color: #333;
+  text-decoration: none;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background-color: #e2e6ea;
+  border-color: #dae0e5;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background-color: #f6f5f5;
+  color: black;
+  border-color: black;
+}
