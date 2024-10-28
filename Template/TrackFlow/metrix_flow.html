@@ -65,7 +65,7 @@
         </div>
         <div class="col-md-3">
             {% if ac == "view" or matrix.action == "View" %}
-                <button type="button" id="Btn2" class="btn btn-primary">Send Back</button>
+                <button type="button" id="Btn2" class="btn btn-primary" {% if ac == "view" or matrix.action == "View" %} disabled {% endif %}>Send Back</button>
             {% else %}
                 <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&sb=1&ac={{ac}}">Send Back</a>
             {% endif %}
