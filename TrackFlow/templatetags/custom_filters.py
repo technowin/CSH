@@ -3,6 +3,23 @@ from django import template
 register = template.Library()
 
 @register.filter
+def to_int(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+    
+@register.filter
+def in_list(value, arg):
+    """Check if value is in the provided list of integers."""
+    try:
+        # Convert the comma-separated string to a list of integers
+        arg_list = [int(i) for i in arg.split(',')]
+    except ValueError:
+        return False
+    return value in arg_list
+    
+@register.filter
 def in_pairs(value):
     """Divide a list into pairs."""
     return [value[i:i+4] for i in range(0, len(value), 4)]

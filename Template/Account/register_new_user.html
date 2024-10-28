@@ -80,7 +80,7 @@
                                             {% endfor %}
                                         </select>                                    
                                     </div>
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                    {% comment %} <div class="col-sm-6 mb-3 mb-sm-0">
                                         <label>Superior :-</label>
                                         <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="superior_id" id="superior_id" class="form-control" required>
                                             {% if not users.superior_id %}
@@ -90,7 +90,7 @@
                                                 <option value="{{ item.0 }}" {% if item.0 == users.superior_id %}selected{% endif %}>{{ item.1 }}</option>
                                             {% endfor %}
                                         </select>                                    
-                                    </div>
+                                    </div> {% endcomment %}
                                 </div>
                                 {% if id == '0'%}
                                 <div class="form-group row">

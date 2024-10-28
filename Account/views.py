@@ -124,13 +124,13 @@ def register_new_user(request):
                 password = request.POST.get('password') 
                 phone = request.POST.get('mobileNumber')
                 role_id = request.POST.get('role_id')
-                superior_id = request.POST.get('superior_id')
+                # superior_id = request.POST.get('superior_id')
                 department = request.POST.get('department')
                 service_db = request.POST.get('service', 'default')
                 full_name = f"{firstname} {lastname}"
-
+                # superior_id=superior_id
                 user = CustomUser(
-                    full_name=full_name,email=email,phone=phone,superior_id=superior_id,role_id=role_id
+                    full_name=full_name,email=email,phone=phone,role_id=role_id
                 )
                 user.username = user.email
                 user.is_active = True 
@@ -167,14 +167,14 @@ def register_new_user(request):
                 full_name = f"{firstname} {lastname}"
                 phone = request.POST.get('mobileNumber')
                 role_id = request.POST.get('role_id')
-                superior_id = request.POST.get('superior_id')
+                # superior_id = request.POST.get('superior_id')
 
                 user = CustomUser.objects.get(id=id)
                 user.full_name = full_name
                 user.email = email
                 user.phone = phone
                 user.role_id = role_id
-                user.superior_id = superior_id
+                # user.superior_id = superior_id
                 user.save()
 
                 messages.success(request, "User details updated successfully!")

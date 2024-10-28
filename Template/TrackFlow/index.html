@@ -48,37 +48,20 @@
                     {% for row in data %}
                         <tr style="color:black">
                             <td>{{ forloop.counter }}</td>
-                            {% for cell in row %}
-                                {% if forloop.counter > 3 %}
-                                    <td>
-                                        {% if forloop.counter == 8 %}
-                                            <span class="badge badge-danger" style="font-size: 16px;">{{ cell }}</span>
-                                        {% elif forloop.counter == 9 %}
-                                            {% comment %} {% if role_id == 3 %}
-                                              {% if row.2 == 1 or row.2 == 7 or row.2 == 9 %}
-                                                 <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
-                                              {% endif %}   
-                                            {% elif role_id == 4 and row.2 == 2 %}
-                                              <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
-                                            {% elif role_id == 5 %} 
-                                              {% if row.2 == 3 or row.2 == 4 or row.2 == 5 or row.2 == 6 %}
-                                                 <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
-                                              {% endif %}   
-                                            {% else %}
-                                              <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;"class="btn btn-sm btn-primary" >View </a>
-                                            {% endif %} {% endcomment %}
-                                            <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;"class="btn btn-sm btn-primary" >{{ cell }} </a>
-                                        {% else %}
-                                            {% if cell|length > 60 %}
-                                                <!-- <textarea rows="4" readonly>{{ cell }}</textarea>  -->
-                                                {{ cell }} 
-                                            {% else %}
-                                                {{ cell }}
-                                            {% endif %}
-                                        {% endif %}
-                                    </td>
-                                {% endif %}
-                            {% endfor %}
+                            <td>{{ row.5 }}</td>
+                            <td>{{ row.6 }}</td>
+                            <td>{{ row.7 }}</td>
+                            <td>{{ row.8 }}</td>
+                            <td><span class="badge badge-danger" style="font-size: 16px;">{{ row.9 }}</span></td>
+                            <td>
+                              {% if row.3|to_int == user_id %}
+                                <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;" class="btn btn-sm btn-primary">{{ row.10 }}</a>
+                              {% elif row.2|in_list:"1,9" and role_id == 3 %}
+                                <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;" class="btn btn-sm btn-primary">{{ row.10 }}</a>
+                              {% else %}
+                                <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;" class="btn btn-sm btn-primary">View</a>
+                              {% endif %}
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

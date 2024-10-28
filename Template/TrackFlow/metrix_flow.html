@@ -26,9 +26,8 @@
         position: sticky;
         
         top: 0;
-        background-color: #fff; /* Set background color for sticky header */
-        z-index: 10; /* Ensure the header is on top of scrolling content */
-    }
+        background-color: #fff;
+        z-index: 10; 
     .card-body {
         padding: 10px;
         border: 2px solid #b3b3b3;
@@ -36,7 +35,7 @@
         overflow: hidden; 
     }
     .swal2-confirm {
-        background-color: #4e73df !important; /* Your specific color code */
+        background-color: #4e73df !important; 
         color: white !important;
     }
     
@@ -44,11 +43,6 @@
 
  <!-- Begin Page Content -->
  <div>
-    <!-- Page Heading -->
-     <!--<div class="d-sm-flex align-items-center justify-content-between mb-2">
-        <h1 class="h3 mb-0 text-gray-800">WorkflowX</h1>
-        {% comment %} <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-download fa-sm text-white-50"></i> Report</a> {% endcomment %}
-    </div> -->
 
     <div class="row col-lg-12 mb-2 shadow " style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;">
         <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
@@ -56,37 +50,35 @@
         <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
 
         <div class="col-md-3">
-            {% comment %} <button type="submit" id="Btn1" class="btn btn-primary">Forward</button> {% endcomment %}
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="forward" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false" {% if ac == "view" %} disabled {% endif %}>
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" %} disabled {% endif %}>
                     Forward
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="forward" style="max-height: 200px; overflow-y: auto;">
                     {% for item in user_list %}
-                        <a class="dropdown-item" value="{{ item.0 }}" href="#">{{ item.1 }}</a>
+                        <a class="dropdown-item" value="{{item.0}}" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&f={{item.0}}&ac={{ac}}">{{item.1}}</a>
                     {% endfor %}
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <button type="submit" id="Btn2" class="btn btn-primary"  {% if ac == "view" %} disabled {% endif %}>Send Back</button>
+            <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&sb=1&ac={{ac}}" {% if ac == "view" or matrix.action == "View" %} disabled {% endif %}>Send Back</a>
         </div>
         <div class="col-md-3">
             <button type="submit" id="Btn3" class="btn btn-primary" data-toggle="modal"  data-target="#docs_model_id" >View Documents</button>
         </div>
         <div class="col-md-3">
-            {% comment %} <button type="submit" id="Btn4" class="btn btn-primary">Send Forward</button> {% endcomment %}
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="send_forward" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false" {% if ac == "view" %} disabled {% endif %}>
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" %} disabled {% endif %}>
                     Send Forward
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="send_forward" style="max-height: 200px; overflow-y: auto;">
                     {% for item in subordinates %}
-                        <a class="dropdown-item" value="{{ item.0 }}" href="#">{{ item.1 }}</a>
+                        <a class="dropdown-item" value="{{ item.0 }}" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&sf={{item.0}}&ac={{ac}}">{{ item.1 }}</a>
                     {% endfor %}
                 </div>
             </div>
@@ -159,15 +151,16 @@
     <div class="row col-lg-12 mb-2 shadow " style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;align-items:center;justify-items:center;">
         <div class="col-md-2">
         </div>
-        {% comment %} <div class="col-md-3">
-            <textarea rows="2" cols="10" placeholder="Write your comments here..." class="form-control" style="height:30%; border-color: black; border-radius: 10px; "></textarea>
-        </div> {% endcomment %}
         <div class="col-md-3" style="">
             <button type="submit" id="Btn3" class="btn btn-primary"  data-toggle="modal"  data-target="#comments_model_id" >Comments</button>
         </div>
         <div class="col-md-3">
-            {% if matrix.action %}
-                <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+            {% if ac != "view" and matrix.action and matrix.action != "View" %}
+                {% if workflow.send_forward|to_int == user_id %}
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                {% elif workflow.status_id|in_list:"1,9" and role_id == 3 %}
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                {% endif %}
             {% endif %}
         </div>
         <div class="col-md-2">
@@ -202,11 +195,35 @@
                 </div>  
             {% elif matrix.reference == "scrutiny" %}
                 <div class="modal-header">
-                    <h3 class="modal-title" style="color:black;font-weight:bold" >Scrutiny</h3>
+                    <h3 class="modal-title" style="color:black;font-weight:bold">Scrutiny 
+                         &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                         &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h3>
+                    <!-- Reject Reason Section -->
+                    <div id="rejectReasonSection" class="ml-auto" style="display: none; flex: 1; justify-content: flex-end;">
+                        <div class="d-flex align-items-center">
+                          <!-- Dropdown for Reject Reason -->
+                          <div class="mr-2">
+                            <label for="rejectReason" class="">Reject Reason:</label>
+                            <select id="rejectReason" name="rejectReason" class="form-control" style="border-color: black; border-radius: 10px; "  required>
+                              <option value="">Select reason</option>
+                              <option value="Incomplete Application">Incomplete Application</option>
+                              <option value="Insufficient Documentation">Insufficient Documentation</option>
+                              <option value="Non-compliance with Standards">Non-compliance with Standards</option>
+                            </select>
+                            <span class="text-danger" id="rejectError" style="display: none;">Please select a reject reason.</span>
+                          </div>
+                          &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                          <!-- Textarea for Editing Selected Reject Reason -->
+                          <div id="editRejectReasonSection" class="d-none">
+                            <label for="editRejectReason" class="">Edit Reason:</label>
+                            <textarea id="editRejectReason" name="rej_res" rows="2" cols="30" style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1"></textarea>
+                          </div>
+                        </div>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body" style="font:size:16px;">
-                    <div class="table-responsive">
+                    <div class="table-container">
                         <table class="table table-bordered" id="user_docs_id1">
                             <thead>
                                 <tr> 
@@ -220,8 +237,8 @@
                             </thead>
                             <tbody>
                                 {% for doc in docs %}
-                                <input type="hidden" id="doc_id" name="doc_id" value="{{id}}" />
                                 <tr>
+                                    <input type="hidden" id="doc_id" name="doc_ids" value="{% if doc.id %}{{ doc.id|enc }}{% endif %}"/>
                                     <td>{{ forloop.counter }}</td>
                                     <td>{{ doc.doc_name }}</td>
                                     <td> 
@@ -233,7 +250,7 @@
                                     <td>
                                         {% if doc.id %}
                                             <div class="mt-1 checkbox-wrapper">
-                                                <input id="correct_{{ forloop.counter }}" name="correct" class="toggle-checkbox"  type="checkbox">
+                                                <input id="correct_{{ forloop.counter }}" name="correct_{{ doc.id }}" class="toggle-checkbox" type="checkbox" {% if doc.correct == "1" %}checked{% endif %}>
                                                 <label for="correct_{{ forloop.counter }}">
                                                   <div class="tick_mark"></div>
                                                 </label>
@@ -245,7 +262,7 @@
                                             <div class="mt-1 reject-checkbox">
                                               <div class="text-center">
                                                 <div class="checkbox-wrapper">
-                                                  <input name="incorrect" class="form-check-label custom-radio-label toggle-checkbox" id="incorrect_{{ forloop.counter }}"type="checkbox" />
+                                                  <input name="incorrect_{{ doc.id }}" class="form-check-label custom-radio-label toggle-checkbox" id="incorrect_{{ forloop.counter }}" type="checkbox" {% if doc.correct == "0" %}checked{% endif %} />
                                                   <label for="incorrect_{{ forloop.counter }}"><div class="tick_mark"><div class="cross"></div></div></label>
                                                 </div>
                                               </div>
@@ -253,7 +270,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <textarea rows="3" cols="10" name="reject_comment" placeholder="Write your comments here..." class="form-control" style="height:30%; border-color: black; border-radius: 10px; "></textarea>
+                                        {% if doc.id %}
+                                            <textarea rows="3" cols="10" name="reject_comment_{{ doc.id }}" value="{{doc.comment}}" placeholder="Write your comments here..." class="form-control" style="height:30%; border-color: black; border-radius: 10px; ">{{doc.comment}}</textarea>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -264,7 +283,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="scru_c" onclick ="btn_confirm(this.id,'btnclkid')">Approve </button>
-                    <button type="submit" class="btn btn-danger" id="scru_r" onclick ="btn_confirm(this.id,'btnclkid')">Reject </button>
+                    <button type="button" class="btn btn-danger" id="scru_r" onclick ="btn_confirm(this.id,'btnclkid')">Reject </button>
                 </div>
             {% elif matrix.reference == "inspection" %} 
                 <div class="modal-header">
@@ -274,29 +293,29 @@
                 <div class="modal-body" style="font-weight:bold;font:size:20px;">
                     <div class="col-md-12 row">
                         <div class="col-md-6 formupl">
-                            <button type="submit" class="btn btn-primary" id="dochk" onclick ="btn_confirm(this.id,'btnclk')">Download Checklist</button>
+                            <a type="button" class="btn btn-primary" href="{% url 'download_doc' down_chklst %}" id="dochk" target="_blank">Download Checklist</a>
                             <hr>
                             <span class="formupl-title">Upload Checklist</span>
                             <p class="formupl-paragraph">
                                 Upload your file
                               </p>
-                             <label for="file-input" class="drop-container">
+                             <label for="file-input1" class="drop-container">
                             <span class="drop-title">Drop files here</span>
                             or
-                            <input type="file" name="cheklist_upl_file" required >
+                            <input type="file" id="file-input1" name="cheklist_upl_file" required >
                           </label>
                         </div>
                         <div class="col-md-6 formupl">
-                            <button type="submit" class="btn btn-primary" id="doinsp" onclick ="btn_confirm(this.id,'btnclk')">Download Inspection </button>
+                            <a type="button" class="btn btn-primary" id="doinsp" href="{% url 'download_doc' down_insp %}" target="_blank">Download Inspection </a>
                             <hr>
                             <span class="formupl-title">Upload Inspection</span>
                             <p class="formupl-paragraph">
                                 Upload your file
                               </p>
-                             <label for="file-input" class="drop-container">
+                             <label for="file-input2" class="drop-container">
                             <span class="drop-title">Drop files here</span>
                             or
-                            <input type="file" name="inspection_upl_file" required >
+                            <input type="file" id="file-input2" name="inspection_upl_file" required >
                           </label>
                         </div>
                     </div>
@@ -330,10 +349,10 @@
                             <p class="formupl-paragraph">
                                 Upload your file
                               </p>
-                             <label for="file-input" class="drop-container">
+                             <label for="file-input3" class="drop-container">
                             <span class="drop-title">Drop files here</span>
                             or
-                            <input type="file"  name="certificate_upl_file"  required >
+                            <input type="file" id="file-input3"  name="certificate_upl_file"  required >
                           </label>
                     </div>
                 </div>
@@ -353,7 +372,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="color:black">Comments  &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')"  {% if ac == "view" %} disabled {% endif %} >Add Comments</button>
+                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')"  {% if ac == "view" or matrix.action == "View" %} disabled {% endif %} >Add Comments</button>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
@@ -396,7 +415,7 @@
             <div class="modal-header">
                 
                 <h5 class="modal-title" style="color:black">Internal Documents &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button type="button" class="btn btn-primary" id="uploadButton"  onclick ="sweet_popup(this.id,'file')"  {% if ac == "view" %} disabled {% endif %} >Upload</button>
+                <button type="button" class="btn btn-primary" id="uploadButton"  onclick ="sweet_popup(this.id,'file')"  {% if ac == "view" or matrix.action == "View" %} disabled {% endif %} >Upload</button>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span>
                 </button>
             </div>
@@ -455,16 +474,13 @@
 <script>
     $(document).ready(function() {
         $('.toggle-checkbox').on('change', function() {
-          // Get the row (closest 'tr') that contains the clicked checkbox
           var $row = $(this).closest('tr');
-          // Uncheck and enable the other checkbox in the same row
           $row.find('.toggle-checkbox').not(this).prop('checked', false).prop('disabled', false);
-          // If the clicked checkbox is checked, disable the other one in the same row
           if ($(this).is(':checked')) {
             $row.find('.toggle-checkbox').not(this).prop('disabled', true);
           }
         });
-      });      
+    });      
 </script>
 <script>
     function btn_confirm(chk, set) {
@@ -477,6 +493,39 @@
             $("#" + set).val(values[chk]);
         }
     }
+</script>
+<script>
+    $(document).ready(function () {
+        $('#scru_r').click(function () {
+            debugger;
+          $('#rejectReasonSection').show();
+          $('#rejectReason').on('change', function () {
+            var selectedReason = $(this).val();
+            if (selectedReason) {
+              $('#editRejectReasonSection').removeClass('d-none').show();
+              $('#editRejectReason').val(selectedReason);
+              $('#scru_r').attr('type', 'submit');
+              $('#rejectError').hide(); 
+            } else {
+              $('#editRejectReasonSection').addClass('d-none').hide();
+              $('#scru_r').attr('type', 'button');
+            }
+          });
+          $('#rejectReason').prop('required', true);
+        });
+        $('#scru_r').click(function (e) {
+            var selectedReason = $('#rejectReason').val();
+            if ($('#rejectReasonSection').is(':visible') && !selectedReason) {
+              e.preventDefault(); 
+              $('#rejectError').show(); 
+            }
+        });
+         $('#scru_c').click(function () {
+            $('#rejectReason').prop('required', false);
+            $('#rejectReasonSection').hide();
+            $('#model_form').submit();
+        });
+      });
 </script>
 <script>
     function sweet_popup(id,type) {
@@ -634,11 +683,7 @@
 
      $("#user_docs_id1").DataTable({
         ordering: false,
-        pageLength: 4,
-        lengthMenu: [
-          [4, 10, 25, 50, 100, 200, 300, 400, 500, -1],
-          [4, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
-        ],
+        paging: false, 
      });
 
      $("#docs_id").DataTable({
