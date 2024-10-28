@@ -46,7 +46,7 @@ def index(request):
 @login_required    
 def matrix_flow(request):
     docs,label,input,data = [],[],[],[]
-    form_id,context,wf_id,sf  = '','','',''
+    form_id,context,wf_id,sf,f,sb  = '','','','','',''
     try:
         if request.user.is_authenticated ==True:                
                 global user,role
@@ -80,6 +80,9 @@ def matrix_flow(request):
                 r = callproc("stp_update_sendback",[wf_id,form_id,user])
                 if r[0][0] == 'success':
                     messages.success(request, "Sendback successfully !!")
+                elif r[0][0] == 'wrongsendback':
+                    messages.error(request, 'You cannot send it back in the first stage itself.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
                 return redirect(f'/index')
             subordinates = callproc("stp_get_subordinates",[form_id,user])
@@ -172,7 +175,8 @@ def matrix_flow(request):
                         file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf)
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     fui = workflow_details.objects.filter(id=wf_id).first()
-                    file_resp = citizen_docs_upload(certificate_upl_file,fui.form_user,form_id,user)
+                    form_user_id = fui.form_user_id
+                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -189,7 +193,7 @@ def matrix_flow(request):
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally: 
-         if request.method == "GET" and sf == '':
+         if request.method == "GET" and sf == '' and f == '' and sb == '':
             return render(request,'TrackFlow/metrix_flow.html', context)
 
 def internal_docs_upload(file,role_id,user,wf):
@@ -226,6 +230,7 @@ def internal_docs_upload(file,role_id,user,wf):
 def citizen_docs_upload(file,user,form_id,created_by):
     file_resp = None
     doc = document_master.objects.get(doc_id=15)
+    app_form = application_form.objects.get(id=form_id)
     sub_path = f'user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}'
     full_path = os.path.join(MEDIA_ROOT, sub_path)
     folder_path = os.path.dirname(full_path)
@@ -250,7 +255,7 @@ def citizen_docs_upload(file,user,form_id,created_by):
 
         citizen_document.objects.create(
             user_id=user,file_name=file.name,filepath=sub_path,
-            document=doc,application_id=form_id,
+            document=doc,application_id=app_form,
             created_by=str(created_by),updated_by=str(created_by),
             created_at=datetime.now(),updated_at=datetime.now()
         )
