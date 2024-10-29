@@ -83,6 +83,9 @@ def matrix_flow(request):
                 elif r[0][0] == 'wrongsendback':
                     messages.error(request, 'You cannot send it back in the first stage itself.')
                     return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                elif r[0][0] == 'multisendback':
+                    messages.error(request, 'Consecutive send-backs are not permitted.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
                 return redirect(f'/index')
             subordinates = callproc("stp_get_subordinates",[form_id,user])
