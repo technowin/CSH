@@ -90,6 +90,7 @@ def matrix_flow(request):
                 return redirect(f'/index')
             subordinates = callproc("stp_get_subordinates",[form_id,user])
             user_list = callproc("stp_get_dropdown_values",['user'])
+            reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
             for doc_master in document_master.objects.all():
                 matching_doc = citizen_docs.filter(document=doc_master).first()
@@ -122,7 +123,7 @@ def matrix_flow(request):
             down_insp = encrypt_parameter("sample.pdf")
             context = {'role_id':role_id,'user_id':request.user.id,'docs':docs,'fields': fields,'header': header,'data': data,'header1': header1,
                        'data1': data1,'subordinates':subordinates,'user_list':user_list,'ac':ac,'wf_id':encrypt_parameter(wf_id),
-                       'form_id': encrypt_parameter(form_id),'workflow':workflow,'matrix':matrix,'down_chklst':down_chklst,'down_insp':down_insp}
+                       'form_id': encrypt_parameter(form_id),'workflow':workflow,'reject_reasons':reject_reasons,'matrix':matrix,'down_chklst':down_chklst,'down_insp':down_insp}
         if request.method == "POST":
             response = None
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.POST.get('wf_id', '')) else ''
@@ -158,9 +159,10 @@ def matrix_flow(request):
                             correct = request.POST.get(f"correct_{doc_id}")
                             incorrect = request.POST.get(f"incorrect_{doc_id}")
                             rej_com = request.POST.get(f"reject_comment_{doc_id}")
-                            r = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,doc_id,correct,incorrect,rej_com,rej_res,user])
-                    if r[0][0] not in (""):
-                        messages.success(request, str(r[0][0]))
+                            r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+                    r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 elif status == 5 and ref == 'inspection':
                     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
