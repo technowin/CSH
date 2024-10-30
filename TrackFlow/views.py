@@ -22,7 +22,7 @@ def index(request):
     name = ''
     try:
         if request.user.is_authenticated ==True:                
-                global user
+                global user,role_id
                 user = request.user.id    
                 role_id = request.user.role_id
         if request.method == "GET":
@@ -49,7 +49,7 @@ def matrix_flow(request):
     form_id,context,wf_id,sf,f,sb  = '','','','','',''
     try:
         if request.user.is_authenticated ==True:                
-                global user,role
+                global user,role_id
                 user = request.user.id   
                 role_id = request.user.role_id   
         if request.method == "GET":
