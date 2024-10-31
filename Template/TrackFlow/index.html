@@ -56,7 +56,7 @@
                             <td>
                               {% if row.3|to_int == user_id %}
                                 <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;" class="btn btn-sm btn-primary">{{ row.10 }}</a>
-                              {% elif row.2|in_list:"1" and role_id == 3 %}
+                              {% elif row.2|in_list:"1,2" and role_id == 3 %}
                                 <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;" class="btn btn-sm btn-primary">{{ row.10 }}</a>
                               {% else %}
                                 <a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;" class="btn btn-sm btn-primary">View</a>
