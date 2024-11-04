@@ -103,7 +103,7 @@ def matrix_flow(request):
                         doc_entry['file_name'] = file_name
                         doc_entry['id'] =  str(matching_doc.id)
                         doc_entry['correct'] =  str(matching_doc.correct_mark)
-                        doc_entry['comment'] =  str(matching_doc.comment)
+                        doc_entry['comment'] =  str(matching_doc.comment or '')
                 docs.append(doc_entry)
             label = callproc("stp_get_masters", ['fm','','header',form_id])
             label = [l[0] for l in label]
