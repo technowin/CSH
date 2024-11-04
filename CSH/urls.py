@@ -133,6 +133,7 @@ urlpatterns = [
     path('OTPScreenPost', OTPScreenPost, name='OTPScreenPost'), 
     path('OTPScreenRegistration', OTPScreenRegistration, name='OTPScreenRegistration'), 
     path('download_doc/<str:filepath>/', download_doc, name='download_doc'), 
+    path('downloadIssuedCertificate/<str:row_id>/', downloadIssuedCertificate, name='downloadIssuedCertificate'), 
 
 ]
 

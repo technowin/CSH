@@ -81,7 +81,7 @@
                                 </a>
                                 
                             {% elif row.status == 'Issue Certificate'  %}
-                                <a class="download-link" href="">
+                                <a class="download-link" href="{% url 'downloadIssuedCertificate' row.id %}">
                                     <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="download-text">Download Certificate</span>
                                 </a> 
@@ -103,20 +103,6 @@
   <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    {% comment %} {% if messages %}
-        {% for message in messages %}
-            <script>
-                debugger
-                Swal.fire({
-                    title: "{{ message.tags }}",
-                    text: "{{ message }}",
-                    icon: "{{ message.tags }}",
-                    confirmButtonText: "OK",
-                });
-            </script>
-        {% endfor %}
-    {% endif %}   {% endcomment %}
     
 </body>
 
