@@ -974,7 +974,7 @@ def application_Form_Final_Submit(request):
             application.save()
 
             workflow = workflow_details.objects.filter(form_id=application_id).first()
-            workflow.status=application.status,  
+            workflow.status=application.status_id,  
             workflow.updated_at = datetime.now()
             workflow.updated_by = str(user)
             workflow.save()
