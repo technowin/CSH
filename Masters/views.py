@@ -972,9 +972,9 @@ def application_Form_Final_Submit(request):
                 application.status_id = 1 
                 
             application.save()
-
+            status_id = status_master.objects.get(status_id=application.status_id)
             workflow = workflow_details.objects.filter(form_id=application_id).first()
-            workflow.status=application.status_id,  
+            workflow.status=status_id
             workflow.updated_at = datetime.now()
             workflow.updated_by = str(user)
             workflow.save()
