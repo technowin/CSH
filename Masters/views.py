@@ -972,17 +972,13 @@ def application_Form_Final_Submit(request):
                 application.status_id = 1 
                 
             application.save()
-            
-            workflow = workflow_details(
-                level=1,  
-                status=application.status,  
-                form_user=user,  
-                form_id=application,  
-                created_by=user_id,  
-                created_at=timezone.now()  
-            )
+            status_id = status_master.objects.get(status_id=application.status_id)
+            workflow = workflow_details.objects.filter(form_id=application_id).first()
+            workflow.status=status_id
+            workflow.updated_at = datetime.now()
+            workflow.updated_by = str(user)
             workflow.save()
-            
+           
             return redirect('applicationFormIndex')
 
         except application_form.DoesNotExist:
