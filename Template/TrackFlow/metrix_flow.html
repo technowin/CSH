@@ -54,7 +54,7 @@
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="forward" data-toggle="dropdown" aria-haspopup="true"
                     aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %}>
-                    Forward
+                    Marked For
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="forward" style="max-height: 200px; overflow-y: auto;">
                     {% for item in user_list %}
