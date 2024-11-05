@@ -637,7 +637,7 @@ def applicationFormIndex(request):
                     
                     getApplicantData.append(item)
                     
-                    if items[4] == 'Refused':
+                    if items[4] == 'Refused' or items[4] == 'New':
                         show_apply_button = True
                     
                     
