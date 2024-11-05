@@ -72,14 +72,10 @@
             {% endif %}
         </div>
         <div class="col-md-2">
-            {% if ac == "view" or matrix.action == "View" or workflow.pre_user == user_id  %}
-                {% if workflow.rollback is None %}
-                    <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
-                {% else %}
-                     <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
-                {% endif %}
+            {% if workflow.pre_user == user_id|to_str and workflow.rollback is None %}
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
             {% else %}
-                <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
+                 <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
             {% endif %}
         </div>
         <div class="col-md-2">

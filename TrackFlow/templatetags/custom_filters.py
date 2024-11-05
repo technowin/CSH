@@ -8,6 +8,14 @@ def to_int(value):
         return int(value)
     except (ValueError, TypeError):
         return None
+
+@register.filter(name='to_str')
+def to_str(value):
+    """Converts an integer to a string."""
+    try:
+        return str(value)
+    except (ValueError, TypeError):
+        return ""
     
 @register.filter
 def in_list(value, arg):
