@@ -66,7 +66,11 @@
                                 </span>
                             {% endif %}
                         </td>
-                        <td>{{ row.comments }}</td>
+                        {% if row.comments == None %}
+                            <td>No Remarks</td>
+                        {% else %}
+                            <td>{{ row.comments }}</td>
+                        {% endif %}    
                         <td>
                             <a class="edit-link" href="{% url 'viewapplicationform' row.id encrypted_new_id  %}">
                                 <i class="fa-solid fa-eye" style="font-size: 30px; color: #274FC2; margin-right: 8px"></i>

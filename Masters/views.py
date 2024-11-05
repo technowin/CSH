@@ -639,6 +639,8 @@ def applicationFormIndex(request):
                     
                     if items[4] == 'Refused':
                         show_apply_button = True
+                    
+                    
 
         return render(request, "ApplicationForm/applicationFormIndex.html", {
             "data": getApplicantData,
@@ -706,7 +708,8 @@ def applicationMasterCrate(request):
             m = Db.get_connection()
             cursor = m.cursor()
         
-        getDocumentData = document_master.objects.filter(is_active=1) 
+        # getDocumentData = document_master.objects.filter(is_active=1) 
+        getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id=15)
         
         # success_message = request.session.pop('success_message', None)
         
@@ -924,7 +927,7 @@ def viewapplicationform(request, row_id, new_id):
             user_id = None 
             
         application = get_object_or_404(application_form, pk=row_id)
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
         for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
                 row.filepath = encrypted_filepath
@@ -965,20 +968,32 @@ def application_Form_Final_Submit(request):
                 
             application_id = request.POST.get('application_id')
             application = get_object_or_404(application_form, id=application_id)
-            
+
             if application.status_id == 4:
                 application.status_id = 9
             else:
-                application.status_id = 1 
+                application.status_id = 1
                 
             application.save()
-            status_id = status_master.objects.get(status_id=application.status_id)
-            workflow = workflow_details.objects.filter(form_id=application_id).first()
-            workflow.status=status_id
-            workflow.updated_at = datetime.now()
-            workflow.updated_by = str(user)
-            workflow.save()
-           
+
+            status_instance = status_master.objects.get(status_id=application.status_id)
+
+            workflow, created = workflow_details.objects.get_or_create(
+                form_id=application,
+                defaults={
+                    'status': status_instance,
+                    'created_by': str(user),
+                    'form_user_id': user_id,
+                    'level': 1
+                }
+            )
+
+            if not created:
+                workflow.status = status_instance
+                workflow.updated_at = timezone.now()
+                workflow.updated_by = str(user)
+                workflow.save()
+
             return redirect('applicationFormIndex')
 
         except application_form.DoesNotExist:
@@ -1007,7 +1022,7 @@ def EditApplicationForm(request, row_id, row_id_status):
         
         application = get_object_or_404(application_form, pk=row_id)
 
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
         for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
                 row.filepath = encrypted_filepath
@@ -1162,7 +1177,7 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
         
         application = get_object_or_404(application_form, pk=row_id)
 
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
         
         # for doc in uploaded_documents:
         #     print(f"Document ID: {doc.id}, File Name: {doc.file_name}, "
