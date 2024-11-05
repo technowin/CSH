@@ -44,6 +44,7 @@ import os
 from django.urls import reverse
 from CSH.settings import *
 import logging
+from django.http import FileResponse, Http404
 logger = logging.getLogger(__name__)
 
 @login_required
@@ -890,7 +891,6 @@ def download_doc(request, filepath):
     file = decrypt_parameter(filepath)
     file_path = os.path.join(settings.MEDIA_ROOT, file)
     file_name = os.path.basename(file_path)
-    file_part, file_extension = os.path.splitext(file_path)
     try:
         if os.path.exists(file_path):
             with open(file_path, 'rb') as file:
@@ -1301,3 +1301,28 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
     except Exception as e:
         print(f"Error: {e}")
         return render(request, "ApplicationForm/applicationFormIndex.html")
+
+def downloadIssuedCertificate(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number)
+        request.session['full_name'] = user.full_name
+        
+        row_id = decrypt_parameter(row_id)
+        document = citizen_document.objects.get(application_id=row_id, document_id=15)
+        
+        filepath = document.filepath
+        file_name = document.file_name
+
+        encrypted_filepath = encrypt_parameter(filepath)
+        
+        return redirect('download_doc', encrypted_filepath)
+    
+    except citizen_document.DoesNotExist:
+        return Http404("Document not found")
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), user.id])
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
