@@ -46,7 +46,7 @@ def index(request):
 @login_required    
 def matrix_flow(request):
     docs,label,input,data = [],[],[],[]
-    form_id,context,wf_id,sf,f,sb  = '','','','','',''
+    form_id,context,wf_id,sf,f,sb,rb  = '','','','','','',''
     try:
         if request.user.is_authenticated ==True:                
                 global user,role_id
@@ -61,6 +61,7 @@ def matrix_flow(request):
             f = request.GET.get('f', '')
             sf = request.GET.get('sf', '')
             sb = request.GET.get('sb', '')
+            rb = request.GET.get('rb', '')
             if sf and sf !='':
                 r = callproc("stp_update_sendforward",[wf_id,form_id,sf,user])
                 if r[0][0] == 'success':
@@ -85,6 +86,18 @@ def matrix_flow(request):
                     return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 elif r[0][0] == 'multisendback':
                     messages.error(request, 'Consecutive send-backs are not permitted.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                else: messages.error(request, 'Oops...! Something went wrong!')
+                return redirect(f'/index')
+            if rb and rb !='':
+                r = callproc("stp_update_rollback",[wf_id,form_id,user])
+                if r[0][0] == 'success':
+                    messages.success(request, "Rollback successfully !!")
+                elif r[0][0] == 'wrongrollback':
+                    messages.error(request, 'You cannot roll it back in the first stage itself.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                elif r[0][0] == 'multirollback':
+                    messages.error(request, 'Consecutive roll-backs are not permitted.')
                     return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
                 return redirect(f'/index')
@@ -198,7 +211,7 @@ def matrix_flow(request):
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally: 
-         if request.method == "GET" and sf == '' and f == '' and sb == '':
+         if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '':
             return render(request,'TrackFlow/metrix_flow.html', context)
 
 def internal_docs_upload(file,role_id,user,wf):

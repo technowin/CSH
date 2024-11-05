@@ -983,6 +983,7 @@ def application_Form_Final_Submit(request):
                 defaults={
                     'status': status_instance,
                     'created_by': str(user),
+                    'updated_at': timezone.now(),
                     'form_user_id': user_id,
                     'level': 1
                 }
