@@ -66,8 +66,10 @@
         <div class="col-md-3">
             {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %}
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
-            {% else %}
+            {% elif workflow.level != 1 and  workflow.sendback is None %}
                 <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&sb=1&ac={{ac}}">Send Back</a>
+            {% else %}
+                <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
             {% endif %}
         </div>
         {% comment %} <div class="col-md-2">
