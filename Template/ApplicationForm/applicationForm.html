@@ -70,22 +70,22 @@
                             <input type="text" value="" name="Address_of_Plumber" class="form-control" id="Address_of_Plumber" placeholder="Enter Address of Plumber" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Plot size<span style="color:red;"> *</span> :</label>
+                            <label for="EmployeeNumber" class="form-label">Plot size (mtr.sq)<span style="color:red;"> *</span> :</label>
                             <input type="text" value="" name="Plot_size" class="form-control" id="Plot_size" placeholder="Enter Plot size" required>
                         </div>
                         <div class="col-md-3">
                             <label for="EmployeeNumber" class="form-label">No of flats<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required>
+                            <input type="number" value="" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required>
                         </div>
                         <div class="col-md-3">
                             <label for="EmployeeNumber" class="form-label">No of shops<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required>
+                            <input type="number" value="" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Septic tank size<span style="color:red;"> *</span> :</label>
+                            <label for="EmployeeNumber" class="form-label">Septic tank size (liters)<span style="color:red;"> *</span> :</label>
                             <input type="text" value="" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
                         </div>
                     </div>
@@ -173,6 +173,19 @@
           order: []
         });
     </script>
+
+    {% if message %}
+        <script>
+            Swal.fire({
+                title: "Error",
+                text: "{{ message }}",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
+        </script>
+    {% endif %}
+
+
     
     {% comment %} <script>
         $(document).ready(function() {

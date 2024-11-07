@@ -1,0 +1,71 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% csrf_token %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>{% block title %} CSH {% endblock %}</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="{% static 'css/CSH.min.css' %}" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-primary">
+
+    <div class="container mt-5">
+        <div class="row">
+            <!-- CIDCO Card -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">CIDCO</h5>
+                        <a href="citizenLoginAccount?service_db=1" class="btn btn-primary">Go to CIDCO</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aple Sarkar Card -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Aple Sarkar</h5>
+                        <a href="aple_sarkar_Register?service_db=1" class="btn btn-primary">Aple Sarkar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Core plugin JavaScript-->
+    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+    <!-- Custom scripts for all pages-->
+    <script src="{% static 'js/CSH.min.js' %}"></script>
+
+    {% if messages %}
+    {% for message in messages %}
+      <script>
+      Swal.fire({
+        title: "{{ message.tags }}",
+        text: "{{ message }}",
+        icon: "{{ message.tags }}",
+        confirmButtonText: "OK",
+      });
+      </script>
+    {% endfor %}
+    {% endif %}
+</body>
+
+</html>

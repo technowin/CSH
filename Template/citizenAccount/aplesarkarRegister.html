@@ -1,0 +1,305 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% csrf_token %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>{% block title %} CSH {% endblock %}</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="{% static 'css/CSH.min.css' %}" rel="stylesheet">
+    {% comment %} <link href="{% static 'css/citizenLogin.css' %}" rel="stylesheet"> {% endcomment %}
+    <link href="{% static 'css/OTPScreenRegistration.css' %}" rel="stylesheet">
+
+</head>
+
+<body class="bg-gradient-primary">
+
+    <div class="container">
+        <div class="card o-hidden border-0 shadow-lg my-5" style="width: 70%; margin: 0 auto;">
+            <div class="card-body p-0">
+                <!-- Nested Row within Card Body -->
+                <div class="row">
+                   {% comment %} <div class="col-lg-2">
+                   </div> {% endcomment %}
+                    <div class="col-lg-12">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h1 class="h4 text-gray-900 mb-4">Create an Account!</h1>
+                            </div>
+                            <form class="user" method="post" action="{% url 'aple_sarkar_Register' %}" onsubmit="return validateMobileNumber()">
+                                {% csrf_token %}
+                                <input type="hidden" id="service_db" name="service_db" value="{{service_db}}" />
+                                <div class="form-group row">
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <label>First Name :-</label>
+                                        <input type="text" value="{{firstName}}" class="form-control form-control-user" 
+                                            id="exampleFirstName" name="firstname" placeholder="First Name" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label>Last Name :-</label>
+                                        <input type="text" value="{{lastName}}" class="form-control form-control-user" 
+                                            id="exampleLastName" name="lastname" placeholder="Last Name">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group row">
+                                    
+                                    <div class="col-sm-6">
+                                        <label>Email :-</label>
+                                        <input type="email" value="{{email}}" class="form-control form-control-user" 
+                                            id="exampleInputEmail" name="email" placeholder="Email Address" required>
+                                    </div>
+                                    
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <label>Mobile :-</label>
+                                        <input type="tel" value="{{mobileNumber}}" class="form-control form-control-user" 
+                                            id="exampleMobileNumber" name="mobileNumber" placeholder="Mobile Number" required>
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group row">
+                                    
+                                    <div class="col-sm-6">
+                                        <label>Service :-</label>
+                                        <input type="text" value="{{ service|default:'Drainage Connection' }}" class="form-control form-control-user" 
+                                            id="exampleInputservice" name="service" placeholder="Service Here" required readonly>
+                                    </div>
+
+                                </div>
+                                
+                                <div class="text-center mt-3" id="submitOTPButton">
+                                    <button type="submit" class="btn btn-primary btn-user">
+                                        Validate Phone Number
+                                    </button>
+                                </div> 
+
+                                <div class="text-center mt-3 ">
+                                    {% comment %} <a class="textLogin"  href="citizenLoginAccount">Already have an account? Login!</a> {% endcomment %}
+                                    <a class="textLogin"  href="aple_sarkar_Login?service_db={{service_db}}">Already have an account? Login!</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Core plugin JavaScript-->
+    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+    <!-- Custom scripts for all pages-->
+    <script src="{% static 'js/CSH.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        
+        function validateMobileNo() {
+            debugger
+            const mobileNumber = document.getElementById('exampleMobileNumber').value;
+            var exampleInputEmail = $("#exampleLastName").val();
+            var exampleLastName = $("#exampleInputEmail").val();
+            var exampleFirstName = $("#exampleMobileNumber").val();
+            
+            // Mobile number validation: Only 10 digits allowed
+            const mobileNumberPattern = /^[0-9]{10}$/;
+            
+            if ( !mobileNumber || !exampleInputEmail || !exampleLastName || !exampleFirstName ) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Input Required',
+                    text: 'Please enter required fields'
+                });
+                return;
+            }
+            
+            if (!mobileNumberPattern.test(mobileNumber)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Mobile Number',
+                    text: 'Please enter a valid 10-digit mobile number.'
+                });
+                return;
+            }
+        
+            $.ajax({
+                url: 'checkmobilenumber',
+                type: 'POST',
+                data: JSON.stringify({
+                    mobileNumber: mobileNumber
+                }),
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    debugger
+                    if (data.exists) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Already Registered',
+                            text: 'You have already registered. Please login.',
+                        }).then(() => {
+                            window.location.href = "{% url 'citizenLoginAccount' %}";
+                        });
+                    } else if (data.otp_sent) {
+                        document.getElementById('otpSection').style.display = 'block';
+                        document.getElementById('submitOTPButton').style.display = 'block';
+                        document.getElementById('ValidatePhoneNUmber').style.display = 'none';
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'OTP Sent',
+                            text: 'An OTP has been sent to your registered number.',
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+        
+        
+    </script>
+    
+    <script>
+
+        function RegisterFormSubmit() {
+            debugger;
+            const mobileNumber = document.getElementById('exampleMobileNumber').value;
+            const otpEntered = document.getElementById('exampleInputOTP').value;
+            const firstName = document.getElementById('exampleFirstName').value;
+            const lastName = document.getElementById('exampleLastName').value;
+            const email = document.getElementById('exampleInputEmail').value;
+        
+            $.ajax({
+                url: 'verify_otp',
+                type: 'POST',
+                data: JSON.stringify({
+                    mobileNumber: mobileNumber,
+                    otp: otpEntered,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email
+                }),
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    debugger;
+                    if (data.otp_verified) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'OTP verified. Registration/Login successful!',
+                        }).then(() => {
+                            window.location.href = "{% url 'citizenLoginAccount' %}";
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.error || 'Invalid OTP. Please try again.',
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+
+        /*function RegisterFormSubmit() {
+            const mobileNumber = document.getElementById('exampleMobileNumber').value;
+            const otpEntered = document.getElementById('exampleInputOTP').value;
+        
+            $.ajax({
+                url: 'verify_otp',
+                type: 'POST',
+                data: JSON.stringify({
+                    mobileNumber: mobileNumber,
+                    otp: otpEntered
+                }),
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    debugger
+                    if (data.otp_verified) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'OTP verified. Registration/Login successful!',
+                        }).then(() => {
+                            window.location.href = "{% url 'applicationFormIndex' %}";
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.error || 'Invalid OTP. Please try again.',
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }*/
+        
+    </script>
+
+    {% if messages %}
+        {% for message in messages %}
+        <script>
+        Swal.fire({
+            title: "{{ message.tags }}",
+            text: "{{ message }}",
+            icon: "{{ message.tags }}",
+            confirmButtonText: "OK",
+        });
+        </script>
+        {% endfor %}
+    {% endif %}
+
+    <script>
+        function validateMobileNumber() {
+            const mobileInput = document.getElementById('exampleMobileNumber');
+            const mobileNumber = mobileInput.value.trim();
+        
+            const mobilePattern = /^[0-9]{10}$/; 
+        
+            if (!mobilePattern.test(mobileNumber)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Mobile Number',
+                    text: 'Please enter a valid 10-digit mobile number.',
+                    confirmButtonText: 'Okay'
+                });
+                mobileInput.focus();
+                return false; 
+            }
+        
+            return true; 
+        }
+    </script>
+    
+</body>
+
+</html>

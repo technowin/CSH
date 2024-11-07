@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
-
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 <body>
     
     <div class="card mb-4" style="zoom:85%" >
@@ -38,7 +40,7 @@
             </div>
          
         <div class="table-responsive">
-            <table style="width: 100%; margin-top:2%;" class="table" id="dataTable">   
+            <table style="width: 100%; margin-top:2%;" class="table" id="dt">   
                 <thead>
                     <tr>
                         <th>Id</th>
@@ -53,24 +55,40 @@
                     {% for row in data %}
                     <tr>
                         <td>{{ row.srno }}</td>
-                        <td>{{ row.request_no }}</td>
-                        <td>{{ row.name_of_owner }}</td>
+                        
+                        {% comment %} <td>{{ row.request_no }}</td> {% endcomment %}
                         <td>
-                            {% if row.status == "New" %}
-                                <span style='background-color:green; padding:2%; border-radius:10px; color:white'>
+                            {% if row.request_no == None %}
+                                &nbsp;
+                            {% else %}
+                                {{ row.request_no }}
+                            {% endif %}
+                        </td>
+                        
+                        <td>{{ row.name_of_owner }}</td>
+                        
+                        <td>
+                            {% if row.status != "Refused" and row.status != "Rejected" and row.status != "Application Pending" %}
+                                {% comment %} <span style='background-color:green; padding:2%; border-radius:10px; color:white'> {% endcomment %}
+                                <span class="badge badge-success" style="font-size: 1.2em; padding: 8px 12px;">
                                     {{ row.status }}
                                 </span>
                             {% else %}
-                                <span style='background-color:red; padding:2%; border-radius:10px; color:white'>
+                                {% comment %} <span style='background-color:red; padding:2%; border-radius:10px; color:white'> {% endcomment %}
+                                <span class="badge badge-danger" style="font-size: 1.2em; padding: 8px 12px;">
                                     {{ row.status }}
                                 </span>
                             {% endif %}
                         </td>
-                        {% if row.comments == None %}
-                            <td>No Remarks</td>
-                        {% else %}
-                            <td>{{ row.comments }}</td>
-                        {% endif %}    
+                        
+                        <td>
+                            {% if row.comments == None %}
+                                &nbsp;
+                            {% else %}
+                                {{ row.comments }}
+                            {% endif %}
+                        </td>
+                        
                         <td>
                             <a class="edit-link" href="{% url 'viewapplicationform' row.id encrypted_new_id  %}">
                                 <i class="fa-solid fa-eye" style="font-size: 30px; color: #274FC2; margin-right: 8px"></i>
@@ -96,6 +114,7 @@
                                 </a>     {% endcomment %}
                             {% endif %}
                         </td>
+                        
                     </tr>
                     {% endfor %}       
                 </tbody>
@@ -107,7 +126,15 @@
   <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+
 </body>
+
+<script>
+    $("#dt").dataTable({
+      pageLength: 10,
+      /* order: [[0, 'desc']] */
+    });
+  </script>
 
 {% endblock %}

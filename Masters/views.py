@@ -45,6 +45,7 @@ from django.urls import reverse
 from CSH.settings import *
 import logging
 from django.http import FileResponse, Http404
+import mimetypes
 logger = logging.getLogger(__name__)
 
 @login_required
@@ -605,7 +606,7 @@ def applicationFormIndex(request):
         phone_number = request.session['phone_number']
         
         if phone_number:
-            user = get_object_or_404(CustomUser, phone=phone_number)
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
             user_id = user.id
         else:
             user_id = None 
@@ -652,52 +653,6 @@ def applicationFormIndex(request):
     except Exception as e:
         print(f"Error fetching data: {e}")
         return JsonResponse({"error": "Failed to fetch data"}, status=500)
-
-# application Form Index Aple Sarkar
-@csrf_exempt
-def aple_sarkar(request):
-    try:
-        
-        getApplicantData = []
-            
-        if request.method == "POST":
-            fullname = request.POST.get('fullname', None)
-            email_id = request.POST.get('email', None)
-            phone_no = request.POST.get('phone', None)
-            
-            CustomUser.objects.create(
-                full_name=fullname,
-                email=email_id,
-                phone=phone_no,
-            )
-    
-            m = Db.get_connection()
-
-        # Get Index Data Here
-            
-            Db.closeConnection()
-            m = Db.get_connection()
-
-            applicationIndex = callproc("stp_getFormDetails")
-            for items in applicationIndex:
-                item = {
-                    "srno": items[0],
-                    "request_no": items[1],       
-                    "name_of_owner": items[2],   
-                    "status": items[3],             
-                    "comments": items[4]          
-                }
-                getApplicantData.append(item)
-
-        return render(request,"ApplicationForm/applicationFormIndex.html",{"data": getApplicantData})
-        # return render(request,"ApplicationForm/applicationFormIndex.html",{"data": getApplicantData, "status": 1})
-
-    except Exception as e:
-        print(f"Error fetching data: {e}")
-        return JsonResponse({"error": "Failed to fetch data"}, status=500)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return HttpResponse("An error occurred while rendering the page.", status=500)
     
 # application Form Create
 def applicationMasterCrate(request):
@@ -712,8 +667,8 @@ def applicationMasterCrate(request):
         getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id=15)
         
         # success_message = request.session.pop('success_message', None)
-        
-        return render(request, 'ApplicationForm/applicationForm.html', {'documents': getDocumentData}) 
+        message = request.session.pop('message', None)
+        return render(request, 'ApplicationForm/applicationForm.html', {'documents': getDocumentData, 'message': message}) 
     
     except Exception as e:
        
@@ -735,7 +690,7 @@ def application_Master_Post(request):
             request.session['service_db'] = service_db
 
             phone_number = request.session.get('phone_number')
-            user = CustomUser.objects.get(phone=phone_number)
+            user = CustomUser.objects.get(phone=phone_number, role_id = 2)
             full_name_session = request.session['full_name'] = user.full_name
             user_id = user.id
 
@@ -749,8 +704,13 @@ def application_Master_Post(request):
                     missing_documents.append(document.doc_name)
                     
             if not all_uploaded:
-                messages.error(request, 'Please upload the mandatory documents.')
+                message = 'Please upload the mandatory documents.'
+                request.session['message'] = message  
                 return redirect('applicationMasterCrate')
+                # messages.error(request, 'Please upload the mandatory documents.')
+                # message = 'Please upload the mandatory documents.'
+                # return redirect('applicationMasterCrate', message)
+                # return render(request, "ApplicationForm/applicationForm.html", context={'message': message})
 
             application = application_form.objects.create(
                 name_of_premises=request.POST.get('Name_Premises', ''),
@@ -894,11 +854,16 @@ def download_doc(request, filepath):
     file = decrypt_parameter(filepath)
     file_path = os.path.join(settings.MEDIA_ROOT, file)
     file_name = os.path.basename(file_path)
+    
     try:
         if os.path.exists(file_path):
+            mime_type, _ = mimetypes.guess_type(file_path)
+            if not mime_type:
+                mime_type = 'application/octet-stream'
+            
             with open(file_path, 'rb') as file:
-                response = HttpResponse(file.read(), content_type='application/pdf')
-                response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_name)}"'
+                response = HttpResponse(file.read(), content_type=mime_type)
+                response['Content-Disposition'] = f'inline; filename="{file_name}"'
                 return response
         else:
             return HttpResponse("File not found", status=404)
@@ -906,25 +871,46 @@ def download_doc(request, filepath):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        callproc("stp_error_log",[fun,str(e),user])  
+        callproc("stp_error_log", [fun, str(e), user])  
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
+    
+# def download_doc(request, filepath):
+#     file = decrypt_parameter(filepath)
+#     file_path = os.path.join(settings.MEDIA_ROOT, file)
+#     file_name = os.path.basename(file_path)
+#     try:
+#         if os.path.exists(file_path):
+#             with open(file_path, 'rb') as file:
+#                 response = HttpResponse(file.read(), content_type='application/pdf')
+#                 response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_name)}"'
+#                 return response
+#         else:
+#             return HttpResponse("File not found", status=404)
+
+#     except Exception as e:
+#         tb = traceback.extract_tb(e.__traceback__)
+#         fun = tb[0].name
+#         callproc("stp_error_log",[fun,str(e),user])  
+#         logger.error(f"Error downloading file {file_name}: {str(e)}")
+#         return HttpResponse("An error occurred while trying to download the file.", status=500)
         
 # View Application Form 
 def viewapplicationform(request, row_id, new_id):
     try:
+        
         context = {} 
         
         row_id = decrypt_parameter(row_id)
         new_id = decrypt_parameter(new_id)
         
-        full_name = request.session.get('full_name')
+        phone_number = request.session['phone_number']
         
-        if full_name:
-            user = get_object_or_404(CustomUser, full_name=full_name)
-            user_id = user.id
+        if phone_number:
+                user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+                user_id = user.id
         else:
-            user_id = None 
+                user_id = None
             
         application = get_object_or_404(application_form, pk=row_id)
         uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
@@ -947,7 +933,7 @@ def viewapplicationform(request, row_id, new_id):
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         user = request.user
-        callproc("stp_error_log", [fun, str(e), user])
+        callproc("stp_error_log", [fun, str(e), ''])
         messages.error(request, 'Oops...! Something went wrong!')
 
     finally:
@@ -957,11 +943,11 @@ def viewapplicationform(request, row_id, new_id):
 def application_Form_Final_Submit(request):
     if request.method == "POST":
         try:
-            
-            full_name = request.session.get('full_name')
-
-            if full_name:
-                user = get_object_or_404(CustomUser, full_name=full_name)
+                
+            phone_number = request.session['phone_number']
+        
+            if phone_number:
+                user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
                 user_id = user.id
             else:
                 user_id = None
@@ -1010,10 +996,10 @@ def EditApplicationForm(request, row_id, row_id_status):
     context = {}
 
     try:
-        full_name = request.session.get('full_name')
-
-        if full_name:
-            user = get_object_or_404(CustomUser, full_name=full_name)
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
             user_id = user.id
         else:
             user_id = None
@@ -1057,7 +1043,7 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
         application = get_object_or_404(application_form, id=application_id)
         
         phone_number = request.session.get('phone_number')
-        user = CustomUser.objects.get(phone=phone_number)
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
         full_name_session = request.session['full_name'] = user.full_name
         user_id = user.id
 
@@ -1165,13 +1151,14 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
     context = {}
 
     try:
-        full_name = request.session.get('full_name')
-
-        if full_name:
-            user = get_object_or_404(CustomUser, full_name=full_name)
+        # full_name = request.session.get('full_name')
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
             user_id = user.id
         else:
-            user_id = None
+            user_id = None 
         
         row_id = decrypt_parameter(row_id)
         row_id_status = decrypt_parameter(row_id_status)
@@ -1206,8 +1193,7 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        user = request.user
-        callproc("stp_error_log", [fun, str(e), user])
+        callproc("stp_error_log", [fun, str(e), '1'])
         messages.error(request, 'Oops...! Something went wrong!')
 
     return render(request, 'ApplicationForm/EditApplicationFormFinalSubmit.html', context)
@@ -1218,7 +1204,7 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
         application = get_object_or_404(application_form, id=application_id)
         
         phone_number = request.session.get('phone_number')
-        user = CustomUser.objects.get(phone=phone_number)
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
         full_name_session = request.session['full_name'] = user.full_name
         user_id = user.id
 
@@ -1321,7 +1307,7 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
 def downloadIssuedCertificate(request, row_id):
     try:
         phone_number = request.session.get('phone_number')
-        user = CustomUser.objects.get(phone=phone_number)
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
         request.session['full_name'] = user.full_name
         
         row_id = decrypt_parameter(row_id)
@@ -1342,3 +1328,15 @@ def downloadIssuedCertificate(request, row_id):
         callproc("stp_error_log", [fun, str(e), user.id])
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
+    
+def onetimepage(request):
+    try:
+        return render(request, 'OneTimePage/onetimepage.html')
+    
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), user.id])
+        logger.error(f"Error rendering onetimepage.html: {str(e)}")
+        return HttpResponse("An error occurred while trying to load the page.", status=500)
+

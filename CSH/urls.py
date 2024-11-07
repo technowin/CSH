@@ -32,7 +32,8 @@ urlpatterns = [
     # APP URLS
 
     # Account
-    path("", Login,name='Account'),
+    path("", onetimepage,name='onetimepage'),
+    # path("", Login,name='Account'),
     path("Login", Login,name='Login'),
     path("services/", services,name='services'),
     path("home", home,name='home'),
@@ -44,6 +45,8 @@ urlpatterns = [
     path("change_password",change_password, name="change_password"),
     path("forget_password_change",forget_password_change, name="forget_password_change"),
 
+    path("onetimepage",onetimepage, name="onetimepage"),
+    
     # Dashboard
     path("newdashboard",newdashboard,name='newdashboard'),
     path("get_sites",get_sites,name='get_sites'),
@@ -101,7 +104,9 @@ urlpatterns = [
     # application master
     
     path('applicationFormIndex', applicationFormIndex, name='applicationFormIndex'),
-    path('aple_sarkar/', aple_sarkar, name='aple_sarkar'),
+    # path('aple_sarkar/', aple_sarkar, name='aple_sarkar'),
+    path('aple_sarkar_Register', aple_sarkar_Register, name='aple_sarkar_Register'),
+    path('aple_sarkar_Login', aple_sarkar_Login, name='aple_sarkar_Login'),
     path('applicationMasterCrate', applicationMasterCrate, name='applicationMasterCrate'), 
     path('application_Master_Post', application_Master_Post, name='application_Master_Post'), 
     path('application_Form_Final_Submit', application_Form_Final_Submit, name='application_Form_Final_Submit'), 
