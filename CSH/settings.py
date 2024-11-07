@@ -96,11 +96,11 @@ SESSION_COOKIE_AGE = 3600  # 1-hour session timeout
 X_FRAME_OPTIONS = 'DENY'
 
 # Security Headers
-SECURE_HSTS_SECONDS = 3600
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_BROWSER_XSS_FILTER = True
+# SECURE_HSTS_SECONDS = 3600
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_BROWSER_XSS_FILTER = True
 
 
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY', 'oRVCHTumzesh-E71A-bAnjjEDuIlkceL6dvAYiCShp0=')
@@ -146,11 +146,13 @@ MIDDLEWARE = [
     'Account.middleware.ServiceDatabaseMiddleware',
 ]
 CORS_ALLOWED_ORIGINS = [
-    'http://13.202.157.7'
+    'http://13.202.157.7',
+    'https://push3.aclgateway.com'
 ]
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = [
     'http://13.202.157.7',
+    'https://push3.aclgateway.com'
 ]
 AUTO_LOGOUT = {
     'IDLE_TIME': 3600,

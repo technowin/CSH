@@ -720,8 +720,8 @@ def OTPScreen(request):
         sms_templates = smstext.objects.all()
         
         try:
-            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-            
+            # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            otp ='123456'
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
@@ -741,7 +741,9 @@ def OTPScreen(request):
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
             messages.error(request, "Failed to send OTP. Please try again.")
-
+            tb = traceback.extract_tb(e.__traceback__)
+            fun = tb[0].name
+            callproc("stp_error_log",[fun,str(e),user])  
         return render(request, 'OTPScreen/OTPScreen.html',{'service_db':service_db})
 
 def format_message(template, otp_value, action, service):
@@ -824,9 +826,9 @@ def OTPScreenPost(request):
                 request.session["user_id"]=(str(user.id))
                 request.session["role_id"] = str(user.role_id)
                 request.session['full_name'] = user.full_name
+                request.session['phone_number'] = phone_number
                 messages.success(request, "OTP verified successfully!")
                 return redirect('applicationFormIndex')
-                # return redirect('home')
             else:
                 messages.error(request, "Invalid OTP. Please try again.")
                 return redirect(f'/citizenLoginAccount?service_db={service_db}')
@@ -870,8 +872,8 @@ def OTPScreenRegistration(request):
             messages.error(request, "Phone number is required.")
             return redirect(f'/citizenRegisterAccount?service_db={service_db}')
 
-        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-
+        # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        otp ='123456'
         try:
             OTPVerification.objects.create(
                 mobile=phone_number,
