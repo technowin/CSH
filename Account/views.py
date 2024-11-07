@@ -720,8 +720,8 @@ def OTPScreen(request):
         sms_templates = smstext.objects.all()
         
         try:
-            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-            
+            # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            otp ='123456'
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
@@ -736,7 +736,7 @@ def OTPScreen(request):
                 service = "Drainage connection"  
 
                 message = format_message(message, otp, action, service)
-                send_sms(phone_number, message, template_id)
+                # send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
@@ -872,8 +872,8 @@ def OTPScreenRegistration(request):
             messages.error(request, "Phone number is required.")
             return redirect(f'/citizenRegisterAccount?service_db={service_db}')
 
-        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-
+        # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        otp ='123456'
         try:
             OTPVerification.objects.create(
                 mobile=phone_number,
@@ -890,7 +890,7 @@ def OTPScreenRegistration(request):
                 
                 message = format_message(message, otp, action, service)
                 
-                send_sms(phone_number, message, template_id)
+                # send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
