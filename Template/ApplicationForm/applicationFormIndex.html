@@ -129,7 +129,7 @@
   <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
 
   
-  {% if messages %}
+  {% comment %} {% if messages %}
   {% for message in messages %}
     <script>
     Swal.fire({
@@ -140,7 +140,7 @@
     });
   </script>
   {% endfor %}
-{% endif %}
+{% endif %} {% endcomment %}
 
 </body>
 
