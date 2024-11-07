@@ -741,7 +741,9 @@ def OTPScreen(request):
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
             messages.error(request, "Failed to send OTP. Please try again.")
-
+            tb = traceback.extract_tb(e.__traceback__)
+            fun = tb[0].name
+            callproc("stp_error_log",[fun,str(e),user])  
         return render(request, 'OTPScreen/OTPScreen.html',{'service_db':service_db})
 
 def format_message(template, otp_value, action, service):
