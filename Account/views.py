@@ -736,7 +736,7 @@ def OTPScreen(request):
                 service = "Drainage connection"  
 
                 message = format_message(message, otp, action, service)
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
@@ -824,8 +824,9 @@ def OTPScreenPost(request):
                 request.session["user_id"]=(str(user.id))
                 request.session["role_id"] = str(user.role_id)
                 request.session['full_name'] = user.full_name
+                request.session['phone_number'] = phone_number
                 messages.success(request, "OTP verified successfully!")
-                return redirect('home')
+                return redirect('applicationFormIndex')
             else:
                 messages.error(request, "Invalid OTP. Please try again.")
                 return redirect(f'/citizenLoginAccount?service_db={service_db}')
@@ -887,7 +888,7 @@ def OTPScreenRegistration(request):
                 
                 message = format_message(message, otp, action, service)
                 
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
