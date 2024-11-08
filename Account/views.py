@@ -130,36 +130,41 @@ def register_new_user(request):
                 service_db = request.POST.get('service', 'default')
                 full_name = f"{firstname} {lastname}"
                 # superior_id=superior_id
-                user = CustomUser(
-                    full_name=full_name,email=email,phone=phone,role_id=role_id
-                )
-                user.username = user.email
-                user.is_active = True 
-                try:
-                    validate_password(password, user=user)
-                    user.set_password(password)
-                    user.save(using='default')
-                    password_storage.objects.using('default').create(user=user, passwordText=password)
-                    user_dept_services.objects.using('default').get_or_create(
-                        user_id=user.id,department_id=department,service_id=service_db,
-                        defaults={ 'created_at': timezone.now(),  'created_by': request.user.id }
+                existing_user = CustomUser.objects.filter(email=email, phone=phone, role_id=role_id).exists()
+                if existing_user:
+                    messages.error(request, "A user with the same email, phone, and role already exists.")
+                    return redirect('/register_new_user?id=0')
+                else:
+                    user = CustomUser(
+                        full_name=full_name,email=email,phone=phone,role_id=role_id
                     )
-                    if service_db:
-                        user.save(using=service_db)
-                        password_storage.objects.using(service_db).create(user=user, passwordText=password)
+                    user.username = user.email
+                    user.is_active = True 
+                    try:
+                        validate_password(password, user=user)
+                        user.set_password(password)
+                        user.save(using='default')
+                        password_storage.objects.using('default').create(user=user, passwordText=password)
+                        user_dept_services.objects.using('default').get_or_create(
+                            user_id=user.id,department_id=department,service_id=service_db,
+                            defaults={ 'created_at': timezone.now(),  'created_by': request.user.id }
+                        )
+                        if service_db:
+                            user.save(using=service_db)
+                            password_storage.objects.using(service_db).create(user=user, passwordText=password)
 
-                    assigned_menus = RoleMenuMaster.objects.filter(role_id=role_id)
-                    for menu in assigned_menus:
-                        UserMenuDetails.objects.create(
-                            user_id=user.id,
-                            menu_id=menu.menu_id,
-                            role_id=role_id
-                    )
+                        assigned_menus = RoleMenuMaster.objects.filter(role_id=role_id)
+                        for menu in assigned_menus:
+                            UserMenuDetails.objects.create(
+                                user_id=user.id,
+                                menu_id=menu.menu_id,
+                                role_id=role_id
+                        )
 
-                    messages.success(request, "User registered successfully!")
+                        messages.success(request, "User registered successfully!")
 
-                except ValidationError as e:
-                    messages.error(request, ' '.join(e.messages))
+                    except ValidationError as e:
+                        messages.error(request, ' '.join(e.messages))
                     
             else:
                 firstname = request.POST.get('firstname')

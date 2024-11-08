@@ -3,6 +3,8 @@
 {% load static %}
 {% csrf_token %}
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 
     <div class="container">
         <div class="card o-hidden border-0 shadow-lg my-5" style="width: 70%; margin: 0 auto;">
@@ -129,7 +131,7 @@
     <!-- Custom scripts for all pages-->
     <script src="{% static 'js/CSH.min.js' %}"></script>
 
-    {% if messages %}
+  {% if messages %}
     {% for message in messages %}
       <script>
       Swal.fire({
