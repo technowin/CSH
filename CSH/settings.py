@@ -64,6 +64,15 @@ DATABASES = {
         'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
+     '4': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'horticulture_db',  
+        'USER': 'root',    
+        'PASSWORD': 'Mysql_7319',  
+        # 'HOST': '13.127.171.88',  
+        'HOST': '127.0.0.1',      
+        'PORT': '3306',
+    },
 }
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -96,11 +105,11 @@ SESSION_COOKIE_AGE = 3600  # 1-hour session timeout
 X_FRAME_OPTIONS = 'DENY'
 
 # Security Headers
-# SECURE_HSTS_SECONDS = 3600
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
-# SECURE_CONTENT_TYPE_NOSNIFF = True
-# SECURE_BROWSER_XSS_FILTER = True
+SECURE_HSTS_SECONDS = 3600
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
 
 
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY', 'oRVCHTumzesh-E71A-bAnjjEDuIlkceL6dvAYiCShp0=')
