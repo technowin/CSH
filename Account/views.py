@@ -72,7 +72,7 @@ def Login(request):
             return redirect('services') 
         else:
             messages.error(request, 'Invalid Credentials')
-            return redirect("Account")
+            return redirect("Login")
 
 def services(request):
     try:
