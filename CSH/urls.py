@@ -34,6 +34,7 @@ urlpatterns = [
     # Account
     path("", onetimepage,name='onetimepage'),
     # path("", Login,name='Account'),
+    path("Login", Login,name='Account'),
     path("Login", Login,name='Login'),
     path("services/", services,name='services'),
     path("home", home,name='home'),
