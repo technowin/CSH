@@ -826,6 +826,8 @@ def OTPScreenPost(request):
                 otp_record.delete()
 
                 user = CustomUser.objects.get(phone=phone_number, role_id=2)
+                servicefetch = service_master.objects.using('default').get(ser_id=service_db)
+                redirect_to = servicefetch.redirect_to_service
                 
                 request.session.cycle_key()
                 request.session["user_id"]=(str(user.id))
@@ -833,7 +835,7 @@ def OTPScreenPost(request):
                 request.session['full_name'] = user.full_name
                 request.session['phone_number'] = phone_number
                 messages.success(request, "OTP verified successfully!")
-                return redirect('applicationFormIndex')
+                return redirect(redirect_to)
             else:
                 messages.error(request, "Invalid OTP. Please try again.")
                 return redirect(f'/citizenLoginAccount?service_db={service_db}')
@@ -841,6 +843,12 @@ def OTPScreenPost(request):
         except OTPVerification.DoesNotExist:
             messages.error(request, "No OTP record found. Please request a new OTP.")
             return redirect(f'/citizenLoginAccount?service_db={service_db}')
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            fun = tb[0].name
+            callproc("stp_error_log", [fun, str(e), ''])
+            logger.error(f"Error rendering onetimepage.html: {str(e)}")
+            return HttpResponse("An error occurred while trying to load the page.", status=500)
 
     return render(request, 'citizenAccount/citizenLogin.html', {'error': 'Invalid request method.','service_db':service_db})
 

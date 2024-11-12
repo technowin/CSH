@@ -78,6 +78,7 @@ class service_master(models.Model):
     created_by =  models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     updated_by =  models.TextField(null=True, blank=True)
+    redirect_to_service = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'service_master'
@@ -146,7 +147,7 @@ class service_matrix(models.Model):
     id = models.AutoField(primary_key=True) 
     ser = models.ForeignKey(service_master, on_delete=models.CASCADE, null=True, blank=True, related_name='ser_id_F')
     level = models.IntegerField(null=True, blank=True)
-    role = models.ForeignKey(roles, on_delete=models.CASCADE, null=True, blank=True, related_name='roles_matrix_F')
+    role_id = models.TextField(null=True, blank=True)
     action = models.TextField(null=True, blank=True)
     reference = models.TextField(null=True, blank=True)
     model = models.TextField(null=True, blank=True)
@@ -157,7 +158,7 @@ class service_matrix(models.Model):
     objects = ServiceManager()
     class Meta:
         db_table = 'service_matrix'
-
+    
 class workflow_details(models.Model):
     id = models.AutoField(primary_key=True)
     request_no = models.TextField(null=True, blank=True)  
