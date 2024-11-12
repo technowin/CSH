@@ -102,7 +102,7 @@ def matrix_flow(request):
                 else: messages.error(request, 'Oops...! Something went wrong!')
                 return redirect(f'/index')
             subordinates = callproc("stp_get_subordinates",[form_id,user])
-            user_list = callproc("stp_get_dropdown_values",['user'])
+            user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
             for doc_master in document_master.objects.all():
@@ -217,7 +217,7 @@ def matrix_flow(request):
 def internal_docs_upload(file,role_id,user,wf):
     file_resp = None
     role = roles.objects.get(id=role_id)
-    sub_path = f'{role.role_name}/user_{user}/{file.name}'
+    sub_path = f'{role.role_name}/user_{user}/workflow_{str(wf.id)}/{file.name}'
     full_path = os.path.join(MEDIA_ROOT, sub_path)
     folder_path = os.path.dirname(full_path)
     if not os.path.exists(folder_path):
