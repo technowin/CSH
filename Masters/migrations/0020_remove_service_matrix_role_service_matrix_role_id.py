@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('Masters', '0019_application_form_tc'),
+        ('Masters', '0018_workflow_details_rollback_workflow_history_rollback'),
     ]
 
     operations = [
