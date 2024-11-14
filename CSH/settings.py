@@ -134,7 +134,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'Reports',
     'Dashboard',
-    'TrackFlow'
+    'TrackFlow',
+    'TreeCutting'
 ]
 
 # SESSION_ENGINE ="django.contrib.sessions.backends.signed_cookies"
