@@ -23,6 +23,7 @@ from Dashboard.views import *
 from Masters.views import *
 from Reports.views import *
 from TrackFlow.views import *
+from TreeCutting.views import *
 from Masters.views import site_master as sm
 from Masters.views import company_master as cm
 from django.urls import path
@@ -57,6 +58,7 @@ urlpatterns = [
 
     # TrackFlow
     path('index/', index, name='index'),
+    path('index_tc/', index_tc, name='index_tc'),
     path('matrix_flow', matrix_flow, name='matrix_flow'),
 
     # Masters
@@ -121,6 +123,13 @@ urlpatterns = [
     # path('viewapplicationform/<int:row_id>/<int:new_id>/', viewapplicationform, name='viewapplicationform'),
     # path('EditApplicationForm/<int:row_id>/<int:row_id_status>/', EditApplicationForm, name='EditApplicationForm'),
     
+    # Tree Cutting
+    
+    path('applicationFormIndexTC', applicationFormIndexTC, name='applicationFormIndexTC'),
+    path('application_Master_Crate_TC', application_Master_Crate_TC, name='application_Master_Crate_TC'),
+    path('application_Master_Edit_TC/<str:row_id>/<str:new_id>/', application_Master_Edit_TC, name='application_Master_Edit_TC'),
+    path('application_Master_View_TC/<str:row_id>/<str:new_id>/', application_Master_View_TC, name='application_Master_View_TC'),
+
     # Verification Screen 
     
     path('VerificationForm', VerificationForm, name='VerificationForm'), 

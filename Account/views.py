@@ -82,7 +82,13 @@ def services(request):
         if request.method == "POST":
             service_db = request.POST.get('service')
             request.session['service_db'] = service_db
-            return redirect('index') 
+            
+            servicefetch = service_master.objects.using('default').get(ser_id=service_db)
+            redirect_to = servicefetch.internal_page
+            
+            return redirect(redirect_to)
+            
+            # return redirect('index') 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
@@ -827,7 +833,7 @@ def OTPScreenPost(request):
 
                 user = CustomUser.objects.get(phone=phone_number, role_id=2)
                 servicefetch = service_master.objects.using('default').get(ser_id=service_db)
-                redirect_to = servicefetch.redirect_to_service
+                redirect_to = servicefetch.citizen_page
                 
                 request.session.cycle_key()
                 request.session["user_id"]=(str(user.id))

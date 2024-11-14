@@ -1,0 +1,147 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+<body>
+    
+    <div class="card mb-4" style="zoom:85%" >
+        <div class="card-body">
+           
+            <div class="row">
+                
+                <div class="col-md-6">
+                    <h1 style="color:#4e73df;font-weight:bold">
+                        <u>Application Form</u>
+                      </h2>
+                </div>
+
+                <div class="col-md-6">
+                    <a class="LocationBtns" href="{% url 'application_Master_Crate_TC' %}">
+                        <div class="Locationsign"> 
+                            <i class="fa-solid fa-plus" style="color: white; font-size:20px; margin-top:-2%;"></i>
+                        </div>
+                        <div class="Locationtext">Apply</div>
+                    </a>
+                </div>
+                
+            </div>
+         
+        <div class="table-responsive">
+            <table style="width: 100%; margin-top:2%;" class="table" id="dt">   
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Request No</th>
+                        <th>Applicant Name</th>
+                        <th>Form Status</th>
+                        <th>Remarks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ row.srno }}</td>
+            
+                        <td>
+                            {% if row.request_no == None %}
+                                &nbsp;
+                            {% else %}
+                                {{ row.request_no }}
+                            {% endif %}
+                        </td>
+            
+                        <td style="letter-spacing: 1px; font-family: 'Poppins', sans-serif; font-size: 18px; color: #333; font-weight:600">
+                            {{ row.name_of_applicant }}
+                        </td>
+            
+                        <td>
+                            {% if row.status != "Refused" and row.status != "Rejected" and row.status != "Application Pending" %}
+                                <span class="badge badge-success" style="font-size: 1.2em; padding: 8px 12px;">
+                                    {{ row.status }}
+                                </span>
+                            {% else %}
+                                <span class="badge badge-danger" style="font-size: 1.2em; padding: 8px 12px;">
+                                    {{ row.status }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            
+                        </td>
+                        
+                        <td>
+                            <a class="edit-link" href="{% url 'application_Master_View_TC' row.id encrypted_new_id %}">
+                                <i class="fa-solid fa-eye" style="font-size: 30px; color: #274FC2; margin-right: 8px"></i>
+                                <span class="edit-text">View</span>
+                            </a>
+                            
+                            {% if row.status == 'Application Pending' or row.status == 'Rejected' %}
+
+                                <a class="edit-link" href="{% url 'application_Master_Edit_TC' row.id encrypted_new_id %}">
+                                    <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="edit-text">Edit</span>
+                                </a>
+
+                            {% endif %}
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+      </div>
+
+  
+      <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  
+    {% comment %} {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: "{{ message }}",
+                    confirmButtonColor: '#4e73df'
+                });
+                {% elif message.tags == 'error' %}
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: "{{ message }}",
+                    confirmButtonColor: '#FF5733'
+                });
+                {% endif %}
+            {% endfor %}
+            });
+        </script>
+    {% endif %} {% endcomment %}
+
+
+</body>
+
+
+<script>
+    $("#dt").dataTable({
+      pageLength: 10,
+      /* order: [[0, 'desc']] */
+    });
+  </script>
+
+{% endblock %}

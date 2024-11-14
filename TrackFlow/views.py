@@ -322,3 +322,40 @@ def sample_doc(columns,file_name,user):
         callproc("stp_error_log",[fun,str(e),user])  
     finally:
         return response      
+
+# Hoticulture Tree-Cutting
+
+@login_required 
+def index_tc(request):
+    pre_url = request.META.get('HTTP_REFERER')
+    header, data = [], []
+    name = ''
+    try:
+        if request.user.is_authenticated ==True:                
+                global user,role_id
+                user = request.user.id    
+                role_id = request.user.role_id
+        if request.method == "GET":
+            
+            datalist1= callproc("stp_getworkflow_details_tc",['wf','','name',user])
+            name = datalist1[0][0]
+            header = callproc("stp_getworkflow_details_tc", ['wf','','header',user])
+            rows = callproc("stp_getworkflow_details_tc",['wf','','data',user])
+            for row in rows:
+                id = encrypt_parameter(str(row[0]))
+                form_id = encrypt_parameter(str(row[1]))    
+                data.append((id,form_id) + row[2:])
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log",[fun,str(e),user])  
+        messages.error(request, 'Oops...! Something went wrong!')
+    finally: 
+        return render(request,'TrackFlow/index_tc.html',
+        { 
+            'header': header,
+            'data': data,
+            'name': name,
+            'user_id': user,
+            'role_id': role_id
+        })
