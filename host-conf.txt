@@ -139,3 +139,42 @@ python manage.py migrate
 
 
 sudo vim /etc/nginx/nginx.conf
+
+
+
+
+python manage.py makemigrations TreeCutting
+python manage.py migrate --database=4
+python manage.py makemigrations service2_app
+python manage.py migrate --database=2
+
+python manage.py makemigrations common_app
+python manage.py migrate common_app --database=1
+python manage.py migrate common_app --database=2
+python manage.py migrate --database=default
+python manage.py makemigrations Account
+python manage.py makemigrations Masters
+python manage.py makemigrations MenuManager
+python manage.py makemigrations Reports
+python manage.py makemigrations DrainageConnection
+python manage.py makemigrations TreeCutting
+
+python manage.py migrate Account --database=default
+python manage.py migrate Account --database=1
+python manage.py migrate Account --database=2
+
+python manage.py migrate Masters --database=1
+python manage.py migrate Masters --database=2
+
+python manage.py migrate MenuManager --database=1
+python manage.py migrate MenuManager --database=2
+
+python manage.py migrate Reports --database=1
+python manage.py migrate Reports --database=2
+
+
+python manage.py migrate DrainageConnection --database=1
+
+python manage.py migrate TreeCutting --database=2
+
+python manage.py startapp MenuManager
