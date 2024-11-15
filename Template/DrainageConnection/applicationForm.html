@@ -1,0 +1,228 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/applicationForm.css' %}" />
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
+<body>
+    
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                  <u>Application Form</u>
+                </h2>
+                <br>
+                
+                <form method="POST" action="{% url 'application_Master_Post' %}" enctype="multipart/form-data">
+
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Name of the Premises<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Name_Premises" class="form-control" id="Name_Premises" placeholder="Enter Name of Premises" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Plot_No" class="form-control" id="Plot_No" placeholder="Enter Plot No." required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Sector No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Sector_No" class="form-control" id="Sector_No" placeholder="Enter Sector No" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Node.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Node" class="form-control" id="Node" placeholder="Enter Node" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Name of the Owner<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Name_Owner" class="form-control" id="Name_Owner" placeholder="Enter Name of Owner" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Address of the Owner<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Address_Owner" class="form-control" id="Address_Owner" placeholder="Enter Address of Owner" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Name of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Name_Plumber" class="form-control" id="Name_Plumber" placeholder="Enter Name of Plumber" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">License No of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="License_No_Plumber" class="form-control" id="License_No_Plumber" placeholder="Enter License No of Plumber" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Address of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Address_of_Plumber" class="form-control" id="Address_of_Plumber" placeholder="Enter Address of Plumber" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Plot size (mtr.sq)<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Plot_size" class="form-control" id="Plot_size" placeholder="Enter Plot size" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">No of flats<span style="color:red;"> *</span> :</label>
+                            <input type="number" value="" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">No of shops<span style="color:red;"> *</span> :</label>
+                            <input type="number" value="" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="EmployeeNumber" class="form-label">Septic tank size (liters)<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Document Name</th>
+                                <th>Upload</th>
+                                <th>Uploaded Document</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in documents %}
+                            <tr>
+                                <td>{{ document.doc_name }}
+                                    {% if document.mandatory == 1 %}
+                                        <span style="color: red;">*</span>
+                                    {% endif %}
+                                <td>
+                                    <input type="file" name="upload_{{ forloop.counter }}" class="form-control" onchange="previewFile(this, '{{ forloop.counter }}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"> 
+                                </td>
+                                <td>
+                                    <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ forloop.counter }}" 
+                                        target="_blank" style="display: none;">
+                                        <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                        <span class="edit-text">View</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="text-center">
+                        <button type="submit" id="submitBtn"  class="btn btn-primary">Submit</button>
+                        
+                        <a href="{% url 'applicationFormIndex' %}" class="btn btn-secondary">Go Back</a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'sweetalert2/dist/sweetalert2.min.js' %}"></script>
+
+    <script>
+        
+        /* upload Function */
+       
+        function previewFile(input, counter) {
+            const file = input.files[0];
+            if (file) {
+
+                const fileURL = URL.createObjectURL(file);
+        
+                const viewLink = document.getElementById(`viewFile_${counter}`);
+                viewLink.href = fileURL;
+        
+                viewLink.style.display = 'inline-block';
+            }
+        }
+        
+        function openInNewTab(url) {
+            const newWindow = window.open(url, '_blank');
+            if (newWindow) {
+                newWindow.focus();
+            } else {
+                alert("Please allow popups for this website.");
+            }
+        }
+
+    </script>
+
+    <script>
+        $("#dt").dataTable({
+          pageLength: 4,
+          order: []
+        });
+    </script>
+
+    {% if message %}
+        <script>
+            Swal.fire({
+                title: "Error",
+                text: "{{ message }}",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
+        </script>
+    {% endif %}
+
+
+    
+    {% comment %} <script>
+        $(document).ready(function() {
+            const successMessage = "{{ success_message|default:'' }}";  // Use the passed context variable
+            if (successMessage) {
+                new Noty({
+                    type: 'success',
+                    layout: 'topRight',
+                    text: successMessage,
+                    timeout: 3000,
+                    progressBar: true
+                }).show();
+            }
+        });
+    </script> {% endcomment %}
+    
+
+    <!-- If Document Not Uploaded Show Alert -->
+{% comment %}      
+    <sctip>
+
+        {% if messages %}
+            {% for message in messages %}
+                <script>
+                    debugger
+                    Swal.fire({
+                        title: "{{ message.tags }}",
+                        text: "{{ message }}",
+                        icon: "{{ message.tags }}",
+                        confirmButtonText: "OK",
+                    });
+                </script>
+            {% endfor %}
+        {% endif %} 
+
+    </script> {% endcomment %}
+
+    
+</body>
+{% endblock %}

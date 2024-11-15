@@ -32,11 +32,12 @@ class CustomUserManager(BaseUserManager):
         service_db = get_service_db()
         return super().get_queryset().using(service_db)
 
+        
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
     # title = models.CharField(max_length=255)
     full_name = models.CharField(max_length=255)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     # encrypted_password = models.CharField(max_length=225,null=True,blank=True)  # Adjust the max_length as needed
     phone = models.CharField(max_length=15)
     first_time_login = models.IntegerField(default=1)  # 1 for True, 0 for False
@@ -46,7 +47,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     # is_staff = models.BooleanField(default=False)
     superior_id =  models.BigIntegerField(null=True, blank=True)
-    role = models.ForeignKey('Masters.Roles', on_delete=models.CASCADE, related_name='role_idd', blank=True, null=True)
+    role_id = models.BigIntegerField(null=True, blank=True)
     device_token = models.CharField(max_length=255, null=True, blank=True)
     objects = CustomUserManager()
 
@@ -57,6 +58,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class roles(models.Model):
+    id = models.AutoField(primary_key=True)
+    role_name = models.TextField(null=True, blank=True)
+    role_disc = models.TextField(null=True, blank=True)
+    role_type = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
+    created_by = models.TextField(null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
+    objects = ServiceManager()
+    class Meta:
+        db_table = 'roles'
 
 class user_dept_services(models.Model):
     id = models.AutoField(primary_key=True)
@@ -98,50 +113,64 @@ class error_log(models.Model):
     class Meta:
         db_table = 'error_log'
 
-
-class MenuMaster(models.Model):
-    menu_id = models.AutoField(primary_key=True)
-    menu_name = models.CharField(max_length=50, null=True, blank=True)
-    menu_action = models.CharField(max_length=50, null=True, blank=True)
-    menu_is_parent = models.BooleanField(null=True, blank=True)
-    menu_parent_id = models.IntegerField(null=True, blank=True)
-    menu_order = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
-    is_sub_menu = models.BooleanField(null=True, blank=True)
-    sub_menu = models.IntegerField(null=True, blank=True)
-    is_sub_menu2 = models.BooleanField(null=True, blank=True)
-    sub_menu2 = models.IntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
-    created_by = models.TextField(null=True, blank=True)
-    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
-    updated_by = models.TextField(null=True, blank=True)
-    menu_icon = models.CharField(max_length=50, null=True, blank=True)
+class department_master(models.Model):
+    dept_id = models.AutoField(primary_key=True)
+    dept_name =  models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    created_by =  models.TextField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    updated_by =  models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
-        db_table = 'menu_master'
-
-
-class UserMenuDetails(models.Model):
-    user_menu_id = models.AutoField(primary_key=True)
-    user_id = models.CharField(max_length=50, null=True, blank=True)
-    menu_id = models.IntegerField(null=True, blank=True)
-    role_id = models.CharField(max_length=50, null=True, blank=True)
-    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
-    created_by = models.TextField(null=True, blank=True)
-    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
-    updated_by = models.TextField(null=True, blank=True)
+        db_table = 'department_master'
+class service_master(models.Model):
+    ser_id = models.AutoField(primary_key=True)
+    ser_name = models.TextField(null=True, blank=True)
+    short_name = models.TextField(null=True, blank=True)
+    dept = models.ForeignKey(department_master, on_delete=models.CASCADE, null=True, blank=True, related_name='dept_ser_F')
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    created_by =  models.TextField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    updated_by =  models.TextField(null=True, blank=True)
+    citizen_page = models.TextField(null=True, blank=True)
+    internal_page = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
-        db_table = 'user_menu_details'
+        db_table = 'service_master'
 
-class RoleMenuMaster(models.Model):
-    role_menu_id = models.AutoField(primary_key=True)
-    role_id = models.CharField(max_length=50, null=True, blank=True)
-    menu_id = models.IntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
-    created_by = models.TextField(null=True, blank=True)
-    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
-    updated_by = models.TextField(null=True, blank=True)
-    objects = ServiceManager()
+class common_model(models.Model):
+    name = models.CharField(max_length=255)
+    id1 =models.CharField(max_length=255)
+    def __str__(self):
+        return self.id1    
     class Meta:
-        db_table = 'role_menu_master'
+        abstract = True
 
+
+class smstext(models.Model):
+    id = models.AutoField(primary_key=True)
+    template_name = models.TextField(null=True, blank=True) 
+    template_id = models.TextField(null=True, blank=True)  
+    sms_id_number = models.TextField(null=True, blank=True) 
+    created_at = models.DateTimeField(auto_now_add=True) 
+
+    class Meta:
+        db_table = 'smstext'
+        
+class smslog(models.Model):
+    mobile = models.CharField(max_length=20)  
+    message = models.TextField(null=True, blank=True) 
+    user_id = models.CharField(max_length=50) 
+    content = models.TextField(null=True, blank=True) 
+    status = models.CharField(max_length=20)  
+    unique_id = models.CharField(max_length=50, null=True, blank=True) 
+    content_type = models.CharField(max_length=50) 
+    response_status = models.CharField(max_length=20)
+    is_successful = models.BooleanField(default=False)  
+    response_url = models.TextField(null=True, blank=True)  
+    status_description = models.TextField(null=True, blank=True)  
+    template_id = models.CharField(max_length=50)  
+    created_at = models.DateTimeField(auto_now_add=True)  
+
+    class Meta:
+        db_table = 'smslog'

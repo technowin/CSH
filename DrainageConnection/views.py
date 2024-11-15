@@ -1,0 +1,1021 @@
+from datetime import datetime
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, render,redirect
+from Account.models import *
+from Masters.models import *
+from DrainageConnection.models import *
+import traceback
+from Account.db_utils import callproc
+from django.contrib import messages
+from django.conf import settings
+from CSH.encryption import *
+import os
+from CSH.settings import *
+from django.contrib.auth.decorators import login_required
+import openpyxl
+import mimetypes
+from openpyxl.styles import Font, Border, Side
+import pandas as pd
+import calendar
+from django.utils import timezone
+from datetime import timedelta
+# Create your views here.
+import logging
+logger = logging.getLogger(__name__)
+
+@login_required 
+def index(request):
+    pre_url = request.META.get('HTTP_REFERER')
+    header, data = [], []
+    name = ''
+    try:
+        if request.user.is_authenticated ==True:                
+                global user,role_id
+                user = request.user.id    
+                role_id = request.user.role_id
+        if request.method == "GET":
+            datalist1= callproc("stp_get_masters",['wf','','name',user])
+            name = datalist1[0][0]
+            header = callproc("stp_get_masters", ['wf','','header',user])
+            rows = callproc("stp_get_masters",['wf','','data',user])
+            for row in rows:
+                id = encrypt_parameter(str(row[0]))
+                form_id = encrypt_parameter(str(row[1]))    
+                data.append((id,form_id) + row[2:])
+        context = {'role_id':role_id,'name':name,'header':header,'data':data,'user_id':request.user.id,'pre_url':pre_url}
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log",[fun,str(e),user])  
+        messages.error(request, 'Oops...! Something went wrong!')
+    finally: 
+         return render(request,'TrackFlow/index.html', context)
+
+@login_required    
+def matrix_flow(request):
+    docs,label,input,data = [],[],[],[]
+    form_id,context,wf_id,sf,f,sb,rb  = '','','','','','',''
+    try:
+        if request.user.is_authenticated ==True:                
+                global user,role_id
+                user = request.user.id   
+                role_id = request.user.role_id   
+        if request.method == "GET":
+            wf_id = decrypt_parameter(wf_id) if (wf_id := request.GET.get('wf', '')) else ''
+            form_id = decrypt_parameter(form_id) if (form_id := request.GET.get('af', '')) else ''
+            workflow = workflow_details.objects.get(id=wf_id) 
+            matrix = service_matrix.objects.get(level=workflow.level)
+            ac = request.GET.get('ac', '')
+            f = request.GET.get('f', '')
+            sf = request.GET.get('sf', '')
+            sb = request.GET.get('sb', '')
+            rb = request.GET.get('rb', '')
+            if sf and sf !='':
+                r = callproc("stp_update_sendforward",[wf_id,form_id,sf,user])
+                if r[0][0] == 'success':
+                    messages.success(request, "Send Forward successfully !!")
+                elif r[0][0] == 'incomplete':
+                    messages.error(request, 'Before forwarding, please complete the necessary actions.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                else: messages.error(request, 'Oops...! Something went wrong!')
+                return redirect(f'/index')
+            if f and f !='':
+                r = callproc("stp_update_forward",[wf_id,form_id,f,user])
+                if r[0][0] == 'success':
+                    messages.success(request, "Forwarded successfully !!")
+                else: messages.error(request, 'Oops...! Something went wrong!')
+                return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+            if sb and sb !='':
+                r = callproc("stp_update_sendback",[wf_id,form_id,user])
+                if r[0][0] == 'success':
+                    messages.success(request, "Sendback successfully !!")
+                elif r[0][0] == 'wrongsendback':
+                    messages.error(request, 'You cannot send it back in the first stage itself.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                elif r[0][0] == 'multisendback':
+                    messages.error(request, 'Consecutive send-backs are not permitted.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                else: messages.error(request, 'Oops...! Something went wrong!')
+                return redirect(f'/index')
+            if rb and rb !='':
+                r = callproc("stp_update_rollback",[wf_id,form_id,user])
+                if r[0][0] == 'success':
+                    messages.success(request, "Rollback successfully !!")
+                elif r[0][0] == 'wrongrollback':
+                    messages.error(request, 'You cannot roll it back in the first stage itself.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                elif r[0][0] == 'multirollback':
+                    messages.error(request, 'Consecutive roll-backs are not permitted.')
+                    return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                else: messages.error(request, 'Oops...! Something went wrong!')
+                return redirect(f'/index')
+            subordinates = callproc("stp_get_subordinates",[form_id,user])
+            user_list = callproc("stp_get_dropdown_values",['marked_for'])
+            reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
+            citizen_docs = citizen_document.objects.filter(application_id=form_id) 
+            for doc_master in document_master.objects.all():
+                matching_doc = citizen_docs.filter(document=doc_master).first()
+                doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
+                if matching_doc and matching_doc.filepath:
+                    full_filepath = os.path.join(MEDIA_ROOT, matching_doc.filepath)
+                    file_name = os.path.basename(full_filepath)
+                    if os.path.exists(full_filepath):
+                        doc_entry['file_path'] = encrypt_parameter(matching_doc.filepath)
+                        doc_entry['file_name'] = file_name
+                        doc_entry['id'] =  str(matching_doc.id)
+                        doc_entry['correct'] =  str(matching_doc.correct_mark)
+                        doc_entry['comment'] =  str(matching_doc.comment or '')
+                docs.append(doc_entry)
+            label = callproc("stp_get_masters", ['fm','','header',form_id])
+            label = [l[0] for l in label]
+            input = callproc("stp_get_masters",['fm','','data',form_id])
+            fields = list(zip(label, input[0]))
+            header = callproc("stp_get_masters", ['iud','','header',wf_id])
+            rows = callproc("stp_get_masters",['iud','','data',wf_id])
+            for row in rows:
+                if os.path.exists(os.path.join(MEDIA_ROOT, str(row[4]))):
+                    encrypted_id = encrypt_parameter(str(row[4]))
+                else: encrypted_id = None
+                new_row = row[:4] + (encrypted_id,)
+                data.append(new_row)
+            header1 = callproc("stp_get_masters", ['iuc','','header',wf_id])
+            data1 = callproc("stp_get_masters",['iuc','','data',wf_id])
+            down_chklst = encrypt_parameter("sample.pdf")
+            down_insp = encrypt_parameter("sample.pdf")
+            context = {'role_id':role_id,'user_id':request.user.id,'docs':docs,'fields': fields,'header': header,'data': data,'header1': header1,
+                       'data1': data1,'subordinates':subordinates,'user_list':user_list,'ac':ac,'wf_id':encrypt_parameter(wf_id),
+                       'form_id': encrypt_parameter(form_id),'workflow':workflow,'reject_reasons':reject_reasons,'matrix':matrix,'down_chklst':down_chklst,'down_insp':down_insp}
+        if request.method == "POST":
+            response = None
+            wf_id = decrypt_parameter(wf_id) if (wf_id := request.POST.get('wf_id', '')) else ''
+            form_id = decrypt_parameter(form_id) if (form_id := request.POST.get('form_id', '')) else ''
+            wf = workflow_details.objects.get(id=wf_id)
+            files = request.FILES.getlist('files[]')
+            comment =  request.POST.get('comment', '')
+            if comment!='':
+                internal_user_comments.objects.create(
+                        workflow=wf, comments=comment,
+                        created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                )  
+                response = f"Your comment has been submitted: '{comment}'"
+            for file in files:
+                 response =  internal_docs_upload(file,role_id,user,wf)
+                
+            if response:
+                return JsonResponse(response, safe=False)
+
+            ref = decrypt_parameter(matrix_ref) if (matrix_ref := request.POST.get('matrix_ref', '')) else ''
+            ac = decrypt_parameter(ac) if (ac := request.POST.get('ac', '')) else ''
+            status =  request.POST.get('btnclk', '')
+            ser= request.session.get('service_db')
+            if status.isdigit():
+                status = int(status)
+                
+                if (status == 3 or status == 4) and (ref == 'scrutiny'):
+                    doc_ids = request.POST.getlist('doc_ids')
+                    rej_res = request.POST.get('rej_res')
+                    for doc_id in doc_ids:
+                        if doc_id !='':
+                            doc_id = decrypt_parameter(doc_id)
+                            correct = request.POST.get(f"correct_{doc_id}")
+                            incorrect = request.POST.get(f"incorrect_{doc_id}")
+                            rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                            r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+                    r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                elif status == 5 and ref == 'inspection':
+                    cheklist_upl_file = request.FILES.get('cheklist_upl_file')
+                    inspection_upl_file = request.FILES.get('inspection_upl_file')
+                    if cheklist_upl_file and inspection_upl_file:
+                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf)
+                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf)
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                elif status == 10 and ref == 'certificate':
+                    certificate_upl_file = request.FILES.get('certificate_upl_file')
+                    if certificate_upl_file:
+                        file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf)
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    fui = workflow_details.objects.filter(id=wf_id).first()
+                    form_user_id = fui.form_user_id
+                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user)
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                else:
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log",[fun,str(e),user])  
+        messages.error(request, 'Oops...! Something went wrong!')
+    finally: 
+         if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '':
+            return render(request,'TrackFlow/metrix_flow.html', context)
+
+def internal_docs_upload(file,role_id,user,wf):
+    file_resp = None
+    role = roles.objects.get(id=role_id)
+    sub_path = f'{role.role_name}/user_{user}/workflow_{str(wf.id)}/{file.name}'
+    full_path = os.path.join(MEDIA_ROOT, sub_path)
+    folder_path = os.path.dirname(full_path)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path, exist_ok=True)
+    file_exists_in_folder = os.path.exists(full_path)
+    file_exists_in_db = internal_user_document.objects.filter(file_path=sub_path,workflow=wf).exists()
+    if file_exists_in_db:
+        document = internal_user_document.objects.filter(file_path=sub_path,workflow=wf).first()
+        document.updated_at = datetime.now()
+        document.updated_by = str(user)
+        document.save()
+        with open(full_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+        file_resp =  f"File '{file.name}' has been updated."
+    else:
+        with open(full_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+        internal_user_document.objects.create(
+            workflow=wf, file_name=file.name,file_path=sub_path,
+            created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+        )  
+        file_resp =  f"File '{file.name}' has been inserted."
+    return file_resp
+
+def citizen_docs_upload(file,user,form_id,created_by):
+    file_resp = None
+    doc = document_master.objects.get(doc_id=15)
+    app_form = application_form.objects.get(id=form_id)
+    sub_path = f'user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}'
+    full_path = os.path.join(MEDIA_ROOT, sub_path)
+    folder_path = os.path.dirname(full_path)
+    
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path, exist_ok=True)
+    file_exists_in_folder = os.path.exists(full_path)
+    file_exists_in_db = citizen_document.objects.filter(filepath=sub_path).exists()
+    if file_exists_in_db:
+        document = citizen_document.objects.filter(filepath=sub_path).first()
+        document.updated_at = datetime.now()
+        document.updated_by = str(user)
+        document.save()
+        with open(full_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+        file_resp =  f"File '{file.name}' has been updated."
+    else:
+        with open(full_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+
+        citizen_document.objects.create(
+            user_id=user,file_name=file.name,filepath=sub_path,
+            document=doc,application_id=app_form,
+            created_by=str(created_by),updated_by=str(created_by),
+            created_at=datetime.now(),updated_at=datetime.now()
+        )
+       
+        file_resp =  f"File '{file.name}' has been inserted."
+    return file_resp
+
+def sample_doc(columns,file_name,user):
+    try:
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = 'Sample Format'
+        
+        if columns and columns[0]:
+            columns = [col[0] for col in columns[0]]
+        
+        black_border = Border(
+            left=Side(border_style="thin", color="000000"),
+            right=Side(border_style="thin", color="000000"),
+            top=Side(border_style="thin", color="000000"),
+            bottom=Side(border_style="thin", color="000000")
+        )
+        
+        for col_num, header in enumerate(columns, 1):
+            cell = sheet.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = Font(bold=True)
+            cell.border = black_border
+        
+        for col in sheet.columns:
+            max_length = 0
+            column = col[0].column_letter  
+            for cell in col:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+                    
+            adjusted_width = max_length + 2 
+            sheet.column_dimensions[column].width = adjusted_width  
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="' + str(file_name) +" "+str(datetime.now().strftime("%d-%m-%Y")) + '.xlsx"'
+        workbook.save(response)
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log",[fun,str(e),user])  
+    finally:
+        return response      
+
+# application Form Index
+def applicationFormIndex(request):
+    try:
+        # full_name = request.session.get('full_name')
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+            user_id = user.id
+        else:
+            user_id = None 
+
+        new_id = 1
+        new_id_Value = 0
+        encrypted_new_id = encrypt_parameter(str(new_id))
+        encrypted_new_id_Value = encrypt_parameter(str(new_id_Value))
+        
+        getApplicantData = []
+        show_apply_button = False  
+
+        if request.method == "GET":
+            applicationIndex = callproc("stp_getFormDetails", [user_id])
+            
+            if not applicationIndex:
+                show_apply_button = True
+            else:
+                for items in applicationIndex:
+                    encrypted_id = encrypt_parameter(str(items[1]))
+                    item = {
+                        "srno": items[0],
+                        "id": encrypted_id,
+                        "request_no": items[2],       
+                        "name_of_owner": items[3],   
+                        "status": items[4],          
+                        "comments": items[5]          
+                    }
+                    
+                    getApplicantData.append(item)
+                    
+                    if items[4] == 'Refused' or items[4] == 'New':
+                        show_apply_button = True
+                    
+                    
+
+        return render(request, "DrainageConnection/applicationFormIndex.html", {
+            "data": getApplicantData,
+            "show_apply_button": show_apply_button,  
+            "encrypted_new_id": encrypted_new_id,  
+            "encrypted_new_id_Value": encrypted_new_id_Value 
+        })
+
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return JsonResponse({"error": "Failed to fetch data"}, status=500)
+    
+# application Form Create
+def applicationMasterCrate(request):
+    try:
+        # getDocumentData = document_master.objects.filter(is_active=1) 
+        getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id=15)
+        
+        # success_message = request.session.pop('success_message', None)
+        message = request.session.pop('message', None)
+        return render(request, 'DrainageConnection/applicationForm.html', {'documents': getDocumentData, 'message': message}) 
+    
+    except Exception as e:
+       
+        print(f"An error occurred: {e}")
+     
+        return HttpResponse("An error occurred while rendering the page.", status=500)
+
+# application Form Create Post
+def application_Master_Post(request):
+    context = {}  
+    try:
+        global user
+        
+        if request.method == "POST":
+            service_db = request.session.get('service_db', 'default')
+            request.session['service_db'] = service_db
+
+            phone_number = request.session.get('phone_number')
+            user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+            full_name_session = request.session['full_name'] = user.full_name
+            user_id = user.id
+
+            mandatory_documents = document_master.objects.filter(mandatory=1, is_active=1)
+            all_uploaded = True
+            missing_documents = []
+
+            for document in mandatory_documents:
+                if not request.FILES.get(f'upload_{document.doc_id}'):
+                    all_uploaded = False
+                    missing_documents.append(document.doc_name)
+                    
+            if not all_uploaded:
+                message = 'Please upload the mandatory documents.'
+                request.session['message'] = message  
+                return redirect('applicationMasterCrate')
+                # messages.error(request, 'Please upload the mandatory documents.')
+                # message = 'Please upload the mandatory documents.'
+                # return redirect('applicationMasterCrate', message)
+                # return render(request, "DrainageConnection/applicationForm.html", context={'message': message})
+
+            application = application_form.objects.create(
+                name_of_premises=request.POST.get('Name_Premises', ''),
+                plot_no=request.POST.get('Plot_No', ''),
+                sector_no=request.POST.get('Sector_No', ''),
+                node=request.POST.get('Node', ''),
+                name_of_owner=request.POST.get('Name_Owner', ''),
+                address_of_owner=request.POST.get('Address_Owner', ''),
+                name_of_plumber=request.POST.get('Name_Plumber', ''),
+                license_no_of_plumber=request.POST.get('License_No_Plumber', ''),
+                address_of_plumber=request.POST.get('Address_of_Plumber', ''),
+                plot_size=request.POST.get('Plot_size', ''),
+                no_of_flats=request.POST.get('No_of_flats', ''),
+                no_of_shops=request.POST.get('No_of_shops', ''),
+                septic_tank_size=request.POST.get('Septic_tank_size', ''),
+                created_by=user_id
+            )
+
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            os.makedirs(application_folder_path, exist_ok=True)
+
+            for document in document_master.objects.all():
+                uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+                
+                if uploaded_file:
+                    # Create the document folder path within the application folder
+                    document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
+                    os.makedirs(document_folder_path, exist_ok=True)
+
+                    # Remove all files in the document folder (if any)
+                    for file_name in os.listdir(document_folder_path):
+                        file_path = os.path.join(document_folder_path, file_name)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)  # Delete the file
+
+                    # Construct the file name and file path for the new file
+                    file_name = uploaded_file.name
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    # Save the uploaded file in chunks
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    # Prepare the relative file path for database storage
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
+                    # Update the existing document or create a new record in the database
+                    existing_document = citizen_document.objects.filter(
+                        user_id=user_id,
+                        document=document,
+                        application_id=application
+                    ).first()
+
+                    if existing_document:
+                        existing_document.file_name = file_name
+                        existing_document.filepath = relative_file_path
+                        existing_document.updated_by = full_name_session
+                        existing_document.updated_at = timezone.now()  # Update the timestamp
+                        existing_document.save()
+                    else:
+                        citizen_document.objects.create(
+                            user_id=user_id,
+                            file_name=file_name,
+                            filepath=relative_file_path,
+                            document=document,
+                            application_id=application,
+                            created_by=full_name_session,
+                            updated_by=full_name_session,
+                        )
+            
+            new_id = 0
+            new_id = encrypt_parameter(str(new_id))
+            row_id = encrypt_parameter(str(application.id))
+                                    
+            # messages.success(request, 'Data and files uploaded successfully!')
+            # request.session['success_message'] = 'Data and files uploaded successfully!'
+            return redirect('viewapplicationform', row_id, new_id)  
+            # return redirect('viewapplicationform', row_id=application.id, new_id=0)  
+
+        # return redirect('viewapplicationform', row_id=application.id, new_id=0) 
+    
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        user = request.user  
+        callproc("stp_error_log", [fun, str(e), user])
+        messages.error(request, 'Oops...! Something went wrong!')
+        context['error_message'] = 'An error occurred while processing your request.'
+
+    # finally:
+    #     return redirect('viewapplicationform', row_id=application.id, new_id=0) 
+
+# Main Index For Internal User
+def InternalUserIndex(request):
+    try:
+        session_company = request.session.get("CC", "")
+        username = ""
+
+        service_db = request.session.get('service_db', 'default')    
+        
+        service = service_master.objects.get(ser_id= service_db)
+        service_name = service.ser_name
+    
+        # Get Applicant Data
+
+        getApplicantData = []
+
+        applicationIndex = callproc("stp_getFormDetailsForInternalUser")
+        for items in applicationIndex:
+            item = {
+                "srno": items[0],
+                "request_no": items[1],        
+                "name_of_owner": items[2],      
+                "status": items[3],           
+                "comments": items[4]            
+            }
+            getApplicantData.append(item)
+        
+        return render(request,"Internal User/InternalUserIndex.html",{"data": getApplicantData, "service": service_name})
+
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return JsonResponse({"error": "Failed to fetch data"}, status=500)
+    except Exception as e:
+        
+        print(f"An error occurred: {e}")
+        return HttpResponse("An error occurred while rendering the page.", status=500)  
+ 
+def download_doc(request, filepath):
+    file = decrypt_parameter(filepath)
+    file_path = os.path.join(settings.MEDIA_ROOT, file)
+    file_name = os.path.basename(file_path)
+    try:
+        if os.path.exists(file_path):
+            mime_type, _ = mimetypes.guess_type(file_path)
+            if not mime_type:
+                mime_type = 'application/octet-stream'
+            
+            with open(file_path, 'rb') as file:
+                response = HttpResponse(file.read(), content_type=mime_type)
+                response['Content-Disposition'] = f'inline; filename="{file_name}"'
+                return response
+        else:
+            return HttpResponse("File not found", status=404)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), ''])  
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+    
+# View Application Form 
+def viewapplicationform(request, row_id, new_id):
+    try:
+        
+        context = {} 
+        
+        row_id = decrypt_parameter(row_id)
+        new_id = decrypt_parameter(new_id)
+        
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+                user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+                user_id = user.id
+        else:
+                user_id = None
+            
+        application = get_object_or_404(application_form, pk=row_id)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
+        for row in uploaded_documents:
+                encrypted_filepath = encrypt_parameter(str(row.filepath))
+                row.filepath = encrypted_filepath
+        
+        row_id = encrypt_parameter(str(row_id))
+        row_id_status = encrypt_parameter(str(1))
+                        
+        context = {
+            'application': application,
+            'uploaded_documents': uploaded_documents,
+            'new_id': new_id,
+            'MEDIA_URL': MEDIA_ROOT,
+            'row_id' : row_id,
+            'row_id_status' : row_id_status,
+        }
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        user = request.user
+        callproc("stp_error_log", [fun, str(e), ''])
+        messages.error(request, 'Oops...! Something went wrong!')
+
+    finally:
+        return render(request, 'DrainageConnection/viewapplicationform.html', context)     
+
+# Application Form Final Submit    
+def application_Form_Final_Submit(request):
+    if request.method == "POST":
+        try:
+                
+            phone_number = request.session['phone_number']
+        
+            if phone_number:
+                user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+                user_id = user.id
+            else:
+                user_id = None
+                
+            application_id = request.POST.get('application_id')
+            application = get_object_or_404(application_form, id=application_id)
+
+            if application.status_id == 4:
+                application.status_id = 9
+            else:
+                application.status_id = 1
+                
+            application.save()
+
+            status_instance = status_master.objects.get(status_id=application.status_id)
+
+            workflow, created = workflow_details.objects.get_or_create(
+                form_id=application,
+                defaults={
+                    'status': status_instance,
+                    'created_by': str(user),
+                    'updated_at': timezone.now(),
+                    'form_user_id': user_id,
+                    'level': 1
+                }
+            )
+
+            if not created:
+                workflow.status = status_instance
+                workflow.updated_at = timezone.now()
+                workflow.updated_by = str(user)
+                workflow.save()
+
+            return redirect('applicationFormIndex')
+
+        except application_form.DoesNotExist:
+            return JsonResponse({"error": "Application not found."}, status=404)
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return JsonResponse({"error": "An unexpected error occurred."}, status=500)
+
+    return render(request, "DrainageConnection/applicationFormIndex.html")
+
+# Edit Application Form
+def EditApplicationForm(request, row_id, row_id_status):
+    context = {}
+
+    try:
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+            user_id = user.id
+        else:
+            user_id = None
+        
+        row_id = decrypt_parameter(row_id)
+        row_id_status = decrypt_parameter(row_id_status)
+        
+        application = get_object_or_404(application_form, pk=row_id)
+
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
+        for row in uploaded_documents:
+                encrypted_filepath = encrypt_parameter(str(row.filepath))
+                row.filepath = encrypted_filepath
+
+        uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
+
+        all_documents = document_master.objects.all()
+
+        not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
+
+        context = {
+            'application': application,
+            'uploaded_documents': uploaded_documents,
+            'not_uploaded_documents': not_uploaded_documents,
+            'MEDIA_URL': settings.MEDIA_URL,
+            'row_id_status': row_id_status,
+        }
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        user = request.user
+        callproc("stp_error_log", [fun, str(e), user])
+        messages.error(request, 'Oops...! Something went wrong!')
+
+    return render(request, 'DrainageConnection/EditApplicationForm.html', context)
+   
+# Edit Post Here          
+def edit_Post_Application_Master(request, application_id, row_id_status):
+    try:
+        application = get_object_or_404(application_form, id=application_id)
+        
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+        full_name_session = request.session['full_name'] = user.full_name
+        user_id = user.id
+
+        if request.method == 'POST':
+            name_of_premises = request.POST.get('Name_Premises')
+            plot_no = request.POST.get('Plot_No')
+            sector_no = request.POST.get('Sector_No')
+            node = request.POST.get('Node')
+            name_of_owner = request.POST.get('Name_Owner')
+            address_of_owner = request.POST.get('Address_Owner')
+            name_of_plumber = request.POST.get('Name_Plumber')
+            license_no_plumber = request.POST.get('License_No_Plumber')
+            address_of_plumber = request.POST.get('Address_of_Plumber')
+            plot_size = request.POST.get('Plot_size')
+            no_of_flats = request.POST.get('No_of_flats')
+            no_of_shops = request.POST.get('No_of_shops')
+            septic_tank_size = request.POST.get('Septic_tank_size')
+
+            application.name_of_premises = name_of_premises
+            application.plot_no = plot_no
+            application.sector_no = sector_no
+            application.node = node
+            application.name_of_owner = name_of_owner
+            application.address_of_owner = address_of_owner
+            application.name_of_plumber = name_of_plumber
+            application.license_no_of_plumber = license_no_plumber
+            application.address_of_plumber = address_of_plumber
+            application.plot_size = plot_size
+            application.no_of_flats = no_of_flats
+            application.no_of_shops = no_of_shops
+            application.septic_tank_size = septic_tank_size
+
+            application.save()
+
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            os.makedirs(application_folder_path, exist_ok=True)
+
+            for document in document_master.objects.all():
+                uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+                
+                if uploaded_file:
+                    # Create the document folder path within the application folder
+                    document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
+                    os.makedirs(document_folder_path, exist_ok=True)
+
+                    # Remove all files in the document folder (if any)
+                    for file_name in os.listdir(document_folder_path):
+                        file_path = os.path.join(document_folder_path, file_name)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)  # Delete the file
+
+                    # Construct the file name and file path for the new file
+                    file_name = uploaded_file.name
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    # Save the uploaded file in chunks
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    # Prepare the relative file path for database storage
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
+                    # Update the existing document or create a new record in the database
+                    existing_document = citizen_document.objects.filter(
+                        user_id=user_id,
+                        document=document,
+                        application_id=application
+                    ).first()
+
+                    if existing_document:
+                        existing_document.file_name = file_name
+                        existing_document.filepath = relative_file_path
+                        existing_document.updated_by = full_name_session
+                        existing_document.updated_at = timezone.now()  # Update the timestamp
+                        existing_document.save()
+                    else:
+                        citizen_document.objects.create(
+                            user_id=user_id,
+                            file_name=file_name,
+                            filepath=relative_file_path,
+                            document=document,
+                            application_id=application,
+                            created_by=full_name_session,
+                            updated_by=full_name_session,
+                        )
+
+            new_id = 0
+            new_id = encrypt_parameter(str(new_id))
+            row_id = encrypt_parameter(str(application.id))
+            
+            if row_id_status == 1: 
+                return redirect('viewapplicationform', row_id, new_id)
+                # return redirect('viewapplicationform', row_id=application_id, new_id=0)
+            else:
+                return redirect('applicationFormIndex') 
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return render(request, "DrainageConnection/applicationFormIndex.html")
+
+# Edit Application Form Final Submit
+def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
+    context = {}
+
+    try:
+        # full_name = request.session.get('full_name')
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+            user_id = user.id
+        else:
+            user_id = None 
+        
+        row_id = decrypt_parameter(row_id)
+        row_id_status = decrypt_parameter(row_id_status)
+        
+        application = get_object_or_404(application_form, pk=row_id)
+
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
+        
+        # for doc in uploaded_documents:
+        #     print(f"Document ID: {doc.id}, File Name: {doc.file_name}, "
+        #           f"File Path: {doc.filepath}, Comment: {doc.comment}, "
+        #           f"Created At: {doc.created_at}, User ID: {doc.user_id}")
+            
+        for row in uploaded_documents:
+                encrypted_filepath = encrypt_parameter(str(row.filepath))
+                row.filepath = encrypted_filepath
+                
+        uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
+
+        all_documents = document_master.objects.all()
+
+        not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
+
+        context = {
+            'application': application,
+            'uploaded_documents': uploaded_documents,
+            'not_uploaded_documents': not_uploaded_documents,
+            'MEDIA_URL': MEDIA_ROOT,
+            'row_id_status': row_id_status,
+        }
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), '1'])
+        messages.error(request, 'Oops...! Something went wrong!')
+
+    return render(request, 'DrainageConnection/EditApplicationFormFinalSubmit.html', context)
+
+# Edit Post Here Final Submit        
+def edit_Post_Application_Master_final_submit(request, application_id, row_id_status):
+    try:
+        application = get_object_or_404(application_form, id=application_id)
+        
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+        full_name_session = request.session['full_name'] = user.full_name
+        user_id = user.id
+
+        if request.method == 'POST':
+            name_of_premises = request.POST.get('Name_Premises')
+            plot_no = request.POST.get('Plot_No')
+            sector_no = request.POST.get('Sector_No')
+            node = request.POST.get('Node')
+            name_of_owner = request.POST.get('Name_Owner')
+            address_of_owner = request.POST.get('Address_Owner')
+            name_of_plumber = request.POST.get('Name_Plumber')
+            license_no_plumber = request.POST.get('License_No_Plumber')
+            address_of_plumber = request.POST.get('Address_of_Plumber')
+            plot_size = request.POST.get('Plot_size')
+            no_of_flats = request.POST.get('No_of_flats')
+            no_of_shops = request.POST.get('No_of_shops')
+            septic_tank_size = request.POST.get('Septic_tank_size')
+
+            application.name_of_premises = name_of_premises
+            application.plot_no = plot_no
+            application.sector_no = sector_no
+            application.node = node
+            application.name_of_owner = name_of_owner
+            application.address_of_owner = address_of_owner
+            application.name_of_plumber = name_of_plumber
+            application.license_no_of_plumber = license_no_plumber
+            application.address_of_plumber = address_of_plumber
+            application.plot_size = plot_size
+            application.no_of_flats = no_of_flats
+            application.no_of_shops = no_of_shops
+            application.septic_tank_size = septic_tank_size
+
+            application.save()
+
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            os.makedirs(application_folder_path, exist_ok=True)
+
+            for document in document_master.objects.all():
+                uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
+                
+                if uploaded_file:
+                    # Create the document folder path within the application folder
+                    document_folder_path = os.path.join(application_folder_path, f'document_{document.doc_id}')
+                    os.makedirs(document_folder_path, exist_ok=True)
+
+                    # Remove all files in the document folder (if any)
+                    for file_name in os.listdir(document_folder_path):
+                        file_path = os.path.join(document_folder_path, file_name)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)  # Delete the file
+
+                    # Construct the file name and file path for the new file
+                    file_name = uploaded_file.name
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    # Save the uploaded file in chunks
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    # Prepare the relative file path for database storage
+                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+
+                    # Update the existing document or create a new record in the database
+                    existing_document = citizen_document.objects.filter(
+                        user_id=user_id,
+                        document=document,
+                        application_id=application
+                    ).first()
+
+                    if existing_document:
+                        existing_document.file_name = file_name
+                        existing_document.filepath = relative_file_path
+                        existing_document.updated_by = full_name_session
+                        existing_document.updated_at = timezone.now()  # Update the timestamp
+                        existing_document.save()
+                    else:
+                        citizen_document.objects.create(
+                            user_id=user_id,
+                            file_name=file_name,
+                            filepath=relative_file_path,
+                            document=document,
+                            application_id=application,
+                            created_by=full_name_session,
+                            updated_by=full_name_session,
+                        )
+            
+            new_id = 0
+            new_id = encrypt_parameter(str(new_id))
+            row_id = encrypt_parameter(str(application.id))
+            
+            return redirect('viewapplicationform', row_id, new_id)
+            # return redirect('viewapplicationform', row_id=application_id, new_id=0)
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return render(request, "DrainageConnection/applicationFormIndex.html")
+
+def downloadIssuedCertificate(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+        request.session['full_name'] = user.full_name
+        
+        row_id = decrypt_parameter(row_id)
+        document = citizen_document.objects.get(application_id=row_id, document_id=15)
+        
+        filepath = document.filepath
+        file_name = document.file_name
+
+        encrypted_filepath = encrypt_parameter(filepath)
+        
+        return redirect('download_doc', encrypted_filepath)
+    
+    except citizen_document.DoesNotExist:
+        return Http404("Document not found")
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), user.id])
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)

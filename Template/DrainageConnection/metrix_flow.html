@@ -1,0 +1,716 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% csrf_token %}
+{% load custom_filters %}
+
+ <!-- Custom styles for this html-->
+<link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/checkbox.css' %}" rel="stylesheet" type="text/css" >
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    .table-container {
+        max-height: 100%; 
+        overflow-x: auto; 
+        overflow-y: auto; 
+        position: relative;
+    }
+    thead th {
+        position: sticky;
+        
+        top: 0;
+        background-color: #fff;
+        z-index: 10; 
+    .card-body {
+        padding: 10px;
+        border: 2px solid #b3b3b3;
+        border-radius: 15px;
+        overflow: hidden; 
+    }
+    .swal2-confirm {
+        background-color: #4e73df !important; 
+        color: white !important;
+    }
+    
+</style>
+
+ <!-- Begin Page Content -->
+ <div>
+
+    <div class="row col-lg-12 mb-2 shadow justify-content-center" style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;">
+        <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
+        <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
+        <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
+      
+        <div class="col-md-3">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="forward" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %}>
+                    Marked For
+                </button>
+                <div class="dropdown-menu animated--fade-in" aria-labelledby="forward" style="max-height: 200px; overflow-y: auto;">
+                    {% for item in user_list %}
+                        <a class="dropdown-item" value="{{item.0}}" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&f={{item.0}}&ac={{ac}}">{{item.1}}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %}
+                <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
+            {% elif workflow.level != 1 and  workflow.sendback is None %}
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&sb=1&ac={{ac}}">Send Back</a>
+            {% else %}
+                <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
+            {% endif %}
+        </div>
+        {% comment %} <div class="col-md-2">
+            {% if workflow.pre_user == user_id|to_str and workflow.rollback is None %}
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
+            {% else %}
+                 <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
+            {% endif %}
+        </div> {% endcomment %}
+        <div class="col-md-3">
+            <button type="submit" id="Btn3" class="btn btn-primary" data-toggle="modal"  data-target="#docs_model_id" >Internal Docs</button>
+        </div>
+        <div class="col-md-3">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button"
+                    id="send_forward" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %}>
+                    Send Forward
+                </button>
+                <div class="dropdown-menu animated--fade-in" aria-labelledby="send_forward" style="max-height: 200px; overflow-y: auto;">
+                    {% for item in subordinates %}
+                        <a class="dropdown-item" value="{{ item.0 }}" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&sf={{item.0}}&ac={{ac}}">{{ item.1 }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content Row -->
+
+    <div class="row mb-2" >
+
+        <!-- Applicant Form -->
+        <div class="col-md-7" >
+            <div class="shadow " style="padding: 10px;border: 2px solid #b3b3b3;border-radius: 15px;">
+                <!-- Card Header -->
+                <div class="card-header"> <h6 class="m-0 font-weight-bold text-primary">Applicant Form</h6></div>
+                <!-- Card Body -->
+                <div class="card-body" style="zoom:85%;height:400px;border: 2px solid #b3b3b3;">
+                    <div class="table-container">
+                        {% for pair in fields|in_pairs %}
+                            <div class="row mb-3">
+                                {% for label, value in pair %}
+                                    <div class="col-md-3">
+                                        <label for="{{ label }}" class="form-label">{{ label }} :- </label>
+                                        <input type="text" value="{{ value }}" class="form-control" readonly>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applicant Documents -->
+        <div class="col-md-5" style="margin-left:0px;">
+            <div class=" shadow " style="padding: 10px; border: 2px solid #b3b3b3;border-radius: 15px;">
+                <!-- Card Header -->
+                <div class="card-header"> <h6 class="m-0 font-weight-bold text-primary">Applicant Documents</h6></div>
+                <!-- Card Body -->
+                <div class="card-body" style="zoom:85%;height:400px;">
+                    <div class="table-container">
+                        <table class="table table-bordered" id="user_docs_id">
+                        <thead>
+                            <tr>
+                                <th style="font-weight:bold;">Sr.No.</th>
+                                <th style="font-weight:bold;">Document</th>
+                                <th style="font-weight:bold;">Download</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in docs %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ doc.doc_name }}</td>
+                                <td> 
+                                    {% if doc.file_path %}
+                                        <a href="{% url 'download_doc' doc.file_path %}" style="font-weight: bold; font-size: 15px" download >
+                                        <img src={% static 'images/download2.png' %}  width="42" height = "42" title="{{doc.file_name}}" target="_blank"></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row col-lg-12 mb-2 shadow " style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;align-items:center;justify-items:center;">
+        <div class="col-md-2">
+        </div>
+        <div class="col-md-3" style="">
+            <button type="submit" id="Btn3" class="btn btn-primary"  data-toggle="modal"  data-target="#comments_model_id" >Comments</button>
+        </div>
+        <div class="col-md-3">
+            {% if ac != "view" and matrix.action and matrix.action != "View"  %}
+                {% if workflow.send_forward|to_int == user_id %}
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                {% elif workflow.status_id|in_list:"1,2" and role_id == 3 %}
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="col-md-2">
+            <a type="button" href="/index" id="Btn3" class="btn btn-primary">Back</a>
+        </div>
+    </div>
+</div>
+    
+  <!-- Common Modal -->
+  <div class="modal fade" id="{{matrix.reference}}">
+    <form id="model_form" method="POST" enctype="multipart/form-data"  action="{% url 'matrix_flow' %}">
+        {% csrf_token %}
+        <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
+        <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
+        <input type="hidden" id="matrixh_ref" name="matrix_ref" value="{% if matrix.reference %}{{ matrix.reference|enc }}{% endif %}">
+        <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
+        <input type="hidden" id="btnclkid" name="btnclk" value="">
+        <div class="modal-dialog modal-{{matrix.model}}  modal-dialog-scrollable" role="common">
+          <div class="modal-content">
+        
+            {% if matrix.reference == "acknowledge" %}
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold" >Are you sure?</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                      Are you sure you want to proceed? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="ack" onclick ="btn_confirm(this.id,'btnclkid')" >Yes, Acknowledge </button>
+                </div>  
+            {% elif matrix.reference == "scrutiny" %}
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold">Scrutiny 
+                         &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                         &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h3>
+                    <!-- Reject Reason Section -->
+                    <div id="rejectReasonSection" class="ml-auto" style="display: none; flex: 1; justify-content: flex-end;">
+                        <div class="d-flex align-items-center">
+                          <!-- Dropdown for Reject Reason -->
+                          <div class="mr-2">
+                            <label for="rejectReason" class="">Reject Reason:</label>
+
+                            <select id="rejectReason" name="rejectReason" class="form-control" style="border-color: black; border-radius: 10px; "  required>
+                              <option value="" selected disabled>Select reason</option>
+                              {% for item in reject_reasons %}
+                                 <option value="{{ item.0 }}">{{ item.1 }}</option>
+                              {% endfor %}
+                            </select>
+                            <span class="text-danger" id="rejectError" style="display: none;">Please select a reject reason.</span>
+                          </div>
+                          &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                          <!-- Textarea for Editing Selected Reject Reason -->
+                          <div id="editRejectReasonSection" class="d-none">
+                            <label for="editRejectReason" class="">Edit Reason:</label>
+                            <textarea id="editRejectReason" name="rej_res" rows="2" cols="30" style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1"></textarea>
+                          </div>
+                        </div>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font:size:16px;">
+                    <div class="table-container">
+                        <table class="table table-bordered" id="user_docs_id1">
+                            <thead>
+                                <tr> 
+                                    <th style="font-weight:bold;">Sr.No.</th>
+                                    <th style="font-weight:bold;width:100px;">Document</th>
+                                    <th style="font-weight:bold;">Download</th>
+                                    <th style="font-weight:bold;">Correct</th>
+                                    <th style="font-weight:bold;">Incorrect</th>
+                                    <th style="font-weight:bold;width:30px;">Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in docs %}
+                                <tr>
+                                    <input type="hidden" id="doc_id" name="doc_ids" value="{% if doc.id %}{{ doc.id|enc }}{% endif %}"/>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ doc.doc_name }}</td>
+                                    <td> 
+                                        {% if doc.file_path %}
+                                            <a  href="{% url 'download_doc' doc.file_path %}" style=" font-size: 15px" download >
+                                            <img src={% static 'images/download2.png' %}  width="48" height = "48" title="{{doc.file_name}}" target="_blank"></a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if doc.id %}
+                                            <div class="mt-1 checkbox-wrapper">
+                                                <input id="correct_{{ forloop.counter }}" name="correct_{{ doc.id }}" class="toggle-checkbox" type="checkbox" {% if doc.correct == "1" %}checked{% endif %}>
+                                                <label for="correct_{{ forloop.counter }}">
+                                                  <div class="tick_mark"></div>
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if doc.id %}
+                                            <div class="mt-1 reject-checkbox">
+                                              <div class="text-center">
+                                                <div class="checkbox-wrapper">
+                                                  <input name="incorrect_{{ doc.id }}" class="form-check-label custom-radio-label toggle-checkbox" id="incorrect_{{ forloop.counter }}" type="checkbox" {% if doc.correct == "0" %}checked{% endif %} />
+                                                  <label for="incorrect_{{ forloop.counter }}"><div class="tick_mark"><div class="cross"></div></div></label>
+                                                </div>
+                                              </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if doc.id %}
+                                            <textarea rows="3" cols="10" name="reject_comment_{{ doc.id }}" value="{{doc.comment}}" placeholder="Write your comments here..." class="form-control" style="height:30%; border-color: black; border-radius: 10px; ">{{doc.comment}}</textarea>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="scru_c" onclick ="btn_confirm(this.id,'btnclkid')">Approve </button>
+                    <button type="button" class="btn btn-danger" id="scru_r" onclick ="btn_confirm(this.id,'btnclkid')">Reject </button>
+                </div>
+            {% elif matrix.reference == "inspection" %} 
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold" >Inspection</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                    <div class="col-md-12 row">
+                        <div class="col-md-6 formupl">
+                            <a type="button" class="btn btn-primary" href="{% url 'download_doc' down_chklst %}" id="dochk" target="_blank">Download Checklist</a>
+                            <hr>
+                            <span class="formupl-title">Upload Checklist</span>
+                            <p class="formupl-paragraph">
+                                Upload your file
+                              </p>
+                             <label for="file-input1" class="drop-container">
+                            <span class="drop-title">Drop files here</span>
+                            or
+                            <input type="file" id="file-input1" name="cheklist_upl_file" required >
+                          </label>
+                        </div>
+                        <div class="col-md-6 formupl">
+                            <a type="button" class="btn btn-primary" id="doinsp" href="{% url 'download_doc' down_insp %}" target="_blank">Download Inspection </a>
+                            <hr>
+                            <span class="formupl-title">Upload Inspection</span>
+                            <p class="formupl-paragraph">
+                                Upload your file
+                              </p>
+                             <label for="file-input2" class="drop-container">
+                            <span class="drop-title">Drop files here</span>
+                            or
+                            <input type="file" id="file-input2" name="inspection_upl_file" required >
+                          </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="insp" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
+                </div>
+            {% elif matrix.reference == "approve" %} 
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold" >Action Required</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                    Do you want to approve or refuse this request?<br>
+                    Please confirm your action.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="app" onclick ="btn_confirm(this.id,'btnclkid')">Approve </button>
+                    <button type="submit" class="btn btn-danger" id="ref" onclick ="btn_confirm(this.id,'btnclkid')">Refuse </button>
+                </div>  
+            {% elif matrix.reference == "certificate" %} 
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color:black;font-weight:bold" >Issue Certificate</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                    <div class="formupl">
+                            <span class="formupl-title">Upload Certificate</span>
+                            <p class="formupl-paragraph">
+                                Upload your file
+                              </p>
+                             <label for="file-input3" class="drop-container">
+                            <span class="drop-title">Drop files here</span>
+                            or
+                            <input type="file" id="file-input3"  name="certificate_upl_file"  required >
+                          </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="iss" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
+                </div>
+            {% endif %}
+      
+          </div>
+        </div>
+    </form>
+  </div>
+<!-- Comments Modal -->
+<div class="modal fade" id="comments_model_id" >
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document" >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color:black">Comments  &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
+                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %} >Add Comments</button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container">
+                    <table class="table table-bordered" id = "comments_table_id">
+                        <thead style="font-weight:bold;">
+                            <tr>
+                                {% for col in header1 %}
+                                    <th style="font-weight: bold; color: black; {% if col.1 != "" %} width: {{ col.1 }};{% endif %}">{{ col.0 }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data1 %}
+                                <tr style="color:black">
+                                    <td>{{ forloop.counter }}</td>
+                                    {% for cell in row %}
+                                        <td>{{ cell }}</td>
+                                    {% endfor %}
+                                </tr>    
+                            {% endfor %}
+                        </tbody>
+                        
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+  </div>
+  
+  
+
+<!-- Documents Modal -->
+<div class="modal fade" id="docs_model_id" >
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document" >
+        <div class="modal-content">
+            <div class="modal-header">
+                
+                <h5 class="modal-title" style="color:black">Internal Documents &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
+                <button type="button" class="btn btn-primary" id="uploadButton"  onclick ="sweet_popup(this.id,'file')"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %} >Upload</button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container">
+                    <table class="table table-bordered" id = "docs_id" >
+                        <thead style="font-weight:bold;">
+                            <tr>    
+                                {% for col in header %}
+                                    <th style="font-weight: bold; color: black; {% if col.1 != "" %} width: {{ col.1 }};{% endif %}">{{ col.0 }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data %}
+                                <tr style="color:black">
+                                    <td>{{ forloop.counter }}</td>
+                                    {% for cell in row %}
+                                    {% if forloop.counter == 5 %}
+                                        <td>
+                                            {% if cell %}
+                                                <a href="{% url 'download_doc' cell %}" style="font-weight: bold; font-size: 15px" download >
+                                                <img src={% static 'images/download2.png' %}  width="42" height = "42" title="{{row.0}}" target="_blank"></a>
+                                            {% endif %}
+                                        </td>
+                                    {% else %}
+                                        <td>{{ cell }}</td>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tr>    
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+{% if messages %}
+  {% for message in messages %}
+    <script>
+    Swal.fire({
+      title: "{{ message.tags }}",
+      text: "{{ message }}",
+      icon: "{{ message.tags }}",
+      confirmButtonText: "OK",
+    });
+  </script>
+  {% endfor %}
+{% endif %}
+
+<script>
+    $(document).ready(function() {
+        $('.toggle-checkbox').on('change', function() {
+          var $row = $(this).closest('tr');
+          $row.find('.toggle-checkbox').not(this).prop('checked', false).prop('disabled', false);
+          if ($(this).is(':checked')) {
+            $row.find('.toggle-checkbox').not(this).prop('disabled', true);
+          }
+        });
+    });      
+</script>
+<script>
+    function btn_confirm(chk, set) {
+        const values = {
+            "ack": 2,"scru_c": 3,"scru_r": 4,"dochk": 'dochk',"doinsp": 'doinsp',"insp": 5,
+            "app": 6,"ref": 7,"senbak": 8,"iss": 10
+        };
+        
+        if (values.hasOwnProperty(chk)) {
+            $("#" + set).val(values[chk]);
+        }
+    }
+</script>
+<script>
+    $(document).ready(function () {
+        $('#scru_r').click(function () {
+            debugger;
+          $('#rejectReasonSection').show();
+          $('#rejectReason').on('change', function () {
+            var selectedReason = $(this).val();
+            if (selectedReason) {
+              $('#editRejectReasonSection').removeClass('d-none').show();
+              $('#editRejectReason').val(selectedReason);
+              $('#scru_r').attr('type', 'submit');
+              $('#rejectError').hide(); 
+            } else {
+              $('#editRejectReasonSection').addClass('d-none').hide();
+              $('#scru_r').attr('type', 'button');
+            }
+          });
+          $('#rejectReason').prop('required', true);
+        });
+        $('#scru_r').click(function (e) {
+            var selectedReason = $('#rejectReason').val();
+            if ($('#rejectReasonSection').is(':visible') && !selectedReason) {
+              e.preventDefault(); 
+              $('#rejectError').show(); 
+            }
+        });
+         $('#scru_c').click(function () {
+            $('#rejectReason').prop('required', false);
+            $('#rejectReasonSection').hide();
+            $('#model_form').submit();
+        });
+      });
+</script>
+<script>
+    function sweet_popup(id,type) {
+        show_sweet_popup(id,type).then(result => {
+            if (result.isConfirmed && result.value) {
+              handle_sweet_popup(result.value,id,type);
+            }
+        });
+    }
+    function show_sweet_popup(id,type) {
+      return new Promise(function(resolve, reject) { 
+        if(type == "file")
+        {
+            Swal.fire({
+                title: 'Upload File',
+                input: 'file',
+                inputAttributes: {
+                    accept: '*/*', // Accept all files
+                    'aria-label': 'Upload your file',"name": "files",  "id": "file-input",  
+                    "type": "file","required": true, "multiple": true,
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Upload',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    confirmButton: 'swal2-confirm',
+                }
+            }).then(result => {
+              resolve(result);
+            });
+        }
+        else if(type == "comment")
+        {
+            Swal.fire({
+                title: 'Submit your comment',
+                input: 'textarea',
+                inputPlaceholder: 'Write your comments here...',
+                inputAttributes: {
+                    'aria-label': 'Write your comments here',
+                    'style': 'height: 100px; border-radius: 10px;'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Submit',
+                cancelButtonText: 'Cancel',
+                preConfirm: (comment) => {
+                    if (!comment || comment.trim() === "") {
+                        Swal.showValidationMessage('Comment cannot be empty!');
+                    }
+                }
+            }).then(result => {
+                resolve(result);
+            });
+        }
+      });
+    }
+  
+  function handle_sweet_popup(fileInput,id,type) {
+    return new Promise(function(resolve, reject) {
+      var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const formData = new FormData();
+      if (fileInput.length > 0) {
+        if(type == "file"){
+            for (var i = 0; i < fileInput.length; i++) {
+                formData.append('files[]', fileInput[i]);
+            }
+        } else if(type == "comment"){
+            formData.append('comment', fileInput);
+        }
+      }
+
+      var wfh_id = $('#wfh_id').val();
+      var formh_id = $('#formh_id').val();
+      formData.append("wf_id", wfh_id);
+      formData.append("form_id", formh_id);
+
+      fetch('/matrix_flow', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken 
+        },
+        body: formData
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Failed to upload files');
+        }
+      })
+      .then(data => {
+        if (data != "") {
+          Swal.fire({
+            icon: 'success',
+            title: 'Submitted!',
+            text:data,
+            showConfirmButton: false,
+            timer: 3000
+          }).then(() => {
+            location.reload(); 
+          });
+    
+          resolve();
+        } else {
+    
+          throw new Error('File upload failed');
+        }
+        resolve();
+      })
+      .catch(error => {
+        console.error('Error uploading files:', error);
+        var err_title = "";
+        if(type=="file")
+        {
+            err_title = 'File upload failed';
+        } else if(type == "comment"){
+            err_title = 'Oops...! Something went wrong!';
+        }
+        Swal.fire({
+            icon: 'error',
+            title: err_title,
+            text: 'Please try again.',
+            timer: 3000, 
+            showConfirmButton: false
+        });
+
+        
+        reject(error);
+      });
+      
+    });
+  }
+  
+  </script>
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+      $("#comments_table_id").DataTable({
+         ordering: false,
+         pageLength: 6,
+         lengthMenu: [
+           [6, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+           [6, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+         ],
+      });
+
+      $("#user_docs_id").DataTable({
+        ordering: false,
+        pageLength: 4,
+        lengthMenu: [
+          [4, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+          [4, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+        ],
+     });    
+
+     $("#user_docs_id1").DataTable({
+        ordering: false,
+        paging: false, 
+     });
+
+     $("#docs_id").DataTable({
+        ordering: false,
+        pageLength: 6,
+        lengthMenu: [
+          [6, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+          [6, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+        ],
+     });
+
+    });
+  </script>
+
+<!-- End of Main Content -->
+{% endblock %}

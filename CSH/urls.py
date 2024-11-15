@@ -22,7 +22,9 @@ from Dashboard.views import *
 # from Masters.models import site_master
 from Masters.views import *
 from Reports.views import *
-from TrackFlow.views import *
+from MenuManager.views import *
+from DrainageConnection.views import *
+from TreeCutting.views import *
 from Masters.views import site_master as sm
 from Masters.views import company_master as cm
 from django.urls import path
@@ -54,10 +56,6 @@ urlpatterns = [
     path("updateGraph",updateGraph, name="updateGraph"),
     path("get_roster_data",get_roster_data, name="get_roster_data"),
     path("get_roster_data_tommorow",get_roster_data_tommorow, name="get_roster_data_tommorow"),
-
-    # TrackFlow
-    path('index/', index, name='index'),
-    path('matrix_flow', matrix_flow, name='matrix_flow'),
 
     # Masters
     path('masters/', masters, name='masters'),
@@ -102,7 +100,11 @@ urlpatterns = [
     path("charts",charts,name='charts'),  
     path("tables",tables,name='tables'),
     
-    # application master
+    # Drainage Connection Workflow
+    path('index/', index, name='index'),
+    path('matrix_flow', matrix_flow, name='matrix_flow'),
+
+    # Drainage Connection application 
     
     path('applicationFormIndex', applicationFormIndex, name='applicationFormIndex'),
     # path('aple_sarkar/', aple_sarkar, name='aple_sarkar'),
@@ -121,6 +123,18 @@ urlpatterns = [
     # path('viewapplicationform/<int:row_id>/<int:new_id>/', viewapplicationform, name='viewapplicationform'),
     # path('EditApplicationForm/<int:row_id>/<int:row_id_status>/', EditApplicationForm, name='EditApplicationForm'),
     
+    # Tree Cutting Workflow
+
+    path('index_tc/', index_tc, name='index_tc'),
+    path('matrix_flow_tc', matrix_flow_tc, name='matrix_flow_tc'),
+
+    # Tree Cutting application
+    
+    path('applicationFormIndexTC', applicationFormIndexTC, name='applicationFormIndexTC'),
+    path('application_Master_Crate_TC', application_Master_Crate_TC, name='application_Master_Crate_TC'),
+    path('application_Master_Edit_TC/<str:row_id>/<str:new_id>/', application_Master_Edit_TC, name='application_Master_Edit_TC'),
+    path('application_Master_View_TC/<str:row_id>/<str:new_id>/', application_Master_View_TC, name='application_Master_View_TC'),
+
     # Verification Screen 
     
     path('VerificationForm', VerificationForm, name='VerificationForm'), 

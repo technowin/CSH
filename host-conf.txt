@@ -25,9 +25,9 @@ pip install django gunicorn
 
 sudo ufw allow 8000
 
-python3 manage.py runserver  172.26.13.184:8000
+python3 manage.py runserver  172.26.13.184:8000     
 
-gunicorn --bind 172.26.13.184:8000 CSH.wsgi
+gunicorn --bind 172.26.13.184:8000 CSH.wsgi   
 
 deactivate
 

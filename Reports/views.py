@@ -7,6 +7,7 @@ from django.shortcuts import render,redirect
 from django.contrib.auth.decorators import login_required
 import requests
 from Reports.models import *
+from Account.models import *
 import Db 
 import json
 from datetime import datetime, timedelta
@@ -103,11 +104,7 @@ def get_filter(request):
     finally:
         return JsonResponse(drop_down, safe=False)
     
-class common_model(models.Model):
-    name = models.CharField(max_length=255)
-    id1 =models.CharField(max_length=255)
-    def __str__(self):
-        return self.id1    
+
     
 def common_dict(unit):
     return {

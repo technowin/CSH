@@ -1,0 +1,237 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/applicationForm.css' %}" />
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
+<body>
+    
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                  <u>View Application Form</u>
+                </h2>
+                <br>
+                
+                <form method="POST" action="{% url 'application_Form_Final_Submit' %}" enctype="multipart/form-data" id="finalSubmitForm">
+
+                    {% csrf_token %}
+                    
+                    <input type="hidden" name="application_id" value="{{ application.id }}">
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="Name_Premises" class="form-label">Name of the Premises<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.name_of_premises }}" name="Name_Premises" class="form-control" id="Name_Premises" placeholder="Enter Name of Premises" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="Plot_No" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.plot_no }}" name="Plot_No" class="form-control" id="Plot_No" placeholder="Enter Plot No." required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="Sector_No" class="form-label">Sector No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.sector_no }}" name="Sector_No" class="form-control" id="Sector_No" placeholder="Enter Sector No" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="Node" class="form-label">Node.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.node }}" name="Node" class="form-control" id="Node" placeholder="Enter Node" required readonly disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="Name_Owner" class="form-label">Name of the Owner<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.name_of_owner }}" name="Name_Owner" class="form-control" id="Name_Owner" placeholder="Enter Name of Owner" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="Address_Owner" class="form-label">Address of the Owner<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.address_of_owner }}" name="Address_Owner" class="form-control" id="Address_Owner" placeholder="Enter Address of Owner" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="Name_Plumber" class="form-label">Name of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.name_of_plumber }}" name="Name_Plumber" class="form-control" id="Name_Plumber" placeholder="Enter Name of Plumber" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="License_No_Plumber" class="form-label">License No of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.license_no_of_plumber }}" name="License_No_Plumber" class="form-control" id="License_No_Plumber" placeholder="Enter License No of Plumber" required readonly disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="Address_of_Plumber" class="form-label">Address of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.address_of_plumber }}" name="Address_of_Plumber" class="form-control" id="Address_of_Plumber" placeholder="Enter Address of Plumber" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="Plot_size" class="form-label">Plot size (mtr.sq)<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.plot_size }}" name="Plot_size" class="form-control" id="Plot_size" placeholder="Enter Plot size" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="No_of_flats" class="form-label">No of flats<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.no_of_flats }}" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="No_of_shops" class="form-label">No of shops<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.no_of_shops }}" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required readonly disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="Septic_tank_size" class="form-label">Septic tank size (liters)<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.septic_tank_size }}" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required readonly disabled>
+                        </div>
+                    </div>
+
+                    {% if application.status_id == 4 %}
+                        <p style="color:red;">
+                            Rejected Reason: {{ application.rejected_reason }} Please edit your application form.
+                        </p>
+                    {% endif %}
+
+                    {% comment %} <p>Media URL: {{ MEDIA_URL }}</p> {% endcomment %}
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Document Name</th>
+                                <th>Uploaded Document</th>
+                                {% if application.status_id == 4 %}
+                                    <th>Remark</th>
+                                    <th>Comment</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in uploaded_documents %}
+                            <tr>
+                                <td>{{ document.document.doc_name }}
+                                    {% if document.document.mandatory == 1 %} 
+                                        <span style="color: red;">*</span>
+                                    {% endif %}
+                                </td>
+                                {% comment %} <td>
+                                    {% if document.filepath %}
+                                        <a class="edit-link" href="{{ MEDIA_URL }}{{ document.filepath }}" id="viewFile_{{ forloop.counter }}" 
+                                            target="_blank" onclick="openInNewTab(this.href)">
+                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                            <span class="edit-text">View</span>
+                                        </a>
+                                    {% else %}
+                                        <span>No file uploaded</span>
+                                    {% endif %}
+                                </td> {% endcomment %}
+                                <td>
+                                    {% if document.filepath %}
+                                        <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ forloop.counter }}" target="_blank">
+                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                            <span class="edit-text">View</span>
+                                        </a>
+                                    {% else %}
+                                        <span>No file uploaded</span>
+                                    {% endif %}
+                                </td>
+                                {% if application.status_id == 4 %}
+                                    {% if document.correct_mark == '0' %}
+                                        <td>
+                                            <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
+                                        </td>
+                                    {% elif document.correct_mark == '1' %}
+                                        <td>
+                                            <i class="fa-solid fa-check" style="font-size: 24px; color: green;"></i>
+                                        </td>
+                                    {% else %}   
+                                        <td></td>
+                                    {% endif %}
+                                {% endif %}
+
+
+                                {% if application.status_id == 4 %}
+                                    {% if document.comment != null %}
+                                        <td style="color:red;">
+                                            {{ document.comment }}
+                                        </td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="text-center">   
+                        
+                        {% if new_id == '0' %}
+                            <button type="submit" id="submitBtn" class="btn btn-primary">Final Submit</button>
+                        {% endif %}
+                        
+                        {% if new_id == '0' %}
+                            {% comment %} <a href="{% url 'EditApplicationForm' row_id=application.id row_id_status=1 %}" class="btn btn-secondary">Go Back</a> {% endcomment %}
+                            {% comment %} <a href="{% url 'EditApplicationFormFinalSubmit' row_id=application.id row_id_status=1 %}" class="btn btn-secondary">Go Back</a> {% endcomment %}
+                            <a href="{% url 'EditApplicationFormFinalSubmit' row_id row_id_status %}" class="btn btn-secondary">Go Back</a>
+                        {% else %}
+                            <a href="{% url 'applicationFormIndex' %}" class="btn btn-secondary">Go Back</a>
+                        {% endif %}
+
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'sweetalert2/dist/sweetalert2.min.js' %}"></script>
+    
+  <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("submitBtn").addEventListener("click", function(event) {
+                event.preventDefault(); 
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You will not be able to edit this form after the final submission!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, submit it!',
+                    cancelButtonText: 'No, cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Submit the form after confirmation
+                        document.getElementById("finalSubmitForm").submit();
+                    } else {
+                        Swal.fire('Cancelled', 'You can continue editing the form.', 'info');
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script>
+        $("#dt").dataTable({
+          pageLength: 4,
+          order: []
+        });
+    </script>
+
+</body>
+{% endblock %}
+
+
