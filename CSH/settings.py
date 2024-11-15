@@ -130,11 +130,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'axes',
     'Account',
+    'MenuManager',
     'Masters',
     'corsheaders',
     'Reports',
     'Dashboard',
-    'TrackFlow'
+    'TrackFlow',
+    'DrainageConnection',
+    'TreeCutting',
 ]
 
 # SESSION_ENGINE ="django.contrib.sessions.backends.signed_cookies"
