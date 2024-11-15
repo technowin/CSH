@@ -29,24 +29,7 @@
                 <div class="card">
                     <div class="card-body text-center">
                         <h5 class="card-title">CIDCO</h5>
-
-                        <form class="user" action="{% url 'onetimepage' %}" method="post">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <select name="services" id="service_id" class="form-control" style="border-radius:15px;" required>
-                                    <option value="" Selected disabled>Select Services</option>
-                                    {% for item in services %}
-                                        <option value="{{ item.0 }}">{{ item.1 }}</option>
-                                    {% endfor %}
-                                </select>
-                                
-                            </div>
-                            
-                            <hr>
-                            <div class="text-center">
-                                 <button type="submit" class="btn btn-primary btn-user " style="border-radius:15px;"> Go to CIDCO </button>
-                            </div>        
-                        </form>
+                        <a href="citizenLoginAccount?service_db=1" class="btn btn-primary">Go to CIDCO</a>
                     </div>
                 </div>
             </div>
@@ -56,25 +39,7 @@
                 <div class="card">
                     <div class="card-body text-center">
                         <h5 class="card-title">Aple Sarkar</h5>
-
-                        <form class="user" action="{% url 'onetimepage' %}" method="post">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <select name="services" id="service_id" class="form-control" style="border-radius:15px;" required>
-                                    <option value="" Selected disabled>Select Services</option>
-                                    {% for item in services %}
-                                        <option value="{{ item.0 }}">{{ item.1 }}</option>
-                                    {% endfor %}
-                                </select>
-                                
-                            </div>
-                            
-                            <hr>
-                            <div class="text-center">
-                                 <button type="submit" class="btn btn-primary btn-user " style="border-radius:15px;">Aple Sarkar</button>
-                            </div>        
-                        </form>
-
+                        <a href="aple_sarkar_Register?service_db=1" class="btn btn-primary">Aple Sarkar</a>
                     </div>
                 </div>
             </div>

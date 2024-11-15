@@ -871,7 +871,7 @@ def download_doc(request, filepath):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        callproc("stp_error_log", [fun, str(e), ''])  
+        callproc("stp_error_log", [fun, str(e), user])  
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
     
@@ -1331,19 +1331,12 @@ def downloadIssuedCertificate(request, row_id):
     
 def onetimepage(request):
     try:
-        if request.method =="GET":
-            services = service_master.objects.filter(ser_id__in=[1, 4]).values_list('ser_id', 'ser_name')
-            return render(request,'OneTimePage/onetimepage.html',{'services':services}) 
-
-        elif request.method == "POST":
-            service_db = request.POST.get('services')
-            request.session['service_db'] = service_db
-            return redirect(f'/citizenLoginAccount?service_db={service_db}')     
-              
+        return render(request, 'OneTimePage/onetimepage.html')
+    
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        callproc("stp_error_log", [fun, str(e), ''])
+        callproc("stp_error_log", [fun, str(e), user.id])
         logger.error(f"Error rendering onetimepage.html: {str(e)}")
         return HttpResponse("An error occurred while trying to load the page.", status=500)
 
