@@ -20,7 +20,6 @@ class application_search(models.Model):
     def __str__(self):
         return self.name
          
-
 class parameter_master(models.Model):
     parameter_id = models.AutoField(primary_key=True)
     parameter_name =models.TextField(null=True,blank=True)
@@ -90,8 +89,6 @@ class service_matrix(models.Model):
     class Meta:
         db_table = 'service_matrix'
 
-
- 
 class Log(models.Model):
     log_text = models.TextField(null=True,blank=True)
     objects = ServiceManager()
