@@ -117,7 +117,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'Reports',
     'Dashboard',
-    'TrackFlow',
     'DrainageConnection',
     'TreeCutting',
 ]

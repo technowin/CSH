@@ -49,7 +49,7 @@ def index(request):
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally: 
-         return render(request,'TrackFlow/index.html', context)
+         return render(request,'DrainageConnection/index.html', context)
 
 @login_required    
 def matrix_flow(request):
