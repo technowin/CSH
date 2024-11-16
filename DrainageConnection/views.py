@@ -220,7 +220,7 @@ def matrix_flow(request):
         messages.error(request, 'Oops...! Something went wrong!')
     finally: 
          if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '':
-            return render(request,'TrackFlow/metrix_flow.html', context)
+            return render(request,'DrainageConnection/metrix_flow.html', context)
 
 def internal_docs_upload(file,role_id,user,wf):
     file_resp = None

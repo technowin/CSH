@@ -75,7 +75,7 @@ class document_master(models.Model):
 
 class service_matrix(models.Model):
     id = models.AutoField(primary_key=True) 
-    ser = models.ForeignKey(service_master, on_delete=models.CASCADE, null=True, blank=True, related_name='ser_id_F')
+    # ser = models.ForeignKey(service_master, on_delete=models.CASCADE, null=True, blank=True, related_name='ser_id_F')
     level = models.IntegerField(null=True, blank=True)
     role_id = models.TextField(null=True, blank=True)
     action = models.TextField(null=True, blank=True)
