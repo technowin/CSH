@@ -134,11 +134,14 @@ def register_new_user(request):
                 service_db = request.POST.get('service', 'default')
                 full_name = f"{firstname} {lastname}"
                 # superior_id=superior_id
-                existing_user = CustomUser.objects.filter(email=email, phone=phone, role_id=role_id).exists()
-                if existing_user:
+                existing_user = CustomUser.objects.using('default').filter(email=email, phone=phone, role_id=role_id).exists()
+                exist_inservice = CustomUser.objects.using(service_db).filter(email=email, phone=phone, role_id=role_id).exists()
+                if exist_inservice:
                     messages.error(request, "A user with the same email, phone, and role already exists.")
                     return redirect('/register_new_user?id=0')
                 else:
+                    from django.db import transaction
+
                     user = CustomUser(
                         full_name=full_name,email=email,phone=phone,role_id=role_id
                     )
@@ -147,19 +150,27 @@ def register_new_user(request):
                     try:
                         validate_password(password, user=user)
                         user.set_password(password)
-                        user.save(using='default')
-                        password_storage.objects.using('default').create(user=user, passwordText=password)
+                        if existing_user:
+                            user = CustomUser.objects.using('default').get(email=email, phone=phone, role_id=role_id)
+                            user_id = user.id
+                        else:
+                            with transaction.atomic(using='default'):
+                                user.save(using='default') 
+                                password_storage.objects.using('default').create(user=user, passwordText=password)
+                            user_id = user.id
                         user_dept_services.objects.using('default').get_or_create(
-                            user_id=user.id,department_id=department,service_id=service_db,
+                            user_id=user_id,department_id=department,service_id=service_db,
                             defaults={ 'created_at': timezone.now(),  'created_by': request.user.id }
                         )
                         if service_db:
-                            user.save(using=service_db)
-                            password_storage.objects.using(service_db).create(user=user, passwordText=password)
+                            user.id = user_id
+                            with transaction.atomic(using=service_db):
+                                user.save(using=service_db)
+                                password_storage.objects.using(service_db).create(user=user, passwordText=password)
 
-                        assigned_menus = RoleMenuMaster.objects.filter(role_id=role_id)
+                        assigned_menus = RoleMenuMaster.objects.using(service_db).filter(role_id=role_id)
                         for menu in assigned_menus:
-                            UserMenuDetails.objects.create(
+                            UserMenuDetails.objects.using(service_db).create(
                                 user_id=user.id,
                                 menu_id=menu.menu_id,
                                 role_id=role_id
@@ -630,33 +641,47 @@ def verify_otp(request):
                     }
                     return render(request, 'citizenAccount/citizenRegister.html', context)
 
-                if CustomUser.objects.using('default').filter(email=email, role_id=2).exists():
-                    messages.warning(request, "This email is already registered.")
+                # if CustomUser.objects.using('default').filter(email=email, role_id=2).exists():
+                #     messages.warning(request, "This email is already registered.")
+                #     return redirect(f'/citizenRegisterAccount?service_db={service_db}')
+                
+                existing_user = CustomUser.objects.using('default').filter(phone=phone_number, role_id=role_id.id).exists()
+                exist_inservice = CustomUser.objects.using(service_db).filter(phone=phone_number, role_id=role_id.id).exists()
+                user_id = None
+                if exist_inservice:
+                    messages.error(request, "A user with the same email, phone, and role already exists.")
                     return redirect(f'/citizenRegisterAccount?service_db={service_db}')
+                else:
+                    if existing_user:
+                        user = CustomUser.objects.using('default').get(phone=phone_number, role_id=role_id.id)
+                        user_id = user.id
+                    else:
+                        user = CustomUser.objects.using('default').create(
+                            full_name=f"{first_name} {last_name}",
+                            email=email,
+                            phone=phone_number,
+                            first_time_login=True,
+                            role_id=role_id.id
+                        )
+                        user_id = user.id
 
-                CustomUser.objects.using('default').create(
-                    full_name=f"{first_name} {last_name}",
-                    email=email,
-                    phone=phone_number,
-                    first_time_login=True,
-                    role_id=role_id.id
-                )
-            
-                user = CustomUser.objects.using(service_db).create(
-                    full_name=f"{first_name} {last_name}",
-                    email=email,
-                    phone=phone_number,
-                    first_time_login=True,
-                    role_id=role_id.id
-                )
+                    if service_db:
+                        user = CustomUser.objects.using(service_db).create(
+                            id = user_id,
+                            full_name=f"{first_name} {last_name}",
+                            email=email,
+                            phone=phone_number,
+                            first_time_login=True,
+                            role_id=role_id.id
+                        )
 
-                assigned_menus = RoleMenuMaster.objects.filter(role_id=role_id.id)
-                for menu in assigned_menus:
-                    UserMenuDetails.objects.create(
-                        user_id=user.id,
-                        menu_id=menu.menu_id,
-                        role_id=user.role_id
-                    )
+                    assigned_menus = RoleMenuMaster.objects.using(service_db).filter(role_id=role_id.id)
+                    for menu in assigned_menus:
+                        UserMenuDetails.objects.using(service_db).create(
+                            user_id=user.id,
+                            menu_id=menu.menu_id,
+                            role_id=user.role_id
+                        )
 
                 request.session['user_id'] = user.id
                 request.session['phone_number'] = phone_number
