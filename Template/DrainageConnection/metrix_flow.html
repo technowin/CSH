@@ -225,7 +225,7 @@
                               {% endfor %}
                             </select>
                             <span class="text-danger" id="rejectError" style="display: none;">Please select a reject reason.</span>
-                          </div>
+                          </div> 
                           &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
                           <!-- Textarea for Editing Selected Reject Reason -->
                           <div id="editRejectReasonSection" class="d-none">
@@ -346,6 +346,12 @@
                 <div class="modal-body" style="font-weight:bold;font:size:20px;">
                     Do you want to approve or refuse this request?<br>
                     Please confirm your action.
+                </br>
+                </br>
+                    <div>
+                        <label for="f_remark" class="">Remark:</label>
+                        <textarea id="f_remark" name="f_remark" rows="2" cols="30" placeholder="Write your remark here..." style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1" required></textarea>
+                    </div>    
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -369,6 +375,11 @@
                             <input type="file" id="file-input3"  name="certificate_upl_file"  required >
                           </label>
                     </div>
+                </br>
+                <div>
+                    <label for="iss_remark" class="">Remark:</label>
+                    <textarea id="iss_remark" name="iss_remark" rows="2" cols="30" placeholder="Write your remark here..." style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1" required></textarea>
+                </div>    
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -386,7 +397,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="color:black">Comments  &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %} >Add Comments</button>
+                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')" {% if workflow.forward|to_int == user_id %} {% elif ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7"  %} disabled {% endif %} >Add Comments</button>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
