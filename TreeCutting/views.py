@@ -19,10 +19,10 @@ import pandas as pd
 import calendar
 from django.utils import timezone
 from datetime import timedelta
+# from DrainageConnection.models import *
+
 # Create your views here.
 import logging
-logger = logging.getLogger(__name__)
-
 logger = logging.getLogger(__name__)
 
 @login_required 
@@ -44,7 +44,7 @@ def index_tc(request):
                 id = encrypt_parameter(str(row[0]))
                 form_id = encrypt_parameter(str(row[1]))    
                 data.append((id,form_id) + row[2:])
-        context = {'role_id':role_id,'name':name,'header':header,'data':data,'user_id':request.user.id,'pre_url':pre_url}
+        context = {'role_id':role_id,'name':name,'header':header,'data':data,'user_id':user,'pre_url':pre_url}
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
@@ -80,7 +80,7 @@ def matrix_flow_tc(request):
                     messages.error(request, 'Before forwarding, please complete the necessary actions.')
                     return redirect(f'/matrix_flow_tc?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
-                return redirect(f'/index')
+                return redirect(f'/index_tc')
             if f and f !='':
                 r = callproc("stp_update_forward",[wf_id,form_id,f,user])
                 if r[0][0] == 'success':
@@ -98,7 +98,7 @@ def matrix_flow_tc(request):
                     messages.error(request, 'Consecutive send-backs are not permitted.')
                     return redirect(f'/matrix_flow_tc?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
-                return redirect(f'/index')
+                return redirect(f'/index_tc')
             if rb and rb !='':
                 r = callproc("stp_update_rollback",[wf_id,form_id,user])
                 if r[0][0] == 'success':
@@ -110,7 +110,7 @@ def matrix_flow_tc(request):
                     messages.error(request, 'Consecutive roll-backs are not permitted.')
                     return redirect(f'/matrix_flow_tc?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
-                return redirect(f'/index')
+                return redirect(f'/index_tc')
             subordinates = callproc("stp_get_subordinates",[form_id,user])
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
@@ -197,14 +197,43 @@ def matrix_flow_tc(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                elif status == 10 and ref == 'certificate':
+                elif status == 6 and ref == 'public_notice':
+                    notice_upl_file = request.FILES.get('notice_upl_file')
+                    objection_upl_file = request.FILES.get('objection_upl_file')
+                    if notice_upl_file and objection_upl_file:
+                        file_resp = internal_docs_upload(notice_upl_file,role_id,user,wf)
+                        file_resp = internal_docs_upload(objection_upl_file,role_id,user,wf)
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                elif status == 7 and ref == 'department_proposal':
+                    DepProposal_upl_file = request.FILES.get('DepProposal_upl_file')
+                    if DepProposal_upl_file:
+                        file_resp = internal_docs_upload(DepProposal_upl_file,role_id,user,wf)
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                elif status == 10 and ref == 'letter_of_payment':
+                    letOfPay_upl_file = request.FILES.get('letOfPay_upl_file')
+                    if letOfPay_upl_file:
+                        file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf)
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    fui = workflow_details.objects.filter(id=wf_id).first()
+                    form_user_id = fui.form_user_id
+                    file_resp = citizen_docs_upload(letOfPay_upl_file,form_user_id,form_id,user,status)
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                elif status == 13 and ref == 'certificate':
                     certificate_upl_file = request.FILES.get('certificate_upl_file')
                     if certificate_upl_file:
                         file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf)
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
-                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user)
+                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,status)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -254,9 +283,13 @@ def internal_docs_upload(file,role_id,user,wf):
         file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
-def citizen_docs_upload(file,user,form_id,created_by):
+def citizen_docs_upload(file,user,form_id,created_by,status):
     file_resp = None
-    doc = document_master.objects.get(doc_id=15)
+    if status == 10:
+        doc = document_master.objects.get(doc_id=13)
+    else:
+        doc = document_master.objects.get(doc_id=14)
+        
     app_form = application_form.objects.get(id=form_id)
     sub_path = f'user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}'
     full_path = os.path.join(MEDIA_ROOT, sub_path)
@@ -537,7 +570,7 @@ def application_Master_Edit_TC(request, row_id, new_id):
             ).values_list("parameter_value", "parameter_value")
             uploaded_documents = citizen_document.objects.filter(
                 user_id=user_id, application_id=viewDetails
-            ).exclude(document_id=15)
+            ).exclude( document__in=[13, 14])
 
             for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
@@ -664,7 +697,6 @@ def application_Master_Edit_TC(request, row_id, new_id):
 
             return redirect("application_Master_View_TC", row_id, new_id)
 
-
 def application_Master_View_TC(request, row_id, new_id):
     try:
         phone_number = request.session.get("phone_number")
@@ -672,16 +704,18 @@ def application_Master_View_TC(request, row_id, new_id):
         if phone_number:
             user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
             user_id = user.id
+            service_db = request.session.get("service_db", "default")
 
         if request.method == "GET":
 
-            row_id = decrypt_parameter(row_id)
+            row_id1 = int(decrypt_parameter(row_id))
             new_id = decrypt_parameter(new_id)
-            viewDetails = application_form.objects.get(id=row_id)
+            viewDetails = None
+            viewDetails = application_form.objects.get(id=row_id1)
 
             uploaded_documents = citizen_document.objects.filter(
                 user_id=user_id, application_id=viewDetails.id
-            ).exclude(document=15)
+            ).exclude( document__in=[13, 14])
             for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
                 row.filepath = encrypted_filepath
@@ -721,7 +755,7 @@ def application_Master_View_TC(request, row_id, new_id):
                 workflow.updated_at = timezone.now()
                 workflow.updated_by = str(user)
                 workflow.save()
-
+    
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
@@ -743,3 +777,52 @@ def application_Master_View_TC(request, row_id, new_id):
             )
         else:
             return redirect("applicationFormIndexTC")
+
+def download_doc(request, filepath):
+    file = decrypt_parameter(filepath)
+    file_path = os.path.join(settings.MEDIA_ROOT, file)
+    file_name = os.path.basename(file_path)
+    try:
+        if os.path.exists(file_path):
+            mime_type, _ = mimetypes.guess_type(file_path)
+            if not mime_type:
+                mime_type = 'application/octet-stream'
+            
+            with open(file_path, 'rb') as file:
+                response = HttpResponse(file.read(), content_type=mime_type)
+                response['Content-Disposition'] = f'inline; filename="{file_name}"'
+                return response
+        else:
+            return HttpResponse("File not found", status=404)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), ''])  
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+    
+def downloadIssuedCertificate(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+        request.session['full_name'] = user.full_name
+        
+        row_id = decrypt_parameter(row_id)
+        document = citizen_document.objects.get(application_id=row_id, document_id=13)
+        
+        filepath = document.filepath
+        file_name = document.file_name
+
+        encrypted_filepath = encrypt_parameter(filepath)
+        
+        return redirect('download_doc', encrypted_filepath)
+    
+    except citizen_document.DoesNotExist:
+        return Http404("Document not found")
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), user.id])
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
