@@ -49,7 +49,7 @@
         <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
         <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
       
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="forward" data-toggle="dropdown" aria-haspopup="true"
@@ -63,7 +63,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,10"  %}
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
             {% elif workflow.level != 1 and  workflow.sendback is None %}
@@ -72,17 +72,17 @@
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
             {% endif %}
         </div>
-        {% comment %} <div class="col-md-2">
-            {% if workflow.pre_user == user_id|to_str and workflow.rollback is None %}
+        <div class="col-md-2">
+            {% if workflow.level != 1 and workflow.pre_user == user_id|to_str and workflow.rollback is None %}
                 <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
             {% else %}
                  <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
             {% endif %}
-        </div> {% endcomment %}
-        <div class="col-md-3">
+        </div> 
+        <div class="col-md-2">
             <button type="submit" id="Btn3" class="btn btn-primary" data-toggle="modal"  data-target="#docs_model_id" >Internal Docs</button>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2"> 
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="send_forward" data-toggle="dropdown" aria-haspopup="true"
