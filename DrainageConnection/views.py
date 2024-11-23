@@ -152,6 +152,7 @@ def matrix_flow(request):
             wf = workflow_details.objects.get(id=wf_id)
             files = request.FILES.getlist('files[]')
             comment =  request.POST.get('comment', '')
+            ser= request.session.get('service_db','default')
             if comment!='':
                 internal_user_comments.objects.create(
                         workflow=wf, comments=comment,
@@ -159,7 +160,7 @@ def matrix_flow(request):
                 )  
                 response = f"Your comment has been submitted: '{comment}'"
             for file in files:
-                 response =  internal_docs_upload(file,role_id,user,wf)
+                 response =  internal_docs_upload(file,role_id,user,wf,ser)
                 
             if response:
                 return JsonResponse(response, safe=False)
@@ -167,13 +168,17 @@ def matrix_flow(request):
             ref = decrypt_parameter(matrix_ref) if (matrix_ref := request.POST.get('matrix_ref', '')) else ''
             ac = decrypt_parameter(ac) if (ac := request.POST.get('ac', '')) else ''
             status =  request.POST.get('btnclk', '')
-            ser= request.session.get('service_db')
             if status.isdigit():
                 status = int(status)
                 
                 if (status == 3 or status == 4) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
                     rej_res = request.POST.get('rej_res')
+                    if rej_res!='' and status in [4]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=rej_res,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
                     for doc_id in doc_ids:
                         if doc_id !='':
                             doc_id = decrypt_parameter(doc_id)
@@ -189,25 +194,37 @@ def matrix_flow(request):
                     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
                     inspection_upl_file = request.FILES.get('inspection_upl_file')
                     if cheklist_upl_file and inspection_upl_file:
-                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf)
-                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf)
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser)
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 elif status == 10 and ref == 'certificate':
+                    iss_remark = request.POST.get('iss_remark')
+                    if iss_remark!='':
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=iss_remark,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
                     certificate_upl_file = request.FILES.get('certificate_upl_file')
                     if certificate_upl_file:
-                        file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf)
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                        file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf,ser)
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,iss_remark])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
-                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user)
+                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,ser)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 else:
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    f_remark = request.POST.get('f_remark')
+                    if f_remark!='' and status in [6, 7]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=f_remark,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,f_remark])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -222,10 +239,11 @@ def matrix_flow(request):
          if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '':
             return render(request,'DrainageConnection/metrix_flow.html', context)
 
-def internal_docs_upload(file,role_id,user,wf):
+def internal_docs_upload(file,role_id,user,wf,ser):
     file_resp = None
     role = roles.objects.get(id=role_id)
-    sub_path = f'{role.role_name}/user_{user}/workflow_{str(wf.id)}/{file.name}'
+    service = service_master.objects.using("default").get(ser_id=ser)
+    sub_path = f'{service.ser_name}/{role.role_name}/user_{user}/workflow_{str(wf.id)}/{file.name}'
     full_path = os.path.join(MEDIA_ROOT, sub_path)
     folder_path = os.path.dirname(full_path)
     if not os.path.exists(folder_path):
@@ -251,12 +269,13 @@ def internal_docs_upload(file,role_id,user,wf):
         )  
         file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
-
-def citizen_docs_upload(file,user,form_id,created_by):
+ 
+def citizen_docs_upload(file,user,form_id,created_by,ser):
     file_resp = None
     doc = document_master.objects.get(doc_id=15)
     app_form = application_form.objects.get(id=form_id)
-    sub_path = f'user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}'
+    service = service_master.objects.using("default").get(ser_id=ser)
+    sub_path = f'{service.ser_name}/User/user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}'
     full_path = os.path.join(MEDIA_ROOT, sub_path)
     folder_path = os.path.dirname(full_path)
     
