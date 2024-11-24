@@ -135,10 +135,10 @@ def matrix_flow_tc(request):
             header = callproc("stp_get_masters", ['iud','','header',wf_id])
             rows = callproc("stp_get_masters",['iud','','data',wf_id])
             for row in rows:
-                if os.path.exists(os.path.join(MEDIA_ROOT, str(row[4]))):
-                    encrypted_id = encrypt_parameter(str(row[4]))
+                if os.path.exists(os.path.join(MEDIA_ROOT, str(row[5]))):
+                    encrypted_id = encrypt_parameter(str(row[5]))
                 else: encrypted_id = None
-                new_row = row[:4] + (encrypted_id,)
+                new_row = row[:5] + (encrypted_id,)
                 data.append(new_row)
             header1 = callproc("stp_get_masters", ['iuc','','header',wf_id])
             data1 = callproc("stp_get_masters",['iuc','','data',wf_id])
@@ -162,7 +162,7 @@ def matrix_flow_tc(request):
                 )  
                 response = f"Your comment has been submitted: '{comment}'"
             for file in files:
-                 response =  internal_docs_upload(file,role_id,user,wf,ser)
+                 response =  internal_docs_upload(file,role_id,user,wf,ser,'')
                 
             if response:
                 return JsonResponse(response, safe=False)
@@ -191,8 +191,8 @@ def matrix_flow_tc(request):
                     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
                     inspection_upl_file = request.FILES.get('inspection_upl_file')
                     if cheklist_upl_file and inspection_upl_file:
-                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser)
-                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser,'Checklist')
+                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser,'Inspection')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
@@ -201,8 +201,8 @@ def matrix_flow_tc(request):
                     notice_upl_file = request.FILES.get('notice_upl_file')
                     objection_upl_file = request.FILES.get('objection_upl_file')
                     if notice_upl_file and objection_upl_file:
-                        file_resp = internal_docs_upload(notice_upl_file,role_id,user,wf,ser)
-                        file_resp = internal_docs_upload(objection_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(notice_upl_file,role_id,user,wf,ser,'Public Notice')
+                        file_resp = internal_docs_upload(objection_upl_file,role_id,user,wf,ser,'Objection')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
@@ -210,7 +210,7 @@ def matrix_flow_tc(request):
                 elif status == 7 and ref == 'department_proposal':
                     DepProposal_upl_file = request.FILES.get('DepProposal_upl_file')
                     if DepProposal_upl_file:
-                        file_resp = internal_docs_upload(DepProposal_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(DepProposal_upl_file,role_id,user,wf,ser,'Department Proposal')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
@@ -218,7 +218,7 @@ def matrix_flow_tc(request):
                 elif status == 10 and ref == 'letter_of_payment':
                     letOfPay_upl_file = request.FILES.get('letOfPay_upl_file')
                     if letOfPay_upl_file:
-                        file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf,ser,'Letter of Payment')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
@@ -229,7 +229,7 @@ def matrix_flow_tc(request):
                 elif status == 13 and ref == 'certificate':
                     certificate_upl_file = request.FILES.get('certificate_upl_file')
                     if certificate_upl_file:
-                        file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf,ser,'Issue Certificate')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
@@ -253,7 +253,7 @@ def matrix_flow_tc(request):
          if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '':
             return render(request,'TreeCutting/metrix_flow.html', context)
 
-def internal_docs_upload(file,role_id,user,wf,ser):
+def internal_docs_upload(file,role_id,user,wf,ser,name1):
     file_resp = None
     role = roles.objects.get(id=role_id)
     service = service_master.objects.using("default").get(ser_id=ser)
@@ -268,6 +268,7 @@ def internal_docs_upload(file,role_id,user,wf,ser):
         document = internal_user_document.objects.filter(file_path=sub_path,workflow=wf).first()
         document.updated_at = datetime.now()
         document.updated_by = str(user)
+        document.name=name1
         document.save()
         with open(full_path, 'wb+') as destination:
             for chunk in file.chunks():
@@ -278,7 +279,7 @@ def internal_docs_upload(file,role_id,user,wf,ser):
             for chunk in file.chunks():
                 destination.write(chunk)
         internal_user_document.objects.create(
-            workflow=wf, file_name=file.name,file_path=sub_path,
+            workflow=wf, file_name=file.name,file_path=sub_path,name=name1,
             created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
         )  
         file_resp =  f"File '{file.name}' has been inserted."

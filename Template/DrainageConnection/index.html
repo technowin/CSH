@@ -54,7 +54,7 @@
                           <td>{{ row.7 }}</td>
                           <td>{{ row.8 }}</td>
                           <td>{{ row.11 }}</td>
-                          <td><span class="badge badge-danger" style="font-size: 16px;">{{ row.9 }}</span></td>
+                          <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
                           <td><a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;" class="btn btn-sm btn-primary">{{ row.10 }}</a></td>
                       </tr>
                     {% elif row.4|to_int == user_id %}
@@ -65,7 +65,7 @@
                         <td>{{ row.7 }}</td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
-                        <td><span class="badge badge-danger" style="font-size: 16px;">{{ row.9 }}</span></td>
+                        <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
                         <td><a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;" class="btn btn-sm btn-primary">View</a></td>
                       </tr>
                     {% elif row.2|in_list:"1,2" and role_id == 3 and row.3 is None %}
@@ -76,7 +76,7 @@
                         <td>{{ row.7 }}</td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
-                        <td><span class="badge badge-danger" style="font-size: 16px;">{{ row.9 }}</span></td>
+                        <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
                         <td><a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;" class="btn btn-sm btn-primary">{{ row.10 }}</a></td>
                       </tr>
                     {% elif row.12 is not None and row.12 != '' and user_id|in_list:row.12 %}  
@@ -87,7 +87,7 @@
                         <td>{{ row.7 }}</td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
-                        <td><span class="badge badge-danger" style="font-size: 16px;">{{ row.9 }}</span></td>
+                        <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
                         <td><a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;" class="btn btn-sm btn-primary">View</a></td>
                       </tr>
                     {% endif %}  
