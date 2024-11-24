@@ -178,3 +178,6 @@ python manage.py migrate DrainageConnection --database=1
 python manage.py migrate TreeCutting --database=2
 
 python manage.py startapp MenuManager
+
+git config --global user.name "YourName"
+git config --global user.email "youremail@example.com"
