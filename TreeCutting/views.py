@@ -56,7 +56,7 @@ def index_tc(request):
 @login_required    
 def matrix_flow_tc(request):
     docs,label,input,data = [],[],[],[]
-    form_id,context,wf_id,sf,f,sb,rb  = '','','','','','',''
+    form_id,context,wf_id,sf,f,sb,rb,rb1  = '','','','','','','',''
     try:
         if request.user.is_authenticated ==True:                
                 global user,role_id
@@ -67,11 +67,13 @@ def matrix_flow_tc(request):
             form_id = decrypt_parameter(form_id) if (form_id := request.GET.get('af', '')) else ''
             workflow = workflow_details.objects.get(id=wf_id) 
             matrix = service_matrix.objects.get(level=workflow.level)
+            act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id).exists()
             ac = request.GET.get('ac', '')
             f = request.GET.get('f', '')
             sf = request.GET.get('sf', '')
             sb = request.GET.get('sb', '')
             rb = request.GET.get('rb', '')
+            rb1 = request.GET.get('rb1', '')
             if sf and sf !='':
                 r = callproc("stp_update_sendforward",[wf_id,form_id,sf,user])
                 if r[0][0] == 'success':
@@ -106,6 +108,15 @@ def matrix_flow_tc(request):
                 elif r[0][0] == 'wrongrollback':
                     messages.error(request, 'You cannot roll it back in the first stage itself.')
                     return redirect(f'/matrix_flow_tc?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                elif r[0][0] == 'multirollback':
+                    messages.error(request, 'Consecutive roll-backs are not permitted.')
+                    return redirect(f'/matrix_flow_tc?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                else: messages.error(request, 'Oops...! Something went wrong!')
+                return redirect(f'/index_tc')
+            if rb1 and rb1 !='':
+                r = callproc("stp_update_rollback1",[wf_id,form_id,user])
+                if r[0][0] == 'success':
+                    messages.success(request, "Rollback successfully !!")
                 elif r[0][0] == 'multirollback':
                     messages.error(request, 'Consecutive roll-backs are not permitted.')
                     return redirect(f'/matrix_flow_tc?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
@@ -146,7 +157,8 @@ def matrix_flow_tc(request):
             down_insp = encrypt_parameter("sample.pdf")
             context = {'role_id':role_id,'user_id':request.user.id,'docs':docs,'fields': fields,'header': header,'data': data,'header1': header1,
                        'data1': data1,'subordinates':subordinates,'user_list':user_list,'ac':ac,'wf_id':encrypt_parameter(wf_id),
-                       'form_id': encrypt_parameter(form_id),'workflow':workflow,'reject_reasons':reject_reasons,'matrix':matrix,'down_chklst':down_chklst,'down_insp':down_insp}
+                       'form_id': encrypt_parameter(form_id),'workflow':workflow,'reject_reasons':reject_reasons,'matrix':matrix,
+                       'down_chklst':down_chklst,'down_insp':down_insp,'act_comp':act_comp}
         if request.method == "POST":
             response = None
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.POST.get('wf_id', '')) else ''
@@ -250,7 +262,7 @@ def matrix_flow_tc(request):
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally: 
-         if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '':
+         if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '' and rb1 == '':
             return render(request,'TreeCutting/metrix_flow.html', context)
 
 def internal_docs_upload(file,role_id,user,wf,ser,name1):

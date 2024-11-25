@@ -49,7 +49,7 @@
         <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
         <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
       
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="forward" data-toggle="dropdown" aria-haspopup="true"
@@ -63,8 +63,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,9,12,13"  %}
+        <div class="col-md-2">
+            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,9,12,13" or act_comp  %}
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
             {% elif workflow.level != 1 and  workflow.sendback is None %}
                 <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow_tc?wf={{wf_id}}&af={{form_id}}&sb=1&ac={{ac}}">Send Back</a>
@@ -72,17 +72,21 @@
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
             {% endif %}
         </div>
-        {% comment %} <div class="col-md-2">
-            {% if workflow.pre_user == user_id|to_str and workflow.rollback is None %}
-                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow_tc?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
+        <div class="col-md-2">
+            {% if workflow.level != 1 and workflow.pre_user == user_id|to_str and workflow.rollback is None %}
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
+            {% elif act_comp and workflow.level == 1 and workflow.status_id|in_list:"1,2" and role_id == 3 %}
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb1=1&ac={{ac}}">Roll Back</a>
+            {% elif act_comp and workflow.send_forward == user_id|to_str and workflow.rollback is None  %}
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb1=1&ac={{ac}}">Roll Back</a>
             {% else %}
-                 <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
+                <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
             {% endif %}
-        </div> {% endcomment %}
-        <div class="col-md-3">
+        </div> 
+        <div class="col-md-2">
             <button type="submit" id="Btn3" class="btn btn-primary" data-toggle="modal"  data-target="#docs_model_id" >Internal Docs</button>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="send_forward" data-toggle="dropdown" aria-haspopup="true"
@@ -485,7 +489,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="color:black">Comments  &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,9,12,13"  %} disabled {% endif %} >Add Comments</button>
+                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')" {% if workflow.forward|to_int == user_id %} {% elif ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,9,12,13"  %} disabled {% endif %} >Add Comments</button>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
