@@ -188,6 +188,11 @@ def matrix_flow_tc(request):
                 if (status == 3 or status == 4) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
                     rej_res = request.POST.get('rej_res')
+                    if rej_res!='' and status in [4]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=rej_res,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
                     for doc_id in doc_ids:
                         if doc_id !='':
                             doc_id = decrypt_parameter(doc_id)
@@ -239,6 +244,12 @@ def matrix_flow_tc(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 elif status == 13 and ref == 'certificate':
+                    iss_remark = request.POST.get('iss_remark')
+                    if iss_remark!='':
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=iss_remark,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
                     certificate_upl_file = request.FILES.get('certificate_upl_file')
                     if certificate_upl_file:
                         file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf,ser,'Issue Certificate')
@@ -250,7 +261,13 @@ def matrix_flow_tc(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 else:
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    f_remark = request.POST.get('f_remark')
+                    if f_remark!='' and status in [11, 12]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=f_remark,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        ) 
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,f_remark])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
