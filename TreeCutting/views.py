@@ -302,7 +302,10 @@ def internal_docs_upload(file,role_id,user,wf,ser,name1):
         with open(full_path, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
-        file_resp =  f"File '{file.name}' has been updated."
+        if name1 =='':
+            file_resp =  f"File has been updated."
+        else: file_resp =  f"File '{file.name}' has been updated."
+        
     else:
         with open(full_path, 'wb+') as destination:
             for chunk in file.chunks():
@@ -311,7 +314,9 @@ def internal_docs_upload(file,role_id,user,wf,ser,name1):
             workflow=wf, file_name=file.name,file_path=sub_path,name=name1,
             created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
         )  
-        file_resp =  f"File '{file.name}' has been inserted."
+        if name1 =='':
+            file_resp =  f"File has been inserted."
+        else: file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
 def citizen_docs_upload(file,user,form_id,created_by,status,ser):
