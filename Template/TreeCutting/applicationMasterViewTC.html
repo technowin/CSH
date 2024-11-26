@@ -83,29 +83,32 @@
                             {% for document in uploaded_documents %}
                             <tr>
                                 <td>{{ document.document.doc_name }}
-                                    {% if document.document.mandatory == 1 %} 
-                                        <span style="color: red;">*</span>
+                                    {% if document.document.mandatory == 1 %}
+                                    <span style="color: red;">*</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if document.filepath %}
-                                        <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ forloop.counter }}" target="_blank">
+                                        <a class="edit-link" href="{% url 'download_doc' document.filepath %}" target="_blank">
                                             <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
                                             <span class="edit-text">View</span>
                                         </a>
                                     {% else %}
-                                        <span>No file uploaded</span>
+                                        <input type="file" name="upload_{{ document.document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.doc_id }})">
                                     {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-
+                    
                     <div class="text-center">
-                        {% if plain_new_id == '0' %}
+                        {% if plain_new_id == '0'%}
                             <button type="submit" id="submitBtn" class="btn btn-primary">Final Submit</button>
                             <a href="{% url 'application_Master_Edit_TC' row_id new_id %}" class="btn btn-secondary">Go Back</a>
+                        {% elif viewDetails.status_id == 10 %}
+                            <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                            <a href="{% url 'applicationFormIndexTC' %}" class="btn btn-secondary">Go Back</a>
                         {% else %}
                             <a href="{% url 'applicationFormIndexTC' %}" class="btn btn-secondary">Go Back</a>
                         {% endif %}

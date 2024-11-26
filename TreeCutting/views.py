@@ -234,12 +234,15 @@ def matrix_flow_tc(request):
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 elif status == 10 and ref == 'letter_of_payment':
                     letOfPay_upl_file = request.FILES.get('letOfPay_upl_file')
-                    if letOfPay_upl_file:
+                    plantOfLetter_upl_file = request.FILES.get('plantOfLetter_upl_file')
+                    if letOfPay_upl_file and plantOfLetter_upl_file:
                         file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf,ser,'Letter of Payment')
+                        file_resp = internal_docs_upload(plantOfLetter_upl_file,role_id,user,wf,ser,'Plantation Letter')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
-                    file_resp = citizen_docs_upload(letOfPay_upl_file,form_user_id,form_id,user,status)
+                    file_resp_1 = citizen_docs_upload(letOfPay_upl_file,form_user_id,form_id,user,status, ser, 13)
+                    file_resp_2 = citizen_docs_upload(plantOfLetter_upl_file, form_user_id, form_id, user, status, ser, 15)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -256,7 +259,7 @@ def matrix_flow_tc(request):
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,iss_remark])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
-                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,status,ser)
+                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,status,ser, 14)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -319,12 +322,14 @@ def internal_docs_upload(file,role_id,user,wf,ser,name1):
         else: file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
-def citizen_docs_upload(file,user,form_id,created_by,status,ser):
+def citizen_docs_upload(file,user,form_id,created_by,status,ser, doc_id1):
     file_resp = None
-    if status == 10:
-        doc = document_master.objects.get(doc_id=13)
-    else:
-        doc = document_master.objects.get(doc_id=14)
+    # if status == 10:
+    #     doc = document_master.objects.get(doc_id=13)
+    # else:
+    #     doc = document_master.objects.get(doc_id=14)
+    
+    doc = document_master.objects.get(doc_id=doc_id1)
         
     app_form = application_form.objects.get(id=form_id)
     service = service_master.objects.using("default").get(ser_id=ser)
@@ -396,7 +401,7 @@ def applicationFormIndexTC(request):
 
                     getApplicantData.append(item)
                     
-                    if items[4] == 'Committee Refusal' or items[4] == 'Refused' or items[4] == 'New':
+                    if items[4] == 'Committee Refusal' or items[4] == 'Refused':
                         show_apply_button = True
 
     except Exception as e:
@@ -432,7 +437,7 @@ def application_Master_Crate_TC(request):
                 parameter_name="Reason for removal of tree"
             ).values_list("parameter_value", "parameter_value")
             # documentList = document_master.objects.filter(is_active=1)
-            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[13, 14])
+            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[13, 14, 15, 16, 17])
 
             for document in documentList:
                 if document.doc_subpath:
@@ -617,7 +622,7 @@ def application_Master_Edit_TC(request, row_id, new_id):
             ).values_list("parameter_value", "parameter_value")
             uploaded_documents = citizen_document.objects.filter(
                 user_id=user_id, application_id=viewDetails
-            ).exclude( document__in=[13, 14])
+            ).exclude( document__in=[13, 14, 15, 16, 17])
 
             for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
@@ -627,11 +632,11 @@ def application_Master_Edit_TC(request, row_id, new_id):
 
             all_documents = document_master.objects.all()
             
-            all_documents = document_master.objects.exclude(doc_id__in=[13, 14])
+            all_documents = document_master.objects.exclude(doc_id__in=[13, 14, 15, 16, 17])
 
             not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
 
-            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[13, 14])
+            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[13, 14, 15, 16, 17])
 
             for document in documentList:
                 if document.doc_subpath:
@@ -779,13 +784,31 @@ def application_Master_View_TC(request, row_id, new_id):
             viewDetails = None
             viewDetails = application_form.objects.get(id=row_id1)
 
-            uploaded_documents = citizen_document.objects.filter(
-                user_id=user_id, application_id=viewDetails.id
-            ).exclude( document__in=[13, 14])
-            for row in uploaded_documents:
-                encrypted_filepath = encrypt_parameter(str(row.filepath))
-                row.filepath = encrypted_filepath
+            # To Show Letter Of Payment And Plantation
+            
+            if viewDetails.status_id == 10:
+                uploaded_documents = citizen_document.objects.filter(
+                    user_id=user_id, application_id=viewDetails.id
+                ).exclude(document__in=[14])
 
+                allowed_document_ids = [16, 17]
+                existing_doc_ids = uploaded_documents.values_list("document__doc_id", flat=True)
+
+                missing_docs = document_master.objects.filter(doc_id__in=set(allowed_document_ids) - set(existing_doc_ids))
+                placeholder_documents = [
+                    citizen_document(document=doc, filepath=None) for doc in missing_docs
+                ]
+
+                uploaded_documents = list(uploaded_documents) + placeholder_documents
+            else:
+                uploaded_documents = citizen_document.objects.filter(
+                    user_id=user_id, application_id=viewDetails.id
+                ).exclude(document__in=[13, 14, 15, 16, 17])
+
+            for row in uploaded_documents:
+                if row.filepath:
+                    row.filepath = encrypt_parameter(str(row.filepath))
+                
             plain_new_id = new_id
             new_id = str(encrypt_parameter(str(new_id)))
             row_id = str(encrypt_parameter(str(row_id1)))
@@ -794,10 +817,75 @@ def application_Master_View_TC(request, row_id, new_id):
 
             row_id = int(decrypt_parameter(str(row_id)))
             application = get_object_or_404(application_form, id=row_id)
+            viewDetails = get_object_or_404(application_form, id=row_id)
+            
+            servicefetch = service_master.objects.using("default").get(
+                ser_id=service_db
+            )
+            service_name = servicefetch.ser_name
 
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f"{service_name}")
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            user_folder_path = os.path.join(user_folder_path, f"User")
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            application_folder_path = os.path.join(
+                user_folder_path, f"user_{user_id}", f"application_{viewDetails.id}"
+            )
+            os.makedirs(application_folder_path, exist_ok=True)
+
+            for document in document_master.objects.all():
+                uploaded_file = request.FILES.get(f"upload_{document.doc_id}")
+
+                if uploaded_file:
+                    document_folder_path = os.path.join(
+                        application_folder_path, f"document_{document.doc_id}"
+                    )
+                    os.makedirs(document_folder_path, exist_ok=True)
+
+                    for file_name in os.listdir(document_folder_path):
+                        file_path = os.path.join(document_folder_path, file_name)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)
+
+                    file_name = uploaded_file.name
+                    file_path = os.path.join(document_folder_path, file_name)
+
+                    with open(file_path, "wb+") as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+
+                    relative_file_path = f"{service_name}/User/user_{user_id}/application_{viewDetails.id}/document_{document.doc_id}/{file_name}"
+
+                    existing_document = citizen_document.objects.filter(
+                        user_id=user_id,
+                        document=document.doc_id,
+                        application_id=viewDetails,
+                    ).first()
+
+                    if existing_document:
+                        existing_document.file_name = file_name
+                        existing_document.filepath = relative_file_path
+                        existing_document.updated_by = user_id
+                        existing_document.updated_at = timezone.now()
+                        existing_document.save()
+                    else:
+                        citizen_document.objects.create(
+                            user_id=user_id,
+                            file_name=file_name,
+                            filepath=relative_file_path,
+                            document=document,
+                            application_id=viewDetails,
+                            created_by=user_id,
+                            updated_by=user_id,
+                        )
+            
             application_id = int(application.id)
             if application.status_id == 4:
                 application.status_id = 14
+            elif application.status_id == 10:
+                application.status_id = 10
             else:
                 application.status_id = 1
 
