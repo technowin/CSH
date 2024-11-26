@@ -49,6 +49,7 @@ class status_master(models.Model):
     status_id = models.AutoField(primary_key=True)
     status_name = models.TextField(null=True, blank=True)
     status_type = models.TextField(null=True, blank=True)
+    status_color = models.TextField(null=True, blank=True)
     is_active = models.IntegerField(default=1)  
     level = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -58,6 +59,13 @@ class status_master(models.Model):
     objects = ServiceManager()
     class Meta:
         db_table = 'status_master'
+
+class status_color(models.Model):
+    id = models.AutoField(primary_key=True)
+    color = models.TextField(null=True, blank=True)
+    objects = ServiceManager()
+    class Meta:
+        db_table = 'status_color'
 
 class document_master(models.Model):
     doc_id = models.AutoField(primary_key=True)

@@ -49,7 +49,7 @@
         <input type="hidden" id="formh_id" name="form_id" value="{{form_id}}" />
         <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
       
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="forward" data-toggle="dropdown" aria-haspopup="true"
@@ -60,29 +60,33 @@
                     {% for item in user_list %}
                         <a class="dropdown-item" value="{{item.0}}" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&f={{item.0}}&ac={{ac}}">{{item.1}}</a>
                     {% endfor %}
-                </div>
+                </div>   
             </div>
         </div>
-        <div class="col-md-3">
-            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,10"  %}
+        <div class="col-md-2">
+            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,10" or act_comp %}
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
-            {% elif workflow.level != 1 and  workflow.sendback is None %}
+            {% elif workflow.level != 1 and workflow.send_forward == user_id|to_str %}
                 <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&sb=1&ac={{ac}}">Send Back</a>
             {% else %}
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
             {% endif %}
         </div>
-        {% comment %} <div class="col-md-2">
-            {% if workflow.pre_user == user_id|to_str and workflow.rollback is None %}
+        <div class="col-md-2">
+            {% if workflow.level != 1 and workflow.pre_user == user_id|to_str and workflow.rollback is None %}
                 <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
+            {% elif act_comp and workflow.level == 1 and workflow.status_id|in_list:"1,2" and role_id == 3 %}
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb1=1&ac={{ac}}">Roll Back</a>
+            {% elif act_comp and workflow.send_forward == user_id|to_str and workflow.rollback is None  %}
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb1=1&ac={{ac}}">Roll Back</a>
             {% else %}
-                 <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
+                <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
             {% endif %}
-        </div> {% endcomment %}
-        <div class="col-md-3">
+        </div> 
+        <div class="col-md-2">
             <button type="submit" id="Btn3" class="btn btn-primary" data-toggle="modal"  data-target="#docs_model_id" >Internal Docs</button>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2"> 
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="send_forward" data-toggle="dropdown" aria-haspopup="true"
@@ -346,8 +350,8 @@
                 <div class="modal-body" style="font-weight:bold;font:size:20px;">
                     Do you want to approve or refuse this request?<br>
                     Please confirm your action.
-                </br>
-                </br>
+                    </br>
+                    </br>
                     <div>
                         <label for="f_remark" class="">Remark:</label>
                         <textarea id="f_remark" name="f_remark" rows="2" cols="30" placeholder="Write your remark here..." style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1" required></textarea>
@@ -375,11 +379,11 @@
                             <input type="file" id="file-input3"  name="certificate_upl_file"  required >
                           </label>
                     </div>
-                </br>
-                <div>
-                    <label for="iss_remark" class="">Remark:</label>
-                    <textarea id="iss_remark" name="iss_remark" rows="2" cols="30" placeholder="Write your remark here..." style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1" required></textarea>
-                </div>    
+                    </br>
+                    <div>
+                        <label for="iss_remark" class="">Remark:</label>
+                        <textarea id="iss_remark" name="iss_remark" rows="2" cols="30" placeholder="Write your remark here..." style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1" required></textarea>
+                    </div>    
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -459,7 +463,7 @@
                                 <tr style="color:black">
                                     <td>{{ forloop.counter }}</td>
                                     {% for cell in row %}
-                                    {% if forloop.counter == 5 %}
+                                    {% if forloop.counter == 6 %}
                                         <td>
                                             {% if cell %}
                                                 <a href="{% url 'download_doc' cell %}" style="font-weight: bold; font-size: 15px" download >

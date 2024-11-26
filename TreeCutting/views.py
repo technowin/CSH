@@ -56,7 +56,7 @@ def index_tc(request):
 @login_required    
 def matrix_flow_tc(request):
     docs,label,input,data = [],[],[],[]
-    form_id,context,wf_id,sf,f,sb,rb  = '','','','','','',''
+    form_id,context,wf_id,sf,f,sb,rb,rb1  = '','','','','','','',''
     try:
         if request.user.is_authenticated ==True:                
                 global user,role_id
@@ -67,11 +67,13 @@ def matrix_flow_tc(request):
             form_id = decrypt_parameter(form_id) if (form_id := request.GET.get('af', '')) else ''
             workflow = workflow_details.objects.get(id=wf_id) 
             matrix = service_matrix.objects.get(level=workflow.level)
+            act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id).exists()
             ac = request.GET.get('ac', '')
             f = request.GET.get('f', '')
             sf = request.GET.get('sf', '')
             sb = request.GET.get('sb', '')
             rb = request.GET.get('rb', '')
+            rb1 = request.GET.get('rb1', '')
             if sf and sf !='':
                 r = callproc("stp_update_sendforward",[wf_id,form_id,sf,user])
                 if r[0][0] == 'success':
@@ -111,6 +113,15 @@ def matrix_flow_tc(request):
                     return redirect(f'/matrix_flow_tc?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
                 return redirect(f'/index_tc')
+            if rb1 and rb1 !='':
+                r = callproc("stp_update_rollback1",[wf_id,form_id,user])
+                if r[0][0] == 'success':
+                    messages.success(request, "Rollback successfully !!")
+                elif r[0][0] == 'multirollback':
+                    messages.error(request, 'Consecutive roll-backs are not permitted.')
+                    return redirect(f'/matrix_flow_tc?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
+                else: messages.error(request, 'Oops...! Something went wrong!')
+                return redirect(f'/index_tc')
             subordinates = callproc("stp_get_subordinates",[form_id,user])
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
@@ -135,10 +146,10 @@ def matrix_flow_tc(request):
             header = callproc("stp_get_masters", ['iud','','header',wf_id])
             rows = callproc("stp_get_masters",['iud','','data',wf_id])
             for row in rows:
-                if os.path.exists(os.path.join(MEDIA_ROOT, str(row[4]))):
-                    encrypted_id = encrypt_parameter(str(row[4]))
+                if os.path.exists(os.path.join(MEDIA_ROOT, str(row[5]))):
+                    encrypted_id = encrypt_parameter(str(row[5]))
                 else: encrypted_id = None
-                new_row = row[:4] + (encrypted_id,)
+                new_row = row[:5] + (encrypted_id,)
                 data.append(new_row)
             header1 = callproc("stp_get_masters", ['iuc','','header',wf_id])
             data1 = callproc("stp_get_masters",['iuc','','data',wf_id])
@@ -146,7 +157,8 @@ def matrix_flow_tc(request):
             down_insp = encrypt_parameter("sample.pdf")
             context = {'role_id':role_id,'user_id':request.user.id,'docs':docs,'fields': fields,'header': header,'data': data,'header1': header1,
                        'data1': data1,'subordinates':subordinates,'user_list':user_list,'ac':ac,'wf_id':encrypt_parameter(wf_id),
-                       'form_id': encrypt_parameter(form_id),'workflow':workflow,'reject_reasons':reject_reasons,'matrix':matrix,'down_chklst':down_chklst,'down_insp':down_insp}
+                       'form_id': encrypt_parameter(form_id),'workflow':workflow,'reject_reasons':reject_reasons,'matrix':matrix,
+                       'down_chklst':down_chklst,'down_insp':down_insp,'act_comp':act_comp}
         if request.method == "POST":
             response = None
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.POST.get('wf_id', '')) else ''
@@ -162,7 +174,7 @@ def matrix_flow_tc(request):
                 )  
                 response = f"Your comment has been submitted: '{comment}'"
             for file in files:
-                 response =  internal_docs_upload(file,role_id,user,wf,ser)
+                 response =  internal_docs_upload(file,role_id,user,wf,ser,'')
                 
             if response:
                 return JsonResponse(response, safe=False)
@@ -176,6 +188,11 @@ def matrix_flow_tc(request):
                 if (status == 3 or status == 4) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
                     rej_res = request.POST.get('rej_res')
+                    if rej_res!='' and status in [4]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=rej_res,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
                     for doc_id in doc_ids:
                         if doc_id !='':
                             doc_id = decrypt_parameter(doc_id)
@@ -191,8 +208,8 @@ def matrix_flow_tc(request):
                     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
                     inspection_upl_file = request.FILES.get('inspection_upl_file')
                     if cheklist_upl_file and inspection_upl_file:
-                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser)
-                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser,'Checklist')
+                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser,'Inspection')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
@@ -201,8 +218,8 @@ def matrix_flow_tc(request):
                     notice_upl_file = request.FILES.get('notice_upl_file')
                     objection_upl_file = request.FILES.get('objection_upl_file')
                     if notice_upl_file and objection_upl_file:
-                        file_resp = internal_docs_upload(notice_upl_file,role_id,user,wf,ser)
-                        file_resp = internal_docs_upload(objection_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(notice_upl_file,role_id,user,wf,ser,'Public Notice')
+                        file_resp = internal_docs_upload(objection_upl_file,role_id,user,wf,ser,'Objection')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
@@ -210,7 +227,7 @@ def matrix_flow_tc(request):
                 elif status == 7 and ref == 'department_proposal':
                     DepProposal_upl_file = request.FILES.get('DepProposal_upl_file')
                     if DepProposal_upl_file:
-                        file_resp = internal_docs_upload(DepProposal_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(DepProposal_upl_file,role_id,user,wf,ser,'Department Proposal')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
@@ -218,7 +235,7 @@ def matrix_flow_tc(request):
                 elif status == 10 and ref == 'letter_of_payment':
                     letOfPay_upl_file = request.FILES.get('letOfPay_upl_file')
                     if letOfPay_upl_file:
-                        file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf,ser,'Letter of Payment')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
@@ -227,9 +244,15 @@ def matrix_flow_tc(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 elif status == 13 and ref == 'certificate':
+                    iss_remark = request.POST.get('iss_remark')
+                    if iss_remark!='':
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=iss_remark,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
                     certificate_upl_file = request.FILES.get('certificate_upl_file')
                     if certificate_upl_file:
-                        file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf,ser)
+                        file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf,ser,'Issue Certificate')
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
@@ -238,7 +261,13 @@ def matrix_flow_tc(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 else:
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    f_remark = request.POST.get('f_remark')
+                    if f_remark!='' and status in [11, 12]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=f_remark,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        ) 
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,f_remark])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -250,10 +279,10 @@ def matrix_flow_tc(request):
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally: 
-         if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '':
+         if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == '' and rb1 == '':
             return render(request,'TreeCutting/metrix_flow.html', context)
 
-def internal_docs_upload(file,role_id,user,wf,ser):
+def internal_docs_upload(file,role_id,user,wf,ser,name1):
     file_resp = None
     role = roles.objects.get(id=role_id)
     service = service_master.objects.using("default").get(ser_id=ser)
@@ -263,25 +292,31 @@ def internal_docs_upload(file,role_id,user,wf,ser):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path, exist_ok=True)
     file_exists_in_folder = os.path.exists(full_path)
-    file_exists_in_db = internal_user_document.objects.filter(file_path=sub_path,workflow=wf).exists()
+    file_exists_in_db = internal_user_document.objects.filter(file_path=sub_path,workflow=wf,name=name1).exists()
     if file_exists_in_db:
-        document = internal_user_document.objects.filter(file_path=sub_path,workflow=wf).first()
+        document = internal_user_document.objects.filter(file_path=sub_path,workflow=wf,name=name1).first()
         document.updated_at = datetime.now()
         document.updated_by = str(user)
+        document.name=name1
         document.save()
         with open(full_path, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
-        file_resp =  f"File '{file.name}' has been updated."
+        if name1 =='':
+            file_resp =  f"File has been updated."
+        else: file_resp =  f"File '{file.name}' has been updated."
+        
     else:
         with open(full_path, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
         internal_user_document.objects.create(
-            workflow=wf, file_name=file.name,file_path=sub_path,
+            workflow=wf, file_name=file.name,file_path=sub_path,name=name1,
             created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
         )  
-        file_resp =  f"File '{file.name}' has been inserted."
+        if name1 =='':
+            file_resp =  f"File has been inserted."
+        else: file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
 def citizen_docs_upload(file,user,form_id,created_by,status,ser):
