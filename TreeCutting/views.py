@@ -210,7 +210,7 @@ def matrix_flow_tc(request):
                     if cheklist_upl_file and inspection_upl_file:
                         file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser,'Checklist')
                         file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser,'Inspection')
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -220,7 +220,7 @@ def matrix_flow_tc(request):
                     if notice_upl_file and objection_upl_file:
                         file_resp = internal_docs_upload(notice_upl_file,role_id,user,wf,ser,'Public Notice')
                         file_resp = internal_docs_upload(objection_upl_file,role_id,user,wf,ser,'Objection')
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -228,7 +228,7 @@ def matrix_flow_tc(request):
                     DepProposal_upl_file = request.FILES.get('DepProposal_upl_file')
                     if DepProposal_upl_file:
                         file_resp = internal_docs_upload(DepProposal_upl_file,role_id,user,wf,ser,'Department Proposal')
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -236,7 +236,7 @@ def matrix_flow_tc(request):
                     letOfPay_upl_file = request.FILES.get('letOfPay_upl_file')
                     if letOfPay_upl_file:
                         file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf,ser,'Letter of Payment')
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
                     file_resp = citizen_docs_upload(letOfPay_upl_file,form_user_id,form_id,user,status)
@@ -253,7 +253,7 @@ def matrix_flow_tc(request):
                     certificate_upl_file = request.FILES.get('certificate_upl_file')
                     if certificate_upl_file:
                         file_resp = internal_docs_upload(certificate_upl_file,role_id,user,wf,ser,'Issue Certificate')
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user])
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,iss_remark])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
                     file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,status,ser)
