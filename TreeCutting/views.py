@@ -963,7 +963,7 @@ def downloadIssuedCertificate(request, row_id):
         request.session['full_name'] = user.full_name
         
         row_id = decrypt_parameter(row_id)
-        document = citizen_document.objects.get(application_id=row_id, document_id=13)
+        document = citizen_document.objects.get(application_id=row_id, document_id=14)
         
         filepath = document.filepath
         file_name = document.file_name
