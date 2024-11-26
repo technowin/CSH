@@ -233,6 +233,16 @@
 
     </script>
 
+    {% if message %}
+        <script>
+            Swal.fire({
+                title: "Error",
+                text: "{{ message }}",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
+        </script>
+    {% endif %}
     
 </body>
 {% endblock %}

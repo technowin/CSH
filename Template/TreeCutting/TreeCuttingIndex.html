@@ -22,16 +22,20 @@
                         <u>Application Form</u>
                       </h2>
                 </div>
-
-                <div class="col-md-6">
-                    <a class="LocationBtns" href="{% url 'application_Master_Crate_TC' %}">
-                        <div class="Locationsign"> 
-                            <i class="fa-solid fa-plus" style="color: white; font-size:20px; margin-top:-2%;"></i>
-                        </div>
-                        <div class="Locationtext">Apply</div>
-                    </a>
-                </div>
                 
+                {% if show_apply_button %}
+                    
+                    <div class="col-md-6">
+                        <a class="LocationBtns" href="{% url 'application_Master_Crate_TC' %}">
+                            <div class="Locationsign"> 
+                                <i class="fa-solid fa-plus" style="color: white; font-size:20px; margin-top:-2%;"></i>
+                            </div>
+                            <div class="Locationtext">Apply</div>
+                        </a>
+                    </div>
+                
+                {% endif %}
+
             </div>
          
             <div class="table-responsive">
