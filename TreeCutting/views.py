@@ -797,7 +797,7 @@ def application_Master_View_TC(request, row_id, new_id):
 
             application_id = int(application.id)
             if application.status_id == 4:
-                application.status_id = 9
+                application.status_id = 14
             else:
                 application.status_id = 1
 

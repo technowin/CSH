@@ -85,6 +85,12 @@
                             </select>
                         </div>
                     </div>
+                    
+                    {% if viewDetails.status_id == 4 %}
+                        <p style="color:red">
+                            Rejected Reason :- {{viewDetails.rejected_reason}}
+                        </p>
+                    {% endif %} 
 
                     {% comment %} table here {% endcomment %}
 
@@ -94,7 +100,7 @@
                                 <th>Document Name</th>
                                 <th>ReUpload Document</th>
                                 <th>Uploaded Document</th>
-                                {% if application.status_id == 4 %}
+                                {% if viewDetails.status_id == 4 %}
                                 <th>Remark</th>
                                 <th>Comment</th>
                                 {% endif %}
@@ -131,7 +137,7 @@
                                     {% endif %}
                                 </td>
 
-                                {% if application.status_id == 4 %}
+                                {% if viewDetails.status_id == 4 %}
                                     {% if document.correct_mark == '0' %}
                                         <td>
                                             <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
@@ -145,7 +151,7 @@
                                     {% endif %}    
                                 {% endif %}
 
-                                {% if application.status_id == 4 %}
+                                {% if viewDetails.status_id == 4 %}
                                     {% if document.comment != null %}
                                         <td style="color:red;">
                                             {{ document.comment }}
@@ -176,7 +182,7 @@
                                         <span class="edit-text">View</span>
                                     </a>
                                 </td>
-                                {% if application.status_id == 4 %}
+                                {% if viewDetails.status_id == 4 %}
                                     <td></td>
                                     <td></td>
                                 {% endif %}
