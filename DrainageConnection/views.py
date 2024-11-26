@@ -889,6 +889,8 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
         uploaded_doc_ids = uploaded_documents.values_list('document_id', flat=True)
 
         all_documents = document_master.objects.all()
+        
+        all_documents = document_master.objects.exclude(doc_id__in=[15])
 
         not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
 

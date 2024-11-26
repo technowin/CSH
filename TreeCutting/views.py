@@ -340,20 +340,29 @@ def applicationFormIndexTC(request):
             encrypted_new_id = encrypt_parameter(str(new_id))
 
             getApplicantData = []
+            show_apply_button = False  
+            
             applicationIndex = callproc("stp_getFormDetailsForTC", [user_id])
 
-            for items in applicationIndex:
-                encrypted_id = encrypt_parameter(str(items[1]))
-                item = {
-                    "srno": items[0],
-                    "id": encrypted_id,
-                    "request_no": items[2],
-                    "name_of_applicant": items[3],
-                    "status": items[4],
-                    "comments": items[5],
-                }
+            if not applicationIndex:
+                show_apply_button = True
+            else:
+                    
+                for items in applicationIndex:
+                    encrypted_id = encrypt_parameter(str(items[1]))
+                    item = {
+                        "srno": items[0],
+                        "id": encrypted_id,
+                        "request_no": items[2],
+                        "name_of_applicant": items[3],
+                        "status": items[4],
+                        "comments": items[5],
+                    }
 
-                getApplicantData.append(item)
+                    getApplicantData.append(item)
+                    
+                    if items[4] == 'Committee Refusal' or items[4] == 'Refused' or items[4] == 'New':
+                        show_apply_button = True
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -365,7 +374,7 @@ def applicationFormIndexTC(request):
         return render(
             request,
             "TreeCutting/TreeCuttingIndex.html",
-            {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}},
+            {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "show_apply_button": show_apply_button},
         )
 
 def application_Master_Crate_TC(request):
@@ -387,7 +396,8 @@ def application_Master_Crate_TC(request):
             ReasonSelect = parameter_master.objects.filter(
                 parameter_name="Reason for removal of tree"
             ).values_list("parameter_value", "parameter_value")
-            documentList = document_master.objects.filter(is_active=1)
+            # documentList = document_master.objects.filter(is_active=1)
+            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[13, 14])
 
             for document in documentList:
                 if document.doc_subpath:
@@ -562,7 +572,7 @@ def application_Master_Edit_TC(request, row_id, new_id):
 
             new_id = decrypt_parameter(new_id)
             row_id = decrypt_parameter(row_id)
-
+            message = request.session.pop("message", None)
             viewDetails = get_object_or_404(application_form, id=row_id)
             applicantType = parameter_master.objects.filter(
                 parameter_id__in=[11, 12]
@@ -581,10 +591,12 @@ def application_Master_Edit_TC(request, row_id, new_id):
             uploaded_doc_ids = uploaded_documents.values_list("document_id", flat=True)
 
             all_documents = document_master.objects.all()
+            
+            all_documents = document_master.objects.exclude(doc_id__in=[13, 14])
 
             not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
 
-            documentList = document_master.objects.filter(is_active=1)
+            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[13, 14])
 
             for document in documentList:
                 if document.doc_subpath:
@@ -595,7 +607,6 @@ def application_Master_Edit_TC(request, row_id, new_id):
         if request.method == "POST":
 
             viewDetails = get_object_or_404(application_form, id=row_id)
-
             viewDetails.applicant_type = request.POST.get("applicant_type")
             viewDetails.name_of_applicant = request.POST.get("applicant_name")
             viewDetails.plot_no = request.POST.get("plot_no")
@@ -609,6 +620,17 @@ def application_Master_Edit_TC(request, row_id, new_id):
                 "trees_to_retain"
             )
             viewDetails.reason_for_cutting_trees = request.POST.get("Reason_Select")
+
+            if not all([viewDetails.applicant_type, viewDetails.name_of_applicant, viewDetails.plot_no, viewDetails.survey_no, 
+                        viewDetails.address, viewDetails.total_existing_no_of_trees, viewDetails.proposed_no_of_trees_to_cut_or_transplant, 
+                        viewDetails.balance_no_of_trees_to_retain, viewDetails.reason_for_cutting_trees]):
+                
+                new_id = encrypt_parameter(new_id)
+                row_id = encrypt_parameter(row_id)
+                # messages.error(request, "All fields are mandatory. Please fill in all fields.")
+                message = "All fields are mandatory. Please fill in all fields."
+                request.session["message"] = message
+                return redirect("application_Master_Edit_TC", row_id, new_id) 
 
             viewDetails.save()
 
@@ -673,6 +695,12 @@ def application_Master_Edit_TC(request, row_id, new_id):
                             created_by=user_id,
                             updated_by=user_id,
                         )
+            
+            new_id = 0
+            new_id = encrypt_parameter(str(new_id))
+            row_id = encrypt_parameter(str(row_id))
+
+            return redirect("application_Master_View_TC", row_id, new_id)
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -690,14 +718,15 @@ def application_Master_Edit_TC(request, row_id, new_id):
                     "uploaded_documents": uploaded_documents,
                     "not_uploaded_documents": not_uploaded_documents,
                     "new_id": new_id,
+                    "message": message,
                 },
             )
-        else:
-            new_id = 0
-            new_id = encrypt_parameter(str(new_id))
-            row_id = encrypt_parameter(str(row_id))
+        # else:
+        #     new_id = 0
+        #     new_id = encrypt_parameter(str(new_id))
+        #     row_id = encrypt_parameter(str(row_id))
 
-            return redirect("application_Master_View_TC", row_id, new_id)
+        #     return redirect("application_Master_View_TC", row_id, new_id)
 
 def application_Master_View_TC(request, row_id, new_id):
     try:
@@ -724,7 +753,7 @@ def application_Master_View_TC(request, row_id, new_id):
 
             plain_new_id = new_id
             new_id = str(encrypt_parameter(str(new_id)))
-            row_id = str(encrypt_parameter(str(row_id)))
+            row_id = str(encrypt_parameter(str(row_id1)))
 
         if request.method == "POST":
 
