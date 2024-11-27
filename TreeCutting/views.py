@@ -907,7 +907,7 @@ def application_Master_View_TC(request, row_id, new_id):
             if not created:
                 workflow.status = status_instance
                 workflow.updated_at = timezone.now()
-                workflow.updated_by = str(user)
+                workflow.updated_by = str(user_id)
                 workflow.save()
     
     except Exception as e:
