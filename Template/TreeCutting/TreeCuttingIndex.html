@@ -80,7 +80,11 @@
                         </td>
                         
                         <td>
-                            
+                            {% if row.comments == None %}
+                                &nbsp;
+                            {% else %}
+                                {{ row.comments }}
+                            {% endif %}
                         </td>
                         
                         <td>

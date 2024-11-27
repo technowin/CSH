@@ -24,6 +24,7 @@ class application_form(models.Model):
     refused_reason = models.TextField(null=True, blank=True)
     rejected_reason = models.TextField(null=True, blank=True)
     committee_refusal = models.TextField(null=True, blank=True)
+    committee_approval = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)

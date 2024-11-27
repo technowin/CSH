@@ -68,6 +68,15 @@ def matrix_flow_tc(request):
             workflow = workflow_details.objects.get(id=wf_id) 
             matrix = service_matrix.objects.get(level=workflow.level)
             act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id).exists()
+            
+            doc_ids = [16, 17]
+            existing_docs = citizen_document.objects.filter( document_id__in=doc_ids, application_id=form_id).values_list('document_id', flat=True)
+
+            if all(doc_id in existing_docs for doc_id in doc_ids):
+                checkUpload = 1 
+            else:
+                checkUpload = 0 
+            
             ac = request.GET.get('ac', '')
             f = request.GET.get('f', '')
             sf = request.GET.get('sf', '')
@@ -158,15 +167,19 @@ def matrix_flow_tc(request):
             context = {'role_id':role_id,'user_id':request.user.id,'docs':docs,'fields': fields,'header': header,'data': data,'header1': header1,
                        'data1': data1,'subordinates':subordinates,'user_list':user_list,'ac':ac,'wf_id':encrypt_parameter(wf_id),
                        'form_id': encrypt_parameter(form_id),'workflow':workflow,'reject_reasons':reject_reasons,'matrix':matrix,
-                       'down_chklst':down_chklst,'down_insp':down_insp,'act_comp':act_comp}
+                       'down_chklst':down_chklst,'down_insp':down_insp,'act_comp':act_comp,'checkUpload':checkUpload}
         if request.method == "POST":
             response = None
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.POST.get('wf_id', '')) else ''
             form_id = decrypt_parameter(form_id) if (form_id := request.POST.get('form_id', '')) else ''
             wf = workflow_details.objects.get(id=wf_id)
+            form_user_id = wf.form_user_id
             files = request.FILES.getlist('files[]')
+            # filess = request.FILES.getlist('filess[]')
             comment =  request.POST.get('comment', '')
             ser= request.session.get('service_db','default')
+            id1 = request.POST.get('id1', None)
+            id2 = request.POST.get('id2', None)
             if comment!='':
                 internal_user_comments.objects.create(
                         workflow=wf, comments=comment,
@@ -175,7 +188,28 @@ def matrix_flow_tc(request):
                 response = f"Your comment has been submitted: '{comment}'"
             for file in files:
                  response =  internal_docs_upload(file,role_id,user,wf,ser,'')
+            
+            filess = request.FILES.getlist('filess[]')
+
+            if len(filess) >= 1:
+                file1 = filess[0]
+
+                if len(filess) > 1:
+                    file2 = filess[1]
+                else:
+                    file2 = None
+
+                response1 = internal_docs_upload(file1, role_id, user, wf, ser, '')
+                file_resp = citizen_docs_upload(file1, form_user_id, form_id, user, ser, id1)
                 
+                response2 = None 
+                
+                if file2:
+                    response2 = internal_docs_upload(file2, role_id, user, wf, ser, '')
+                    file_resp = citizen_docs_upload(file2, form_user_id, form_id, user, ser, id2)
+
+                response = response1 or response2
+                    
             if response:
                 return JsonResponse(response, safe=False)
 
@@ -241,8 +275,8 @@ def matrix_flow_tc(request):
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
-                    file_resp_1 = citizen_docs_upload(letOfPay_upl_file,form_user_id,form_id,user,status, ser, 13)
-                    file_resp_2 = citizen_docs_upload(plantOfLetter_upl_file, form_user_id, form_id, user, status, ser, 15)
+                    file_resp_1 = citizen_docs_upload(letOfPay_upl_file,form_user_id,form_id,user, ser, 13)
+                    file_resp_2 = citizen_docs_upload(plantOfLetter_upl_file, form_user_id, form_id, user, ser, 15)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -259,7 +293,7 @@ def matrix_flow_tc(request):
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,iss_remark])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
-                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,status,ser, 14)
+                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,ser, 14)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -322,7 +356,7 @@ def internal_docs_upload(file,role_id,user,wf,ser,name1):
         else: file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
-def citizen_docs_upload(file,user,form_id,created_by,status,ser, doc_id1):
+def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
     file_resp = None
     # if status == 10:
     #     doc = document_master.objects.get(doc_id=13)
@@ -401,7 +435,7 @@ def applicationFormIndexTC(request):
 
                     getApplicantData.append(item)
                     
-                    if items[4] == 'Committee Refusal' or items[4] == 'Refused':
+                    if items[4] == 'Refused':
                         show_apply_button = True
 
     except Exception as e:
