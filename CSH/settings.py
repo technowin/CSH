@@ -55,6 +55,15 @@ DATABASES = {
         'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
+     '3': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'tree_trimming_db',  
+        'USER': 'root',    
+        'PASSWORD': 'Mysql_7319',  
+        # 'HOST': '13.127.171.88',  
+        'HOST': '127.0.0.1',      
+        'PORT': '3306',
+    },
 }
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -119,6 +128,7 @@ INSTALLED_APPS = [
     'Dashboard',
     'DrainageConnection',
     'TreeCutting',
+    'TreeTrimming',
 ]
 
 # SESSION_ENGINE ="django.contrib.sessions.backends.signed_cookies"
