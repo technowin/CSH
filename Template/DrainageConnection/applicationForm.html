@@ -28,67 +28,68 @@
 
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Name of the Premises<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Name_Premises" class="form-control" id="Name_Premises" placeholder="Enter Name of Premises" required>
+                            <label for="Name_Premises" class="form-label">Name of the Premises<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Name_Premises }}" name="Name_Premises" class="form-control" id="Name_Premises" placeholder="Enter Name of Premises" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Plot_No" class="form-control" id="Plot_No" placeholder="Enter Plot No." required>
+                            <label for="Plot_No" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Plot_No }}" name="Plot_No" class="form-control" id="Plot_No" placeholder="Enter Plot No." required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Sector No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Sector_No" class="form-control" id="Sector_No" placeholder="Enter Sector No" required>
+                            <label for="Sector_No" class="form-label">Sector No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Sector_No }}" name="Sector_No" class="form-control" id="Sector_No" placeholder="Enter Sector No" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Node.<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Node" class="form-control" id="Node" placeholder="Enter Node" required>
+                            <label for="Node" class="form-label">Node.<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Node }}" name="Node" class="form-control" id="Node" placeholder="Enter Node" required>
                         </div>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Name of the Owner<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Name_Owner" class="form-control" id="Name_Owner" placeholder="Enter Name of Owner" required>
+                            <label for="Name_Owner" class="form-label">Name of the Owner<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Name_Owner }}" name="Name_Owner" class="form-control" id="Name_Owner" placeholder="Enter Name of Owner" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Address of the Owner<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Address_Owner" class="form-control" id="Address_Owner" placeholder="Enter Address of Owner" required>
+                            <label for="Address_Owner" class="form-label">Address of the Owner<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Address_Owner }}" name="Address_Owner" class="form-control" id="Address_Owner" placeholder="Enter Address of Owner" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Name of the Plumber<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Name_Plumber" class="form-control" id="Name_Plumber" placeholder="Enter Name of Plumber" required>
+                            <label for="Name_Plumber" class="form-label">Name of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Name_Plumber }}" name="Name_Plumber" class="form-control" id="Name_Plumber" placeholder="Enter Name of Plumber" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">License No of the Plumber<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="License_No_Plumber" class="form-control" id="License_No_Plumber" placeholder="Enter License No of Plumber" required>
+                            <label for="License_No_Plumber" class="form-label">License No of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.License_No_Plumber }}" name="License_No_Plumber" class="form-control" id="License_No_Plumber" placeholder="Enter License No of Plumber" required>
                         </div>
                     </div>
-
+                    
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Address of the Plumber<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Address_of_Plumber" class="form-control" id="Address_of_Plumber" placeholder="Enter Address of Plumber" required>
+                            <label for="Address_of_Plumber" class="form-label">Address of the Plumber<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Address_of_Plumber }}" name="Address_of_Plumber" class="form-control" id="Address_of_Plumber" placeholder="Enter Address of Plumber" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Plot size (mtr.sq)<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Plot_size" class="form-control" id="Plot_size" placeholder="Enter Plot size" required>
+                            <label for="Plot_size" class="form-label">Plot size (mtr.sq)<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Plot_size }}" name="Plot_size" class="form-control" id="Plot_size" placeholder="Enter Plot size" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">No of flats<span style="color:red;"> *</span> :</label>
-                            <input type="number" value="" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required>
+                            <label for="No_of_flats" class="form-label">No of flats<span style="color:red;"> *</span> :</label>
+                            <input type="number" value="{{ form_data.No_of_flats }}" name="No_of_flats" class="form-control" id="No_of_flats" placeholder="Enter No of flats" required>
                         </div>
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">No of shops<span style="color:red;"> *</span> :</label>
-                            <input type="number" value="" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required>
+                            <label for="No_of_shops" class="form-label">No of shops<span style="color:red;"> *</span> :</label>
+                            <input type="number" value="{{ form_data.No_of_shops }}" name="No_of_shops" class="form-control" id="No_of_shops" placeholder="Enter No of shops" required>
                         </div>
                     </div>
-
+                    
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="EmployeeNumber" class="form-label">Septic tank size (liters)<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
+                            <label for="Septic_tank_size" class="form-label">Septic tank size (liters)<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ form_data.Septic_tank_size }}" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
                         </div>
                     </div>
+                    
 
                     <table class="table table-bordered">
                         <thead>

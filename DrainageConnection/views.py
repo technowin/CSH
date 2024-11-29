@@ -428,7 +428,8 @@ def applicationMasterCrate(request):
         
         # success_message = request.session.pop('success_message', None)
         message = request.session.pop('message', None)
-        return render(request, 'DrainageConnection/applicationForm.html', {'documents': getDocumentData, 'message': message}) 
+        form_data = request.session.pop("form_data", None)
+        return render(request, 'DrainageConnection/applicationForm.html', {'documents': getDocumentData, 'message': message, 'form_data': form_data}) 
     
     except Exception as e:
        
@@ -454,6 +455,20 @@ def application_Master_Post(request):
             mandatory_documents = document_master.objects.filter(mandatory=1, is_active=1)
             all_uploaded = True
             missing_documents = []
+            
+            name_of_premises = request.POST.get('Name_Premises')
+            plot_no = request.POST.get('Plot_No')
+            sector_no = request.POST.get('Sector_No')
+            node = request.POST.get('Node')
+            name_of_owner = request.POST.get('Name_Owner')
+            address_of_owner = request.POST.get('Address_Owner')
+            name_of_plumber = request.POST.get('Name_Plumber')
+            license_no_of_plumber = request.POST.get('License_No_Plumber')
+            address_of_plumber = request.POST.get('Address_of_Plumber')
+            plot_size = request.POST.get('Plot_size')
+            no_of_flats = request.POST.get('No_of_flats')
+            no_of_shops = request.POST.get('No_of_shops')
+            septic_tank_size = request.POST.get('Septic_tank_size')
 
             for document in mandatory_documents:
                 if not request.FILES.get(f'upload_{document.doc_id}'):
@@ -463,6 +478,21 @@ def application_Master_Post(request):
             if not all_uploaded:
                 message = 'Please upload the mandatory documents.'
                 request.session['message'] = message  
+                request.session["form_data"] = {
+                    'Name_Premises': name_of_premises,
+                    'Plot_No': plot_no,
+                    'Sector_No': sector_no,
+                    'Node': node,
+                    'Name_Owner': name_of_owner,
+                    'Address_Owner': address_of_owner,
+                    'Name_Plumber': name_of_plumber,
+                    'License_No_Plumber': license_no_of_plumber,
+                    'Address_of_Plumber': address_of_plumber,
+                    'Plot_size': plot_size,
+                    'No_of_flats': no_of_flats,
+                    'No_of_shops': no_of_shops,
+                    'Septic_tank_size': septic_tank_size,
+                }
                 return redirect('applicationMasterCrate')
                 # messages.error(request, 'Please upload the mandatory documents.')
                 # message = 'Please upload the mandatory documents.'
@@ -485,10 +515,26 @@ def application_Master_Post(request):
                 septic_tank_size=request.POST.get('Septic_tank_size', ''),
                 created_by=user_id
             )
+            
+            servicefetch = service_master.objects.using("default").get(
+                ser_id=service_db
+            )
+            service_name = servicefetch.ser_name
 
-            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
-            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f"{service_name}")
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            user_folder_path = os.path.join(user_folder_path, f"User")
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            application_folder_path = os.path.join(
+                user_folder_path, f"user_{user_id}", f"application_{application.id}"
+            )
             os.makedirs(application_folder_path, exist_ok=True)
+            
+            # user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            # application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            # os.makedirs(application_folder_path, exist_ok=True)
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
@@ -514,7 +560,8 @@ def application_Master_Post(request):
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+                    # relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+                    relative_file_path = f"{service_name}/User/user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}"
 
                     # Update the existing document or create a new record in the database
                     existing_document = citizen_document.objects.filter(
@@ -523,6 +570,7 @@ def application_Master_Post(request):
                         application_id=application
                     ).first()
 
+                    
                     if existing_document:
                         existing_document.file_name = file_name
                         existing_document.filepath = relative_file_path
@@ -769,6 +817,8 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
     try:
         application = get_object_or_404(application_form, id=application_id)
         
+        service_db = request.session.get('service_db', 'default')
+        request.session['service_db'] = service_db
         phone_number = request.session.get('phone_number')
         user = CustomUser.objects.get(phone=phone_number, role_id = 2)
         full_name_session = request.session['full_name'] = user.full_name
@@ -805,9 +855,25 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
 
             application.save()
 
-            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
-            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            servicefetch = service_master.objects.using("default").get(
+                ser_id=service_db
+            )
+            service_name = servicefetch.ser_name
+
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f"{service_name}")
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            user_folder_path = os.path.join(user_folder_path, f"User")
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            application_folder_path = os.path.join(
+                user_folder_path, f"user_{user_id}", f"application_{application.id}"
+            )
             os.makedirs(application_folder_path, exist_ok=True)
+            
+            # user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            # application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            # os.makedirs(application_folder_path, exist_ok=True)
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
@@ -833,8 +899,8 @@ def edit_Post_Application_Master(request, application_id, row_id_status):
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
-
+                    # relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+                    relative_file_path = f"{service_name}/User/user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}"
                     # Update the existing document or create a new record in the database
                     existing_document = citizen_document.objects.filter(
                         user_id=user_id,
@@ -932,6 +998,8 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
     try:
         application = get_object_or_404(application_form, id=application_id)
         
+        service_db = request.session.get('service_db', 'default')
+        request.session['service_db'] = service_db
         phone_number = request.session.get('phone_number')
         user = CustomUser.objects.get(phone=phone_number, role_id = 2)
         full_name_session = request.session['full_name'] = user.full_name
@@ -968,9 +1036,25 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
 
             application.save()
 
-            user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
-            application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            servicefetch = service_master.objects.using("default").get(
+                ser_id=service_db
+            )
+            service_name = servicefetch.ser_name
+
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f"{service_name}")
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            user_folder_path = os.path.join(user_folder_path, f"User")
+            os.makedirs(user_folder_path, exist_ok=True)
+
+            application_folder_path = os.path.join(
+                user_folder_path, f"user_{user_id}", f"application_{application.id}"
+            )
             os.makedirs(application_folder_path, exist_ok=True)
+            
+            # user_folder_path = os.path.join(settings.MEDIA_ROOT, f'user_{user_id}')
+            # application_folder_path = os.path.join(user_folder_path, f'application_{application.id}')
+            # os.makedirs(application_folder_path, exist_ok=True)
 
             for document in document_master.objects.all():
                 uploaded_file = request.FILES.get(f'upload_{document.doc_id}')
@@ -996,8 +1080,8 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
                             destination.write(chunk)
 
                     # Prepare the relative file path for database storage
-                    relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
-
+                    # relative_file_path = f'user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}'
+                    relative_file_path = f"{service_name}/User/user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}"
                     # Update the existing document or create a new record in the database
                     existing_document = citizen_document.objects.filter(
                         user_id=user_id,

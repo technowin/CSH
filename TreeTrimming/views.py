@@ -951,3 +951,4 @@ def downloadIssuedCertificate(request, row_id):
         callproc("stp_error_log", [fun, str(e), user.id])
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
+
