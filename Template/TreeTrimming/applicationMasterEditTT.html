@@ -1,0 +1,242 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/applicationForm.css' %}" />
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
+<body>
+    
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                  <u>Application Form</u>
+                </h2>
+                <br>
+                
+                <form method="POST" action="{% url 'application_Master_Edit_TT' row_id=viewDetails.id new_id=new_id  %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                
+                    <div class="row mb-3">
+                        <div class="form-group col-md-3">
+                            <label for="applicant_type" class="form-label">Applicant Type<span style="color:red;"> *</span> :</label>
+                            <select name="applicant_type" id="applicant_type" class="form-control" style="border-radius:15px;" required>
+                                <option value="" disabled>Select Type</option>
+                                {% for item in applicantType %}
+                                    <option value="{{ item.0 }}" {% if viewDetails.applicant_type == item.0 %}selected{% endif %}>{{ item.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                
+                        <div class="col-md-3">
+                            <label for="applicant_name" class="form-label">Name of Applicant<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="applicant_name" class="form-control" id="applicant_name" placeholder="Enter Name" value="{{ viewDetails.name_of_applicant }}">
+                        </div>
+                
+                        <div class="col-md-3">
+                            <label for="plot_no" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="plot_no" class="form-control" id="plot_no" placeholder="Enter Plot No." value="{{ viewDetails.plot_no }}">
+                        </div>
+                
+                        <div class="col-md-3">
+                            <label for="survey_no" class="form-label">Survey No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="survey_no" class="form-control" id="survey_no" placeholder="Enter Survey No." value="{{ viewDetails.survey_no }}">
+                        </div>
+                    </div>
+                
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="address" class="form-label">Address<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="address" class="form-control" id="address" placeholder="Enter Address" value="{{ viewDetails.address }}">
+                        </div>
+                
+                        <div class="col-md-3">
+                            <label for="existing_trees" class="form-label">Total Existing Trees<span style="color:red;"> *</span> :</label>
+                            <input type="number" name="existing_trees" class="form-control" id="existing_trees" placeholder="Enter Total Trees" value="{{ viewDetails.total_trees_to_trim }}">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="Reason_Select" class="form-label">Applicant Type<span style="color:red;"> *</span> :</label>
+                            <select name="Reason_Select" id="Reason_Select" class="form-control" style="border-radius:15px;" required>
+                                <option value="" disabled>Select Type</option>
+                                {% for item in ReasonSelect %}
+                                    <option value="{{ item.0 }}" {% if viewDetails.Reason_Select == item.0 %}selected{% endif %}>{{ item.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    {% if viewDetails.status_id == 4 %}
+                        <p style="color:red">
+                            Rejected Reason :- {{viewDetails.rejected_reason}}
+                        </p>
+                    {% endif %} 
+
+                    {% comment %} table here {% endcomment %}
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Document Name</th>
+                                <th>ReUpload Document</th>
+                                <th>Uploaded Document</th>
+                                {% if viewDetails.status_id == 4 %}
+                                <th>Remark</th>
+                                <th>Comment</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loop for documents that already have been uploaded -->
+                            {% for document in uploaded_documents %}
+                            <tr>
+                                <td>
+                                    {{ document.document.doc_name }}
+                                    {% if document.document.mandatory == 1 %}
+                                        <span style="color: red;">*</span>
+                                    {% endif %}
+
+                                    {% if document.doc_subpath %}
+                                        <a href="{% url 'download_doc' filepath=document.encrypted_subpath %}" target="_blank" style="color: #4e73df; margin-left: 10px;"  >
+                                            <i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                </td>
+                                <td>
+                                    <input type="file" name="upload_{{ document.document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.document.doc_id }})">
+                                </td>
+                                <td>
+                                    {% if document.filepath %}
+                                        <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
+                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                            <span class="edit-text">View</span>
+                                        </a>
+                                    {% else %}
+                                        <span>No file uploaded</span>
+                                    {% endif %}
+                                </td>
+
+                                {% if viewDetails.status_id == 4 %}
+                                    {% if document.correct_mark == '0' %}
+                                        <td>
+                                            <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
+                                        </td>
+                                    {% elif document.correct_mark == '1' %}
+                                        <td>
+                                            <i class="fa-solid fa-check" style="font-size: 24px; color: green;"></i>
+                                        </td>
+                                    {% else %}   
+                                        <td></td>
+                                    {% endif %}    
+                                {% endif %}
+
+                                {% if viewDetails.status_id == 4 %}
+                                    {% if document.comment != null %}
+                                        <td style="color:red;">
+                                            {{ document.comment }}
+                                        </td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                    
+                            <!-- Loop for documents not uploaded yet -->
+                            {% for document in not_uploaded_documents %}
+                            <tr>
+                                <td>
+                                    {{ document.doc_name }}
+                                    {% if document.mandatory == 1 %}
+                                        <span style="color: red;">*</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <input type="file" name="upload_{{ document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.doc_id }})">
+                                </td>
+                                <td>
+                                    <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ document.doc_id }}" 
+                                        target="_blank" style="display: none;">
+                                        <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                        <span class="edit-text">View</span>
+                                    </a>
+                                </td>
+                                {% if viewDetails.status_id == 4 %}
+                                    <td></td>
+                                    <td></td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                
+                    <div class="text-center">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                        <a href="{% url 'applicationFormIndexTT' %}" class="btn btn-secondary">Go Back</a>
+                    </div>
+                
+                </form>
+                
+
+            </div>
+        </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'sweetalert2/dist/sweetalert2.min.js' %}"></script>
+
+    <script>
+        
+        /* upload Function */
+       
+        function previewFile(input, counter) {
+            const file = input.files[0];
+            if (file) {
+
+                const fileURL = URL.createObjectURL(file);
+        
+                const viewLink = document.getElementById(`viewFile_${counter}`);
+                viewLink.href = fileURL;
+        
+                viewLink.style.display = 'inline-block';
+            }
+        }
+        
+        function openInNewTab(url) {
+            const newWindow = window.open(url, '_blank');
+            if (newWindow) {
+                newWindow.focus();
+            } else {
+                alert("Please allow popups for this website.");
+            }
+        }
+
+    </script>
+
+    {% if message %}
+        <script>
+            Swal.fire({
+                title: "Error",
+                text: "{{ message }}",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
+        </script>
+    {% endif %}
+    
+</body>
+{% endblock %}

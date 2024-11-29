@@ -1,0 +1,182 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/applicationForm.css' %}" />
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
+<body>
+    
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                  <u>Application Form</u>
+                </h2>
+                <br>
+                
+                <form method="POST" action="{% url 'application_Master_Crate_TT' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                
+                    <div class="row mb-3">
+                        <div class="form-group col-md-3">
+                            <label for="applicant_type" class="form-label">Applicant Type<span style="color:red;"> *</span> :</label>
+                            <select name="applicant_type" id="applicant_type" class="form-control select" style="border-radius:15px;" required>
+                                <option value="" {% if not form_data.applicant_type %}selected{% endif %} disabled>Select Type</option>
+                                {% for item in applicantType %}
+                                    <option value="{{ item.0 }}" {% if item.0 == form_data.applicant_type %}selected{% endif %}>{{ item.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="applicant_name" class="form-label">Name of Applicant<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="applicant_name" class="form-control" id="applicant_name" placeholder="Enter Name" value="{{ form_data.name_of_applicant }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="plot_no" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="plot_no" class="form-control" id="plot_no" placeholder="Enter Plot No." value="{{ form_data.plot_no }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="survey_no" class="form-label">Survey No.<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="survey_no" class="form-control" id="survey_no" placeholder="Enter Survey No." value="{{ form_data.survey_no }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="address" class="form-label">Address<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="address" class="form-control" id="address" placeholder="Enter Address" value="{{ form_data.address }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="existing_trees" class="form-label">Total Trees to Trim<span style="color:red;"> *</span> :</label>
+                            <input type="number" name="existing_trees" class="form-control" id="existing_trees" placeholder="Enter Total Trees" value="{{ form_data.total_trees_to_trim }}" required>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="removal_reason" class="form-label">Reason for Removal<span style="color:red;"> *</span> :</label>
+                            <select name="removal_reason" id="removal_reason" class="form-control select" style="border-radius:15px;" required>
+                                <option value="" {% if not form_data.reason_for_cutting_trees %}selected{% endif %} disabled>Select Type</option>
+                                {% for item in ReasonSelect %}
+                                    <option value="{{ item.0 }}" {% if item.0 == form_data.reason_for_cutting_trees %}selected{% endif %}>{{ item.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        
+                    </div>
+
+                    {% comment %} Table For Document {% endcomment %}
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Document Name</th>
+                                <th>Upload</th>
+                                <th>Uploaded Document</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in documentList %}
+                            <tr>
+                                <td>{{ document.doc_name }}
+                                    {% if document.mandatory == 1 %}
+                                        <span style="color: red;">*</span>
+                                    {% endif %}
+                                    
+                                    {% if document.doc_subpath %}
+                                        <a href="{% url 'download_doc' filepath=document.encrypted_subpath %}" target="_blank" style="color: #4e73df; margin-left: 10px;"  >
+                                            <i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i>
+                                        </a>
+                                    {% endif %}
+
+                                <td>
+                                    <input type="file" name="upload_{{ forloop.counter }}" class="form-control" onchange="previewFile(this, '{{ forloop.counter }}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"> 
+                                </td>
+                                <td>
+                                    <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ forloop.counter }}" 
+                                        target="_blank" style="display: none;">
+                                        <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                        <span class="edit-text">View</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                
+                    <div class="text-center">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                        <a href="{% url 'applicationFormIndexTT' %}" class="btn btn-secondary">Go Back</a>
+                    </div>
+                </form>
+                
+
+            </div>
+        </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'sweetalert2/dist/sweetalert2.min.js' %}"></script>
+
+    <script>
+        
+        /* upload Function */
+       
+        function previewFile(input, counter) {
+            const file = input.files[0];
+            if (file) {
+
+                const fileURL = URL.createObjectURL(file);
+        
+                const viewLink = document.getElementById(`viewFile_${counter}`);
+                viewLink.href = fileURL;
+        
+                viewLink.style.display = 'inline-block';
+            }
+        }
+        
+        function openInNewTab(url) {
+            const newWindow = window.open(url, '_blank');
+            if (newWindow) {
+                newWindow.focus();
+            } else {
+                alert("Please allow popups for this website.");
+            }
+        }
+
+    </script>
+
+    <script>
+        $("#dt").dataTable({
+          pageLength: 4,
+          order: []
+        });
+    </script>
+
+    {% if message %}
+        <script>
+            Swal.fire({
+                title: "Error",
+                text: "{{ message }}",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
+        </script>
+    {% endif %}
+    
+</body>
+{% endblock %}

@@ -25,6 +25,7 @@ from Reports.views import *
 from MenuManager.views import *
 from DrainageConnection.views import *
 from TreeCutting.views import *
+from TreeTrimming.views import *
 from Masters.views import site_master as sm
 from Masters.views import company_master as cm
 from django.urls import path
@@ -135,6 +136,18 @@ urlpatterns = [
     path('application_Master_Edit_TC/<str:row_id>/<str:new_id>/', application_Master_Edit_TC, name='application_Master_Edit_TC'),
     path('application_Master_View_TC/<str:row_id>/<str:new_id>/', application_Master_View_TC, name='application_Master_View_TC'),
 
+    # Tree Trimming Workflow
+    
+    path('index_tt/', index_tt, name='index_tt'),
+    path('matrix_flow_tt', matrix_flow_tt, name='matrix_flow_tt'),
+    
+    # Tree Trimming application
+    
+    path('applicationFormIndexTT', applicationFormIndexTT, name='applicationFormIndexTT'),
+    path('application_Master_Crate_TT', application_Master_Crate_TT, name='application_Master_Crate_TT'),
+    path('application_Master_Edit_TT/<str:row_id>/<str:new_id>/', application_Master_Edit_TT, name='application_Master_Edit_TT'),
+    path('application_Master_View_TT/<str:row_id>/<str:new_id>/', application_Master_View_TT, name='application_Master_View_TT'),
+    
     # Verification Screen 
     
     path('VerificationForm', VerificationForm, name='VerificationForm'), 

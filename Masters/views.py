@@ -602,7 +602,7 @@ def VerificationForm(request):
 def onetimepage(request):
     try:
         if request.method =="GET":
-            services = service_master.objects.filter(ser_id__in=[1, 2]).values_list('ser_id', 'ser_name')
+            services = service_master.objects.filter(ser_id__in=[1, 2, 3]).values_list('ser_id', 'ser_name')
             return render(request,'OneTimePage/onetimepage.html',{'services':services}) 
         elif request.method == "POST":
             service_db = request.POST.get('services')
