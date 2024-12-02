@@ -19,6 +19,8 @@ import pandas as pd
 import calendar
 from django.utils import timezone
 from datetime import timedelta
+from django.http import Http404
+
 # Create your views here.
 import logging
 logger = logging.getLogger(__name__)
@@ -1134,7 +1136,7 @@ def downloadIssuedCertificate(request, row_id):
         return redirect('download_doc', encrypted_filepath)
     
     except citizen_document.DoesNotExist:
-        return Http404("Document not found")
+        raise Http404("Document not found")
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name

@@ -19,6 +19,7 @@ import pandas as pd
 import calendar
 from django.utils import timezone
 from datetime import timedelta
+from django.http import Http404
 # from DrainageConnection.models import *
 
 # Create your views here.
@@ -990,7 +991,7 @@ def download_doc(request, filepath):
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
     
-def downloadIssuedCertificate(request, row_id):
+def downloadIssuedCertificatetc(request, row_id):
     try:
         phone_number = request.session.get('phone_number')
         user = CustomUser.objects.get(phone=phone_number, role_id = 2)
@@ -1007,7 +1008,7 @@ def downloadIssuedCertificate(request, row_id):
         return redirect('download_doc', encrypted_filepath)
     
     except citizen_document.DoesNotExist:
-        return Http404("Document not found")
+        raise  Http404("Document not found")
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name

@@ -927,7 +927,7 @@ def download_doc(request, filepath):
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
     
-def downloadIssuedCertificate(request, row_id):
+def downloadIssuedCertificatett(request, row_id):
     try:
         phone_number = request.session.get('phone_number')
         user = CustomUser.objects.get(phone=phone_number, role_id = 2)
