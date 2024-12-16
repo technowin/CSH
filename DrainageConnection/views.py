@@ -126,7 +126,8 @@ def matrix_flow(request):
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.all():
+            # for doc_master in document_master.objects.all():
+            for doc_master in document_master.objects.exclude(is_active=0).exclude(doc_id=15):
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
@@ -214,7 +215,15 @@ def matrix_flow(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                elif status == 10 and ref == 'certificate':
+                elif status == 10 and ref == 'finalInspection':
+                    final_cheklist_upl_file = request.FILES.get('final_cheklist_upl_file')
+                    if final_cheklist_upl_file:
+                        file_resp = internal_docs_upload(final_cheklist_upl_file,role_id,user,wf,ser,'Final Checklist')
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                elif status == 11 and ref == 'certificate':
                     iss_remark = request.POST.get('iss_remark')
                     if iss_remark!='':
                         internal_user_comments.objects.create(
@@ -755,7 +764,7 @@ def application_Form_Final_Submit(request):
             if not created:
                 workflow.status = status_instance
                 workflow.updated_at = timezone.now()
-                workflow.updated_by = str(user)
+                workflow.updated_by = user_id
                 workflow.save()
 
             return redirect('applicationFormIndex')
@@ -975,7 +984,7 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
 
         all_documents = document_master.objects.all()
         
-        all_documents = document_master.objects.exclude(doc_id__in=[15])
+        all_documents = document_master.objects.exclude(doc_id__in=[15]).exclude(is_active=0)
 
         not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
 

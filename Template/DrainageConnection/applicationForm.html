@@ -85,8 +85,8 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="Septic_tank_size" class="form-label">Septic tank size (liters)<span style="color:red;"> *</span> :</label>
-                            <input type="text" value="{{ form_data.Septic_tank_size }}" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" required>
+                            <label for="Septic_tank_size" class="form-label">Septic tank size (liters):</label>
+                            <input type="text" value="{{ form_data.Septic_tank_size }}" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size">
                         </div>
                     </div>
                     
@@ -94,6 +94,7 @@
                     <table class="table table-bordered">
                         <thead>
                             <tr>
+                                <th>Sr No.</th>
                                 <th>Document Name</th>
                                 <th>Upload</th>
                                 <th>Uploaded Document</th>
@@ -102,16 +103,16 @@
                         <tbody>
                             {% for document in documents %}
                             <tr>
+                                <td>{{ forloop.counter }}</td>
                                 <td>{{ document.doc_name }}
                                     {% if document.mandatory == 1 %}
                                         <span style="color: red;">*</span>
                                     {% endif %}
                                 <td>
-                                    <input type="file" name="upload_{{ forloop.counter }}" class="form-control" onchange="previewFile(this, '{{ forloop.counter }}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"> 
+                                    <input type="file" name="upload_{{ document.doc_id }}" class="form-control" onchange="previewFile(this, '{{ document.doc_id }}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"> 
                                 </td>
                                 <td>
-                                    <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ forloop.counter }}" 
-                                        target="_blank" style="display: none;">
+                                    <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ document.doc_id }}" target="_blank" style="display: none;">
                                         <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
                                         <span class="edit-text">View</span>
                                     </a>
