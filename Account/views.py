@@ -57,20 +57,25 @@ def Login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         remember_me = request.POST.get('remember_me')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            request.session.cycle_key()
-            request.session["username"]=(str(username))
-            request.session["full_name"]=(str(user.full_name))
-            request.session["user_id"]=(str(user.id))
-            request.session["role_id"] = str(user.role_id)
-            
-            if remember_me == 'on':
-                request.session.set_expiry(1209600)  # 2 weeks
+        phone = CustomUser.objects.filter(email=username).exclude(role_id=2).values_list('phone', flat=True).first()
+        if phone:
+            user = authenticate(request, username=phone, password=password)
+            if user is not None:
+                login(request, user)
+                request.session.cycle_key()
+                request.session["username"]=(str(username))
+                request.session["full_name"]=(str(user.full_name))
+                request.session["user_id"]=(str(user.id))
+                request.session["role_id"] = str(user.role_id)
+
+                if remember_me == 'on':
+                    request.session.set_expiry(1209600)  # 2 weeks
+                else:
+                    request.session.set_expiry(0)  # Browser close
+                return redirect('services') 
             else:
-                request.session.set_expiry(0)  # Browser close
-            return redirect('services') 
+                messages.error(request, 'Invalid Credentials')
+                return redirect("Login")
         else:
             messages.error(request, 'Invalid Credentials')
             return redirect("Login")
