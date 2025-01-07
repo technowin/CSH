@@ -211,7 +211,7 @@ def register_new_user(request):
                     service_id=service_db,
                     defaults={
                         'updated_at': timezone.now(),
-                        'updated_by': request.user.id,
+                        'updated_by': id,
                     }
                 )
 
