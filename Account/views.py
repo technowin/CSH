@@ -401,9 +401,9 @@ def citizenRegisterAccount(request):
         if CustomUser.objects.filter(phone=mobile_number, role_id=2 ).exists():
             messages.warning(request, "This mobile number is already registered. Please LogIn.")
             return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
-        elif CustomUser.objects.filter(email=email, role_id=2).exists():
-            messages.warning(request, "This emailId is already registered. ")
-            return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
+        # elif CustomUser.objects.filter(email=email, role_id=2).exists():
+        #     messages.warning(request, "This emailId is already registered. ")
+        #     return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
         else:
             request.session['first_name'] = first_name
             request.session['last_name'] = last_name
@@ -605,7 +605,7 @@ def OTPScreenRegistration(request):
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             fun = tb[0].name
-            callproc("stp_error_log", [fun, str(e), user])  
+            callproc("stp_error_log", [fun, str(e), 'user'])  
             messages.error(request, f"Failed to send OTP. Error: {str(e)}")
         
         return render(request, 'OTPScreen/OTPScreenRegistration.html',{'service_db':service_db})
@@ -631,8 +631,8 @@ def verify_otp(request):
                 otp_record.delete()
                 role_id = roles.objects.get(id=2)
 
-                if CustomUser.objects.filter(email=email, role_id=2 ).exists():
-                    messages.error(request, "An account with this email already exists.")
+                if CustomUser.objects.filter(role_id=2, phone=phone_number ).exists():
+                    messages.error(request, "An account with this details already exists.")
                     context = {
                         'firstName': first_name,
                         'lastName': last_name,
@@ -708,15 +708,7 @@ def verify_otp(request):
                 'mobileNumber': phone_number,'service_db':service_db
             }
             return render(request, 'citizenAccount/citizenRegister.html', context)
-        except IntegrityError:
-            messages.error(request, "An account with this email already exists.")
-            context = {
-                'firstName': first_name,
-                'lastName': last_name,
-                'email': email,
-                'mobileNumber': phone_number,'service_db':service_db
-            }
-            return render(request, 'citizenAccount/citizenRegister.html', context)
+        
         except Exception as e:
             messages.error(request, "An unexpected error occurred. Please try again.")
             context = {
@@ -753,9 +745,9 @@ def aple_sarkar_Register(request):
             if CustomUser.objects.filter(phone=mobile_number, role_id=2).exists():
                 messages.warning(request, "This mobile number is already registered. Please LogIn.")
                 return redirect(f'/aple_sarkar_Register?service_db={service_db}') 
-            elif CustomUser.objects.filter(email=email, role_id=2).exists():
-                messages.warning(request, "This emailId is already registered.")
-                return redirect(f'/aple_sarkar_Register?service_db={service_db}') 
+            # elif CustomUser.objects.filter(email=email, role_id=2).exists():
+            #     messages.warning(request, "This emailId is already registered.")
+            #     return redirect(f'/aple_sarkar_Register?service_db={service_db}') 
             else:
                 request.session['first_name'] = first_name
                 request.session['last_name'] = last_name

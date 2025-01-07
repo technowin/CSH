@@ -58,7 +58,7 @@
                                     <div class="col-sm-6">
                                         <label>Email :-</label>
                                         <input type="email" value="{{email}}" class="form-control form-control-user" 
-                                            id="exampleInputEmail" name="email" placeholder="Email Address" required>
+                                            id="exampleInputEmail" name="email" placeholder="Email Address">
                                     </div>
                                     
                                     <div class="col-sm-6 mb-3 mb-sm-0">
@@ -270,6 +270,7 @@
 
     <script>
         function validateMobileNumber() {
+            debugger
             const mobileInput = document.getElementById('exampleMobileNumber');
             const mobileNumber = mobileInput.value.trim();
         
