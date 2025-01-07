@@ -35,7 +35,8 @@ urlpatterns = [
     # APP URLS
 
     # Account
-    path("", onetimepage,name='onetimepage'),
+    path("", citizenLoginAccount,name='citizenLoginAccount'),
+    # path("", onetimepage,name='onetimepage'),
     # path("", Login,name='Account'),
     path("Login", Login,name='Account'),
     path("Login", Login,name='Login'),

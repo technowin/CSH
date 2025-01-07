@@ -61,7 +61,16 @@
                                     <form class="user" action="citizenLoginAccount" method="post" onsubmit="return validatePhoneNumber()">
                                         {% csrf_token %}
                                         <input type="hidden" id="service_db" name="service_db" value="{{service_db}}" />
+
                                         <div class="form-group">
+                                            <select name="services" id="service_id" class="form-control" style="border-radius:15px; margin-bottom:5%;" required>
+                                                <option value="" selected disabled>Select Services</option>
+                                                <option value="1">Drainage Connection</option>
+                                                <option value="2">Tree Cutting</option>
+                                                <option value="3">Tree Trimming</option>
+                                            </select>
+                                            
+
                                             <input type="text" class="form-control form-control-user"
                                                 id="exampleInputPhone" name="username" aria-describedby="phoneHelp"
                                                 placeholder="Enter Phone Number..." required>
@@ -96,7 +105,7 @@
     <script src="{% static 'js/CSH.min.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    {% if messages %}
+   {% if messages %}
         {% for message in messages %}
         <script>
         Swal.fire({
@@ -107,7 +116,7 @@
         });
         </script>
         {% endfor %}
-    {% endif %}
+    {% endif %} 
 
     <script>
     function validatePhoneNumber() {

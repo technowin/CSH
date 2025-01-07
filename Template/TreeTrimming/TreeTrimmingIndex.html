@@ -127,6 +127,19 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
   
+  {% if messages %}
+        {% for message in messages %}
+            <script>
+            Swal.fire({
+                title: "{{ message.tags }}",
+                text: "{{ message }}",
+                icon: "{{ message.tags }}",
+                confirmButtonText: "OK",
+            });
+            </script>
+        {% endfor %}
+    {% endif %} 
+    
     {% comment %} {% if messages %}
         <script>
             document.addEventListener('DOMContentLoaded', function() {
