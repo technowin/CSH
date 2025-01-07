@@ -57,20 +57,25 @@ def Login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         remember_me = request.POST.get('remember_me')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            request.session.cycle_key()
-            request.session["username"]=(str(username))
-            request.session["full_name"]=(str(user.full_name))
-            request.session["user_id"]=(str(user.id))
-            request.session["role_id"] = str(user.role_id)
-            
-            if remember_me == 'on':
-                request.session.set_expiry(1209600)  # 2 weeks
+        phone = CustomUser.objects.filter(email=username).exclude(role_id=2).values_list('phone', flat=True).first()
+        if phone:
+            user = authenticate(request, username=phone, password=password)
+            if user is not None:
+                login(request, user)
+                request.session.cycle_key()
+                request.session["username"]=(str(username))
+                request.session["full_name"]=(str(user.full_name))
+                request.session["user_id"]=(str(user.id))
+                request.session["role_id"] = str(user.role_id)
+
+                if remember_me == 'on':
+                    request.session.set_expiry(1209600)  # 2 weeks
+                else:
+                    request.session.set_expiry(0)  # Browser close
+                return redirect('services') 
             else:
-                request.session.set_expiry(0)  # Browser close
-            return redirect('services') 
+                messages.error(request, 'Invalid Credentials')
+                return redirect("Login")
         else:
             messages.error(request, 'Invalid Credentials')
             return redirect("Login")
@@ -110,7 +115,7 @@ def register_new_user(request):
         if id != '0':
             id1 = decrypt_parameter(id)
             users = get_object_or_404(CustomUser, id=id1)
-            user_dept_ser =user_dept_services.objects.using('default').filter(user_id=id1) 
+            user_dept_ser = user_dept_services.objects.using('default').filter(user_id=id1).first()
             full_name = users.full_name.split(" ", 1) 
             first_name = full_name[0] 
             last_name = full_name[1] if len(full_name) > 1 else ""  
@@ -198,6 +203,18 @@ def register_new_user(request):
                 user.role_id = role_id
                 # user.superior_id = superior_id
                 user.save()
+                from django.utils import timezone
+                department = request.POST.get('department')
+                service_db = request.POST.get('service', 'default')
+                obj, created = user_dept_services.objects.using('default').update_or_create(
+                    user_id=id,
+                    department_id=department,
+                    service_id=service_db,
+                    defaults={
+                        'updated_at': timezone.now(),
+                        'updated_by': id,
+                    }
+                )
 
                 messages.success(request, "User details updated successfully!")
             return redirect('/masters?entity=user&type=i')
