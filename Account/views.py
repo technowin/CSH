@@ -114,7 +114,7 @@ def register_new_user(request):
         if id != '0':
             id1 = decrypt_parameter(id)
             users = get_object_or_404(CustomUser, id=id1)
-            user_dept_ser =user_dept_services.objects.using('default').filter(user_id=id1) 
+            user_dept_ser = user_dept_services.objects.using('default').filter(user_id=id1).first()
             full_name = users.full_name.split(" ", 1) 
             first_name = full_name[0] 
             last_name = full_name[1] if len(full_name) > 1 else ""  
@@ -202,6 +202,18 @@ def register_new_user(request):
                 user.role_id = role_id
                 # user.superior_id = superior_id
                 user.save()
+                from django.utils import timezone
+                department = request.POST.get('department')
+                service_db = request.POST.get('service', 'default')
+                obj, created = user_dept_services.objects.using('default').update_or_create(
+                    user_id=id,
+                    department_id=department,
+                    service_id=service_db,
+                    defaults={
+                        'updated_at': timezone.now(),
+                        'updated_by': request.user.id,
+                    }
+                )
 
                 messages.success(request, "User details updated successfully!")
             return redirect('/masters?entity=user&type=i')
