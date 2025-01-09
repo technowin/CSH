@@ -739,7 +739,7 @@ def verify_otp(request):
             return render(request, 'citizenAccount/citizenRegister.html', context)
         
         except Exception as e:
-            messages.error(request, "An unexpected error occurred. Please try again.")
+            messages.error(request, "The mobile number you entered already exists. Please try again with a different number.")
             context = {
                 'firstName': first_name,
                 'lastName': last_name,
