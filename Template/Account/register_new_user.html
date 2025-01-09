@@ -2,126 +2,119 @@
 {% block content %}
 {% load static %}
 {% csrf_token %}
+{% load custom_filters %}
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-
-    <div class="container">
-        <div class="card o-hidden border-0 shadow-lg my-5" style="width: 70%; margin: 0 auto;">
-            <div class="card-body p-0">
-                <!-- Nested Row within Card Body -->
-                <div class="row">
-                   {% comment %} <div class="col-lg-2">
-                   </div> {% endcomment %}
-                    <div class="col-lg-12">
-                        <div class="p-5">
-                            <div class="text-center">
-                                <h1 class="h4 text-gray-900 mb-4">{% if id == '0' %}Create an Account!{% else%}Edit user Details{% endif %}</h1>
-                            </div>
-                            <form class="user" method="POST" action="{% url 'register_new_user' %}" onsubmit="return validatePassword()">
-                                {% csrf_token %}
-                                {% if id == '0' %}
-                                <input type="hidden" name="id" if  value="{{ id }}">
-                                {% else  %}
-                                <input type="hidden" name="id" if  value="{{ users.id }}">
-                                {% endif %} 
-
-
-
-                                <div class="form-group row">
-                                    
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label>First Name :-</label>
-                                        <input type="text" value="{{ first_name }}" class="form-control form-control-user" id="exampleFirstName" name="firstname" placeholder="First Name" required>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <label>Last Name :-</label>
-                                        <input type="text" value="{{ last_name }}" class="form-control form-control-user" id="exampleLastName" name="lastname" placeholder="Last Name" required>
-                                    </div>
-                                </div>
-                                <div class="form-group row">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label>Mobile :-</label>
-                                        <input type="tel" value="{{ users.phone }}"  class="form-control form-control-user" id="exampleMobileNumber" name="mobileNumber" placeholder="Mobile Number" required>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <label>Email :-</label>
-                                        <input type="email"  value="{{ users.email }}" class="form-control form-control-user" id="exampleInputEmail" name="email" placeholder="Email Address" required>
-                                    </div>
-                                </div>
-                              
-                                <div class="form-group row">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label>Department :-</label>
-                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="department" id="department_id" class="form-control" required>
-                                            <option value="" Selected disabled>Select Department</option>
-                                            {% for item in department %}
-                                                <option value="{{ item.0 }}" {% if item.0 == user_dept_ser.department_id %}selected{% endif %}>{{ item.1 }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label>Services :-</label>
-                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="service" id="service_id" class="form-control" required >
-                                            <option value="" Selected disabled>Select Services</option>
-                                            {% for item in service %}
-                                                <option value="{{ item.0 }}" {% if item.0 == user_dept_ser.service_id %}selected{% endif %}>{{ item.1 }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group row">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label>Role :-</label>
-                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="role_id" id="role_id" class="form-control" required>
-                                            {% if not users.role_id %}
-                                                <option value="" Selected disabled>Select Role</option>
-                                            {% endif %}
-                                            {% for item in roles %}
-                                                <option value="{{ item.0 }}" {% if item.0 == users.role_id %}selected{% endif %}>{{ item.1 }}</option>
-                                            {% endfor %}
-                                        </select>                                    
-                                    </div>
-                                    {% comment %} <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label>Superior :-</label>
-                                        <select style="border-radius:10em;height: calc(2.5em + .75rem + 2px);font-size: .8rem;" name="superior_id" id="superior_id" class="form-control" required>
-                                            {% if not users.superior_id %}
-                                                <option value="" Selected disabled>Select Superior</option>
-                                            {% endif %}
-                                            {% for item in user_list %}
-                                                <option value="{{ item.0 }}" {% if item.0 == users.superior_id %}selected{% endif %}>{{ item.1 }}</option>
-                                            {% endfor %}
-                                        </select>                                    
-                                    </div> {% endcomment %}
-                                </div>
-                                {% if id == '0'%}
-                                <div class="form-group row">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <label>Password :-</label>
-                                        <input type="password" class="form-control form-control-user" id="exampleInputPassword" name="password" placeholder="Password" required>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <label>Repeat Password :-</label>
-                                        <input type="password"  class="form-control form-control-user" id="exampleRepeatPassword" name="repeatPassword" placeholder="Repeat Password" required>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                <hr>
-                                <div class="text-center">
-                                    <button type="submit" class="btn btn-primary btn-user ">
-                                        {% if id == '0' %}Register Account{% else %}Update User Details{% endif %}
-                                    </button>
-                                </div>     
-                                {% comment %} <div class="text-center">
-                                    <a class="small" href="/">Already have an account? Login!</a>
-                                </div> {% endcomment %}
-                            </form>
-                        </div>
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<div class="mt-5" style="align-items:center;justify-items:center;">
+    <div class="row col-md-4 mb-2 shadow " style="padding: 10px;border: 2px solid #b3b3b3;border-radius: 15px;">
+        <div class="p-5">
+            <div class="text-center">
+                <h1 class="h4 text-gray-900 mb-4">{% if id == '0' %}Create an Account!{% else%}Edit user Details{% endif %}</h1>
+            </div>
+            <form class="user" method="POST" action="{% url 'register_new_user' %}" onsubmit="return validatePassword()">
+                {% csrf_token %}
+                {% if id == '0' %}
+                    <input type="hidden" name="id"  value="{{ id }}">
+                {% else  %}
+                    <input type="hidden" name="id"  value="{{ users.id }}">
+                {% endif %}
+                <div class="form-group row mb-3">
+                    <div class="col-sm-6 mb-3 mb-sm-0">
+                        <label>First Name :-</label>
+                        <input type="text" value="{{ first_name }}" class="form-control " style="border-radius:10em;"  id="exampleFirstName" name="firstname" placeholder="First Name" required>
+                    </div>
+                    <div class="col-sm-6">
+                        <label>Last Name :-</label>
+                        <input type="text" value="{{ last_name }}" class="form-control " style="border-radius:10em;"  id="exampleLastName" name="lastname" placeholder="Last Name" required>
                     </div>
                 </div>
-            </div>
+                <div class="form-group row mb-3">
+                    {% if users.role_id|in_list:"2" %}
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <input type="hidden" name="email"  value="{{ users.email }}">
+
+                            <label>Mobile :-</label>
+                            <input type="tel" value="{{ users.phone }}"  class="form-control" style="border-radius:10em;" id="exampleMobileNumber" name="mobileNumber" placeholder="Mobile Number" required>
+                        </div>
+                    {% else %}
+
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <label>Email :-</label>
+                            <input type="email"  value="{{ users.email }}" class="form-control " style="border-radius:10em;" id="exampleInputEmail" name="email" placeholder="Email Address" required>
+                        </div> 
+                    {% endif %}
+                    {% if users.role_id|in_list:"2" %}
+                        <input type="hidden" name="role_id"  value="{{ users.role_id }}">
+
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <label>Role :-</label>
+                            <input type="text" value="User"  class="form-control" style="border-radius:10em;" id="" name=""  readonly>
+                        </div>
+                    {% else %}
+                    <div class="col-sm-6">
+                        <label>Role :-</label>
+                        <select style="border-radius:10em;" name="role_id" id="role_id" class="form-control select" required>
+                            {% if not users.role_id %}
+                                <option value="" Selected disabled>Select Role</option>
+                            {% endif %}
+                            {% for item in roles %}
+                                <option value="{{ item.0 }}" {% if item.0 == users.role_id %}selected{% endif %}>{{ item.1 }}</option>
+                            {% endfor %}
+                        </select>                                    
+                    </div>
+                    {% endif %}
+                   
+                </div>
+                <div class="form-group row mb-3">
+                    {% if not users.role_id|in_list:"1,2" %}
+                            <div class="col-sm-6 mb-3 mb-sm-0">
+                                <label>Department :-</label>
+                                <select style="border-radius:10em;" name="department" id="department_id" class="form-control select" required>
+                                    <option value="" Selected disabled>Select Department</option>
+                                    {% for item in department %}
+                                        <option value="{{ item.0 }}" {% if item.0 == user_dept_ser.department_id %}selected{% endif %}>{{ item.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-sm-6 ">
+                                <label>Services :-</label>
+                                <select style="border-radius:10em;" name="service" id="service_id" class="form-control select" required >
+                                    <option value="" Selected disabled>Select Services</option>
+                                    {% for item in service %}
+                                        <option value="{{ item.0 }}" {% if item.0 == user_dept_ser.service_id %}selected{% endif %}>{{ item.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                    {% endif %} 
+                </div>
+                <div class="form-group row mb-3">
+                    {% if id == '0'%}
+                        <div class="col-md-6 mb-3 mb-sm-0">
+                            <label>Password :-</label>
+                            <input type="password" class="form-control " style="border-radius:10em;" id="exampleInputPassword" name="password" placeholder="Password" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Repeat Password :-</label>
+                            <input type="password"  class="form-control " style="border-radius:10em;" id="exampleRepeatPassword" name="repeatPassword" placeholder="Repeat Password" required>
+                        </div>
+                    {% endif %} 
+                </div>
+                <hr>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-user ">
+                        {% if id == '0' %}Register Account{% else %}Update {% endif %}
+                    </button>
+                </div>     
+                {% comment %} <div class="text-center">
+                    <a class="small" href="/">Already have an account? Login!</a>
+                </div> {% endcomment %}
+            </form>
         </div>
     </div>
+</div>
+
 
     <!-- Bootstrap core JavaScript-->
     <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>

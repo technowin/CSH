@@ -139,6 +139,8 @@ def register_new_user(request):
                 department = request.POST.get('department')
                 service_db = request.POST.get('service', 'default')
                 full_name = f"{firstname} {lastname}"
+                if role_id and role_id != '2':
+                    phone = email
                 # superior_id=superior_id
                 existing_user = CustomUser.objects.using('default').filter(email=email, phone=phone, role_id=role_id).exists()
                 exist_inservice = CustomUser.objects.using(service_db).filter(email=email, phone=phone, role_id=role_id).exists()
@@ -164,10 +166,11 @@ def register_new_user(request):
                                 user.save(using='default') 
                                 password_storage.objects.using('default').create(user=user, passwordText=password)
                             user_id = user.id
-                        user_dept_services.objects.using('default').get_or_create(
-                            user_id=user_id,department_id=department,service_id=service_db,
-                            defaults={ 'created_at': timezone.now(),  'created_by': request.user.id }
-                        )
+                        if department:
+                            user_dept_services.objects.using('default').get_or_create(
+                                user_id=user_id,department_id=department,service_id=service_db,
+                                defaults={ 'created_at': timezone.now(),  'created_by': request.user.id }
+                            )
                         if service_db:
                             user.id = user_id
                             with transaction.atomic(using=service_db):
@@ -195,6 +198,8 @@ def register_new_user(request):
                 phone = request.POST.get('mobileNumber')
                 role_id = request.POST.get('role_id')
                 # superior_id = request.POST.get('superior_id')
+                if role_id and role_id != '2':
+                    phone = email
 
                 user = CustomUser.objects.get(id=id)
                 user.full_name = full_name
@@ -206,15 +211,16 @@ def register_new_user(request):
                 from django.utils import timezone
                 department = request.POST.get('department')
                 service_db = request.POST.get('service', 'default')
-                obj, created = user_dept_services.objects.using('default').update_or_create(
-                    user_id=id,
-                    department_id=department,
-                    service_id=service_db,
-                    defaults={
-                        'updated_at': timezone.now(),
-                        'updated_by': id,
-                    }
-                )
+                if department:
+                    obj, created = user_dept_services.objects.using('default').update_or_create(
+                        user_id=id,
+                        department_id=department,
+                        service_id=service_db,
+                        defaults={
+                            'updated_at': timezone.now(),
+                            'updated_by': id,
+                        }
+                    )
 
                 messages.success(request, "User details updated successfully!")
             return redirect('/masters?entity=user&type=i')

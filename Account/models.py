@@ -39,7 +39,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     full_name = models.CharField(max_length=255)
     email = models.EmailField(max_length=255)
     # encrypted_password = models.CharField(max_length=225,null=True,blank=True)  # Adjust the max_length as needed
-    phone = models.CharField(unique=True,max_length=15)
+    phone = models.CharField(unique=True,max_length=255)
     first_time_login = models.IntegerField(default=1)  # 1 for True, 0 for False
     last_login = models.DateTimeField(default=timezone.now)
     # password_text = models.CharField(max_length=128)
