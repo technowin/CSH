@@ -72,6 +72,7 @@ def Login(request):
             if user.role_id == 1:
                 request.session['service_db'] = '1'
                 return redirect("masters/?entity=user&type=i")
+            else : return redirect('services') 
         else:
             messages.error(request, 'Invalid Credentials')
             return redirect("Login")
