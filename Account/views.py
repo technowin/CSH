@@ -165,8 +165,7 @@ def register_new_user(request):
                             user_id = user.id
                         if department:
                             user_dept_services.objects.using('default').get_or_create(
-                                user_id=user_id,department_id=department,service_id=service_db,
-                                defaults={ 'created_at': timezone.now(),  'created_by': request.user.id }
+                                user_id=user_id,department_id=int(department),service_id=int(service_db)
                             )
                         if service_db:
                             user.id = user_id
