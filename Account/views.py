@@ -57,31 +57,25 @@ def Login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         remember_me = request.POST.get('remember_me')
-        phone = CustomUser.objects.filter(email=username).exclude(role_id=2).values_list('phone', flat=True).first()
-        if phone:
-            user = authenticate(request, username=phone, password=password)
-            if user is not None:
-                login(request, user)
-                request.session.cycle_key()
-                request.session["username"]=(str(username))
-                request.session["full_name"]=(str(user.full_name))
-                request.session["user_id"]=(str(user.id))
-                request.session["role_id"] = str(user.role_id)
-
-                if remember_me == 'on':
-                    request.session.set_expiry(1209600)  # 2 weeks
-                else:
-                    request.session.set_expiry(0)  # Browser close
-                if user.role_id == 1:
-                    request.session['service_db'] = '1'
-                    return redirect("masters/?entity=user&type=i")
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            request.session.cycle_key()
+            request.session["username"]=(str(username))
+            request.session["full_name"]=(str(user.full_name))
+            request.session["user_id"]=(str(user.id))
+            request.session["role_id"] = str(user.role_id)
+            if remember_me == 'on':
+                request.session.set_expiry(1209600)  # 2 weeks
             else:
-                messages.error(request, 'Invalid Credentials')
-                return redirect("Login")
+                request.session.set_expiry(0)  # Browser close
+            if user.role_id == 1:
+                request.session['service_db'] = '1'
+                return redirect("masters/?entity=user&type=i")
         else:
             messages.error(request, 'Invalid Credentials')
             return redirect("Login")
-
+      
 def services(request):
     try:
         if request.method =="GET":
