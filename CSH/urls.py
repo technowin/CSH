@@ -170,6 +170,10 @@ urlpatterns = [
     path('downloadIssuedCertificate/<str:row_id>/', downloadIssuedCertificate, name='downloadIssuedCertificate'), 
     path('downloadIssuedCertificatetc/<str:row_id>/', downloadIssuedCertificatetc, name='downloadIssuedCertificatetc'), 
     path('downloadIssuedCertificatett/<str:row_id>/', downloadIssuedCertificatett, name='downloadIssuedCertificatett'), 
+    
+    path('downloadRefusalDocument/<str:row_id>/', downloadRefusalDocument, name='downloadRefusalDocument'), 
+    path('downloadRefusalDocumenttt/<str:row_id>/', downloadRefusalDocumenttt, name='downloadRefusalDocumenttt'), 
+    path('downloadRefusalDocumenttc/<str:row_id>/', downloadRefusalDocumenttc, name='downloadRefusalDocumenttc'),
 
 ]
 

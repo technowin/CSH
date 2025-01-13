@@ -127,7 +127,8 @@ def matrix_flow(request):
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
             # for doc_master in document_master.objects.all():
-            for doc_master in document_master.objects.exclude(is_active=0).exclude(doc_id=15):
+            # for doc_master in document_master.objects.exclude(is_active=0).exclude(doc_id=15):
+            for doc_master in document_master.objects.exclude(is_active=0).exclude(doc_id__in=[15, 19]):
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
@@ -165,9 +166,11 @@ def matrix_flow(request):
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.POST.get('wf_id', '')) else ''
             form_id = decrypt_parameter(form_id) if (form_id := request.POST.get('form_id', '')) else ''
             wf = workflow_details.objects.get(id=wf_id)
+            form_user_id = wf.form_user_id
             files = request.FILES.getlist('files[]')
             comment =  request.POST.get('comment', '')
             ser= request.session.get('service_db','default')
+            id1 = request.POST.get('id1', None)
             if comment!='':
                 internal_user_comments.objects.create(
                         workflow=wf, comments=comment,
@@ -177,6 +180,17 @@ def matrix_flow(request):
             for file in files:
                  response =  internal_docs_upload(file,role_id,user,wf,ser,'')
                 
+            if response:
+                return JsonResponse(response, safe=False)
+            
+            Refusalfile = request.FILES.get('file')
+            response = None
+
+            if Refusalfile:
+                response3 = internal_docs_upload(Refusalfile, role_id, user, wf, ser, 'Refusal Document')
+                refusal_file_resp = citizen_docs_upload(Refusalfile, form_user_id, form_id, user, ser, id1)
+                response = response3
+
             if response:
                 return JsonResponse(response, safe=False)
 
@@ -236,7 +250,7 @@ def matrix_flow(request):
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,iss_remark])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
-                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,ser)
+                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,ser, 15)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
@@ -298,9 +312,9 @@ def internal_docs_upload(file,role_id,user,wf,ser,name1):
         else: file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
  
-def citizen_docs_upload(file,user,form_id,created_by,ser):
+def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
     file_resp = None
-    doc = document_master.objects.get(doc_id=15)
+    doc = document_master.objects.get(doc_id=doc_id1)
     app_form = application_form.objects.get(id=form_id)
     service = service_master.objects.using("default").get(ser_id=ser)
     sub_path = f'{service.ser_name}/User/user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}'
@@ -390,11 +404,14 @@ def applicationFormIndex(request):
 
         new_id = 1
         new_id_Value = 0
+        countRefusedDocument = None
+        refused_id = None
         encrypted_new_id = encrypt_parameter(str(new_id))
         encrypted_new_id_Value = encrypt_parameter(str(new_id_Value))
         
         getApplicantData = []
-        show_apply_button = False  
+        show_apply_button = True  
+        # show_apply_button = False  
 
         if request.method == "GET":
             applicationIndex = callproc("stp_getFormDetails", [user_id])
@@ -415,16 +432,20 @@ def applicationFormIndex(request):
                     
                     getApplicantData.append(item)
                     
-                    if items[4] == 'Refused' or items[4] == 'New':
+                    # if items[4] == 'Refused' or items[4] == 'New':
+                    if items[4] == 'Refused':
                         show_apply_button = True
+                        refused_id = items[1]
+            
+                countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id] )
+                countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
                     
-                    
-
         return render(request, "DrainageConnection/applicationFormIndex.html", {
             "data": getApplicantData,
             "show_apply_button": show_apply_button,  
             "encrypted_new_id": encrypted_new_id,  
-            "encrypted_new_id_Value": encrypted_new_id_Value 
+            "encrypted_new_id_Value": encrypted_new_id_Value,
+            "countRefusedDocument": countRefusedDocument
         })
 
     except Exception as e:
@@ -435,8 +456,8 @@ def applicationFormIndex(request):
 def applicationMasterCrate(request):
     try:
         # getDocumentData = document_master.objects.filter(is_active=1) 
-        getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id=15)
-        
+        # getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id=15)
+        getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id__in=[15, 19])
         # success_message = request.session.pop('success_message', None)
         message = request.session.pop('message', None)
         form_data = request.session.pop("form_data", None)
@@ -699,7 +720,7 @@ def viewapplicationform(request, row_id, new_id):
                 user_id = None
             
         application = get_object_or_404(application_form, pk=row_id)
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id__in=[15, 19])
         for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
                 row.filepath = encrypted_filepath
@@ -731,6 +752,7 @@ def application_Form_Final_Submit(request):
         try:
                 
             phone_number = request.session['phone_number']
+            service_db = request.session['service_db']
         
             if phone_number:
                 user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
@@ -766,6 +788,11 @@ def application_Form_Final_Submit(request):
                 workflow.updated_at = timezone.now()
                 workflow.updated_by = user_id
                 workflow.save()
+                
+            workflow_id = workflow.id
+
+            if application.request_no is None:
+                service = callproc('stp_generateRequestNo', [service_db, application.id, workflow_id, user_id])
 
             return redirect('applicationFormIndex')
 
@@ -795,7 +822,7 @@ def EditApplicationForm(request, row_id, row_id_status):
         
         application = get_object_or_404(application_form, pk=row_id)
 
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id__in=[15, 19])
         for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
                 row.filepath = encrypted_filepath
@@ -969,7 +996,7 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
         
         application = get_object_or_404(application_form, pk=row_id)
 
-        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id=15)
+        uploaded_documents = citizen_document.objects.filter(user_id=user_id, application_id=application).exclude(document_id__in=[15, 19])
         
         # for doc in uploaded_documents:
         #     print(f"Document ID: {doc.id}, File Name: {doc.file_name}, "
@@ -984,7 +1011,7 @@ def EditApplicationFormFinalSubmit(request, row_id, row_id_status):
 
         all_documents = document_master.objects.all()
         
-        all_documents = document_master.objects.exclude(doc_id__in=[15]).exclude(is_active=0)
+        all_documents = document_master.objects.exclude(doc_id__in=[15, 19]).exclude(is_active=0)
 
         not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
 
@@ -1152,3 +1179,29 @@ def downloadIssuedCertificate(request, row_id):
         callproc("stp_error_log", [fun, str(e), user.id])
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
+
+def downloadRefusalDocument(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+        request.session['full_name'] = user.full_name
+        
+        row_id = decrypt_parameter(row_id)
+        document = citizen_document.objects.get(application_id=row_id, document_id=19)
+        
+        filepath = document.filepath
+        file_name = document.file_name
+
+        encrypted_filepath = encrypt_parameter(filepath)
+        
+        return redirect('download_doc', encrypted_filepath)
+    
+    except citizen_document.DoesNotExist:
+        return Http404("Document not found")
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), user.id])
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+

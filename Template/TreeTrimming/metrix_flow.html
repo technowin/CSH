@@ -348,6 +348,15 @@
             {% elif matrix.reference == "approve" %} 
                 <div class="modal-header">
                     <h3 class="modal-title" style="color:black;font-weight:bold" >Action Required</h3>
+
+                    <button type="button" class="btn btn-primary" id="singleUploadButton" style="margin-left:2%" 
+                        onclick="single_file_upload(5)" 
+                        {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,8" %} 
+                        disabled 
+                        {% endif %}>
+                        Upload
+                    </button>
+
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body" style="font-weight:bold;font:size:20px;">
@@ -829,6 +838,95 @@
 
     });
   </script>
+
+<script>
+    function single_file_upload(id) {
+        debugger;
+        show_file_popup(id).then(result => {
+            if (result) {
+                handle_file_upload(result.file, result.id);
+            }
+        });
+    }
+
+    function show_file_popup(id) {
+        debugger;
+        return new Promise((resolve) => {
+            Swal.fire({
+                title: 'Upload File',
+                html: `
+                    <label for="file">Refusal Justification Document</label>
+                    <input type="file" id="file" accept="*/*" style="display: block; margin-bottom: 10px;">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Upload',
+                cancelButtonText: 'Cancel',
+                preConfirm: () => {
+                    const file = document.getElementById('file').files[0];
+                    if (!file) {
+                        Swal.showValidationMessage('File is required.');
+                        return false;
+                    }
+                    return { file };
+                }
+            }).then(result => {
+                if (result.isConfirmed) {
+                    resolve({ file: result.value.file, id });
+                } else {
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    function handle_file_upload(file, id) {
+        debugger;
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const formData = new FormData();
+
+        formData.append('file', file);
+
+        const wfh_id = document.getElementById('wfh_id').value;
+        const formh_id = document.getElementById('formh_id').value;
+        formData.append("wf_id", wfh_id);
+        formData.append("form_id", formh_id);
+        formData.append("id1", id);
+
+        fetch('/matrix_flow_tt', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Upload failed');
+        })
+        .then(data => {
+            Swal.fire({
+                icon: 'success',
+                title: 'File Uploaded Successfully',
+                text: data,
+                showConfirmButton: false,
+                timer: 3000
+            }).then(() => {
+                location.reload();
+            });
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'File upload failed',
+                text: 'Please try again.',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        });
+    }
+</script>
 
 <!-- End of Main Content -->
 {% endblock %}

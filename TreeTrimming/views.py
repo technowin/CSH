@@ -136,7 +136,7 @@ def matrix_flow_tt(request):
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.all():
+            for doc_master in document_master.objects.all().exclude(doc_id=5):
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
@@ -180,7 +180,6 @@ def matrix_flow_tt(request):
             comment =  request.POST.get('comment', '')
             ser= request.session.get('service_db','default')
             id1 = request.POST.get('id1', None)
-            id2 = request.POST.get('id2', None)
             if comment!='':
                 internal_user_comments.objects.create(
                         workflow=wf, comments=comment,
@@ -190,26 +189,15 @@ def matrix_flow_tt(request):
             for file in files:
                  response =  internal_docs_upload(file,role_id,user,wf,ser,'')
             
-            filess = request.FILES.getlist('filess[]')
+            Refusalfile = request.FILES.get('file')
+            response = None
 
-            if len(filess) >= 1:
-                file1 = filess[0]
+            if Refusalfile:
 
-                if len(filess) > 1:
-                    file2 = filess[1]
-                else:
-                    file2 = None
-
-                response1 = internal_docs_upload(file1, role_id, user, wf, ser, '')
-                file_resp = citizen_docs_upload(file1, form_user_id, form_id, user, ser, id1)
+                response1 = internal_docs_upload(Refusalfile, role_id, user, wf, ser, 'Refusal Document')
+                file_resp = citizen_docs_upload(Refusalfile, form_user_id, form_id, user, ser, id1)
                 
-                response2 = None 
-                
-                if file2:
-                    response2 = internal_docs_upload(file2, role_id, user, wf, ser, '')
-                    file_resp = citizen_docs_upload(file2, form_user_id, form_id, user, ser, id2)
-
-                response = response1 or response2
+                response = response1
                     
             if response:
                 return JsonResponse(response, safe=False)
@@ -327,10 +315,6 @@ def internal_docs_upload(file,role_id,user,wf,ser,name1):
 
 def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
     file_resp = None
-    # if status == 10:
-    #     doc = document_master.objects.get(doc_id=13)
-    # else:
-    #     doc = document_master.objects.get(doc_id=14)
     
     doc = document_master.objects.get(doc_id=doc_id1)
         
@@ -380,6 +364,8 @@ def applicationFormIndexTT(request):
                 user_id = None
 
             new_id = 1
+            countRefusedDocument = None
+            refused_id = None
             encrypted_new_id = encrypt_parameter(str(new_id))
 
             getApplicantData = []
@@ -404,8 +390,12 @@ def applicationFormIndexTT(request):
 
                     getApplicantData.append(item)
                     
-                    # if items[4] == 'Refused':
-                    show_apply_button = True
+                    if items[4] == 'Refused':
+                        show_apply_button = True
+                        refused_id = items[1]  
+            
+                countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id])
+                countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -417,7 +407,8 @@ def applicationFormIndexTT(request):
         return render(
             request,
             "TreeTrimming/TreeTrimmingIndex.html",
-            {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "show_apply_button": show_apply_button},
+            {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "show_apply_button": show_apply_button
+            , "countRefusedDocument": countRefusedDocument},
         )
 
 def application_Master_Crate_TT(request):
@@ -440,7 +431,7 @@ def application_Master_Crate_TT(request):
                 parameter_name="Reason for removal of tree"
             ).values_list("parameter_value", "parameter_value")
             # documentList = document_master.objects.filter(is_active=1)
-            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4])
+            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4,5])
 
             for document in documentList:
                 if document.doc_subpath:
@@ -617,7 +608,7 @@ def application_Master_Edit_TT(request, row_id, new_id):
             ).values_list("parameter_value", "parameter_value")
             uploaded_documents = citizen_document.objects.filter(
                 user_id=user_id, application_id=viewDetails
-            ).exclude( document__in=[4])
+            ).exclude( document__in=[4,5])
 
             for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
@@ -627,11 +618,11 @@ def application_Master_Edit_TT(request, row_id, new_id):
 
             all_documents = document_master.objects.all()
             
-            all_documents = document_master.objects.exclude(doc_id__in=[4])
+            all_documents = document_master.objects.exclude(doc_id__in=[4,5])
 
             not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
 
-            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4])
+            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4,5])
 
             for document in documentList:
                 if document.doc_subpath:
@@ -776,7 +767,7 @@ def application_Master_View_TT(request, row_id, new_id):
             
             uploaded_documents = citizen_document.objects.filter(
                 user_id=user_id, application_id=viewDetails.id
-            ).exclude(document__in=[4])
+            ).exclude(document__in=[4,5])
 
             for row in uploaded_documents:
                 if row.filepath:
@@ -880,6 +871,11 @@ def application_Master_View_TT(request, row_id, new_id):
                 workflow.updated_at = timezone.now()
                 workflow.updated_by = str(user_id)
                 workflow.save()
+                
+            workflow_id = workflow.id
+
+            if application.request_no is None:
+                service = callproc('stp_generateRequestNo', [service_db, application.id, workflow_id, user_id])
     
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -935,6 +931,31 @@ def downloadIssuedCertificatett(request, row_id):
         
         row_id = decrypt_parameter(row_id)
         document = citizen_document.objects.get(application_id=row_id, document_id=4)
+        
+        filepath = document.filepath
+        file_name = document.file_name
+
+        encrypted_filepath = encrypt_parameter(filepath)
+        
+        return redirect('download_doc', encrypted_filepath)
+    
+    except citizen_document.DoesNotExist:
+        return Http404("Document not found")
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), user.id])
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+
+def downloadRefusalDocumenttt(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+        request.session['full_name'] = user.full_name
+        
+        row_id = decrypt_parameter(row_id)
+        document = citizen_document.objects.get(application_id=row_id, document_id=5)
         
         filepath = document.filepath
         file_name = document.file_name
