@@ -7,11 +7,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
-<div class="mt-5" style="align-items:center;justify-items:center;">
-    <div class="row col-md-4 mb-2 shadow " style="padding: 10px;border: 2px solid #b3b3b3;border-radius: 15px;">
-        <div class="p-5">
+<div class="mt-2" style="align-items:center;justify-items:center;">
+    <div class=" col-md-6 mb-2 shadow " style="padding: 10px;border: 2px solid #b3b3b3;border-radius: 15px;">
+        <div class="p-4">
             <div class="text-center">
-                <h1 class="h4 text-gray-900 mb-4">{% if id == '0' %}Create an Account!{% else%}Edit user Details{% endif %}</h1>
+                <h1 class="h4 text-gray-900 mb-3">{% if id == '0' %}Create an Account!{% else%}Edit user Details{% endif %}</h1>
             </div>
             <form class="user" method="POST" action="{% url 'register_new_user' %}" onsubmit="return validatePassword()">
                 {% csrf_token %}
