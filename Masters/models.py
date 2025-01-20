@@ -89,6 +89,7 @@ class service_matrix(models.Model):
     action = models.TextField(null=True, blank=True)
     reference = models.TextField(null=True, blank=True)
     model = models.TextField(null=True, blank=True)
+    timeline = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
