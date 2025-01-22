@@ -14,6 +14,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link href="{% static 'css/bell_alert.css' %}" rel="stylesheet" type="text/css" >
+
 <style>
     .card-body {
         padding: 10px;
@@ -25,7 +27,7 @@
  <!-- INDEX -->
  <div class="row col-lg-12 mb-2 shadow " style="padding: 10px;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;">
     <div class="card-body" style="zoom:90%;">
-        <h1 style="color:#4e73df;font-weight:bold"><u> {{name}}</u></h2>
+        {% comment %} <h1 style="color:#4e73df;font-weight:bold"><u> {{name}}</u></h2> {% endcomment %}
         <div class="table-responsive">
             <table style="width: 100%;"  class="table"  id="dataTable">   
                 <thead>
@@ -51,7 +53,20 @@
                           <td>{{ forloop.counter }}</td>
                           <td>{{ row.5 }}</td>
                           <td>{{ row.6 }}</td>
-                          <td>{{ row.7 }}</td>
+                          <td 
+                            {% if row.14 or row.15 %}
+                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
+                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                            {% endif %}
+                          >
+                            {{ row.7 }}
+                            {% if row.14 %}
+                                &nbsp;<span class="orangebell fas fa-bell"></span>
+                            {% endif %}
+                            {% if row.15 %}
+                                &nbsp;<span class="redbell fas fa-bell"></span>
+                            {% endif %}
+                          </td>
                           <td>{{ row.8 }}</td>
                           <td>{{ row.11 }}</td>
                           <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
@@ -62,7 +77,20 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ row.5 }}</td>
                         <td>{{ row.6 }}</td>
-                        <td>{{ row.7 }}</td>
+                        <td 
+                            {% if row.14 or row.15 %}
+                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
+                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                            {% endif %}
+                        >
+                            {{ row.7 }}
+                            {% if row.14 %}
+                                &nbsp;<span class="orangebell fas fa-bell"></span>
+                            {% endif %}
+                            {% if row.15 %}
+                                &nbsp;<span class="redbell fas fa-bell"></span>
+                            {% endif %}
+                        </td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
                         <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
@@ -73,7 +101,20 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ row.5 }}</td>
                         <td>{{ row.6 }}</td>
-                        <td>{{ row.7 }}</td>
+                        <td 
+                            {% if row.14 or row.15 %}
+                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
+                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                            {% endif %}
+                        >
+                            {{ row.7 }}
+                            {% if row.14 %}
+                                &nbsp;<span class="orangebell fas fa-bell"></span>
+                            {% endif %}
+                            {% if row.15 %}
+                                &nbsp;<span class="redbell fas fa-bell"></span>
+                            {% endif %}
+                        </td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
                         <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
@@ -84,9 +125,23 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ row.5 }}</td>
                         <td>{{ row.6 }}</td>
-                        <td>{{ row.7 }}</td>
+                        <td 
+                            {% if row.14 or row.15 %}
+                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
+                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                            {% endif %}
+                        >
+                            {{ row.7 }}
+                            {% if row.14 %}
+                                &nbsp;<span class="orangebell fas fa-bell"></span>
+                            {% endif %}
+                            {% if row.15 %}
+                                &nbsp;<span class="redbell fas fa-bell"></span>
+                            {% endif %}
+                        </td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
+
                         <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
                         <td><a href="/matrix_flow?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;" class="btn btn-sm btn-primary">View</a></td>
                       </tr>

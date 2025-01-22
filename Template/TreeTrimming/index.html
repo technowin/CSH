@@ -6,6 +6,8 @@
 
  <!-- Custom styles for this html-->
 <link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
+<link href="{% static 'css/bell_alert.css' %}" rel="stylesheet" type="text/css" >
+
 <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
 <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
 <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
@@ -51,7 +53,20 @@
                           <td>{{ forloop.counter }}</td>
                           <td>{{ row.5 }}</td>
                           <td>{{ row.6 }}</td>
-                          <td>{{ row.7 }}</td>
+                          <td 
+                            {% if row.14 or row.15 %}
+                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
+                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                            {% endif %}
+                          >
+                            {{ row.7 }}
+                            {% if row.14 %}
+                                &nbsp;<span class="orangebell fas fa-bell"></span>
+                            {% endif %}
+                            {% if row.15 %}
+                                &nbsp;<span class="redbell fas fa-bell"></span>
+                            {% endif %}
+                          </td>
                           <td>{{ row.8 }}</td>
                           <td>{{ row.11 }}</td>
                           <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
@@ -62,7 +77,20 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ row.5 }}</td>
                         <td>{{ row.6 }}</td>
-                        <td>{{ row.7 }}</td>
+                        <td 
+                            {% if row.14 or row.15 %}
+                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
+                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                            {% endif %}
+                          >
+                            {{ row.7 }}
+                            {% if row.14 %}
+                                &nbsp;<span class="orangebell fas fa-bell"></span>
+                            {% endif %}
+                            {% if row.15 %}
+                                &nbsp;<span class="redbell fas fa-bell"></span>
+                            {% endif %}
+                          </td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
                         <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
@@ -73,7 +101,20 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ row.5 }}</td>
                         <td>{{ row.6 }}</td>
-                        <td>{{ row.7 }}</td>
+                        <td 
+                            {% if row.14 or row.15 %}
+                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
+                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                            {% endif %}
+                          >
+                            {{ row.7 }}
+                            {% if row.14 %}
+                                &nbsp;<span class="orangebell fas fa-bell"></span>
+                            {% endif %}
+                            {% if row.15 %}
+                                &nbsp;<span class="redbell fas fa-bell"></span>
+                            {% endif %}
+                          </td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
                         <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
@@ -84,7 +125,20 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ row.5 }}</td>
                         <td>{{ row.6 }}</td>
-                        <td>{{ row.7 }}</td>
+                        <td 
+                            {% if row.14 or row.15 %}
+                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
+                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                            {% endif %}
+                          >
+                            {{ row.7 }}
+                            {% if row.14 %}
+                                &nbsp;<span class="orangebell fas fa-bell"></span>
+                            {% endif %}
+                            {% if row.15 %}
+                                &nbsp;<span class="redbell fas fa-bell"></span>
+                            {% endif %}
+                          </td>
                         <td>{{ row.8 }}</td>
                         <td>{{ row.11 }}</td>
                         <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>

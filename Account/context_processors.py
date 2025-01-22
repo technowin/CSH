@@ -15,7 +15,7 @@ def logged_in_user(request):
     if request.user.is_authenticated ==True:
         user = str(request.user.id or '')
     reports = ''    
-    menu_items = []
+    menu_items,alerts_count,alerts = [],[],[]
     # result_data  = callproc("stp_get_all_reports", [user])
     # if result_data and result_data[0]: 
     #     for items in result_data[0]:
@@ -41,10 +41,15 @@ def logged_in_user(request):
             menu_dict[item['parent_id']].append(item)
 
         menu_items = menu_dict.get(-1, []) 
+        alerts_count = callproc("stp_get_workflow_alerts", [user_id, 'count'])
+        alerts_count = alerts_count[0][0] if alerts_count else 0
+        alerts = callproc("stp_get_workflow_alerts", [user_id, 'alerts'])
+
     service = ''  
     
     if service_db: 
         service1 = service_master.objects.using('default').filter(ser_id=service_db).first()
         service = service1.ser_name
 
-    return {'username':username,'full_name':full_name,'session_timeout_minutes':session_timeout_minutes,'reports':reports, 'menu_items': menu_items, 'service': service}
+    return {'username':username,'full_name':full_name,'session_timeout_minutes':session_timeout_minutes,'reports':reports,
+             'menu_items': menu_items, 'service': service, 'alerts_count': alerts_count, 'alerts': alerts, 'role_id': role_id}
