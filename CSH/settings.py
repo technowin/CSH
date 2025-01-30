@@ -64,6 +64,24 @@ DATABASES = {
         'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
+     '4': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'contract_registration_db',  
+        'USER': 'root',    
+        'PASSWORD': 'Mysql_7319',  
+        # 'HOST': '13.127.171.88',  
+        'HOST': '127.0.0.1',      
+        'PORT': '3306',
+    },
+      '5': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'product_approval_db',  
+        'USER': 'root',    
+        'PASSWORD': 'Mysql_7319',  
+        # 'HOST': '13.127.171.88',  
+        'HOST': '127.0.0.1',      
+        'PORT': '3306',
+    },
 }
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -130,6 +148,8 @@ INSTALLED_APPS = [
     'DrainageConnection',
     'TreeCutting',
     'TreeTrimming',
+    'ContractRegistration',
+    'ProductApproval',
 ]
 
 # SESSION_ENGINE ="django.contrib.sessions.backends.signed_cookies"

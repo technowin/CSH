@@ -36,6 +36,10 @@ class ServiceRouter:
                 return '2'
             elif model._meta.app_label == 'TreeTrimming':
                 return '3'
+            elif model._meta.app_label == 'ContractRegistration':
+                return '4'
+            elif model._meta.app_label == 'ProductApproval':
+                return '5'
             
             return service
           
@@ -62,4 +66,8 @@ class ServiceRouter:
                 return '2'
             elif model._meta.app_label == 'TreeTrimming':
                 return '3'
+            elif model._meta.app_label == 'ContractRegistration':
+                return '4'
+            elif model._meta.app_label == 'ProductApproval':
+                return '5'
             return service

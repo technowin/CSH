@@ -88,6 +88,7 @@ def services(request):
             # return redirect('index') 
             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
             redirect_to = servicefetch.internal_page
+            request.session['service_db'] = service_db
             return redirect(redirect_to)
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)

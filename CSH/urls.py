@@ -26,6 +26,8 @@ from MenuManager.views import *
 from DrainageConnection.views import *
 from TreeCutting.views import *
 from TreeTrimming.views import *
+from ContractRegistration.views import *
+from ProductApproval.views import *
 from Masters.views import site_master as sm
 from Masters.views import company_master as cm
 from django.urls import path
@@ -148,6 +150,26 @@ urlpatterns = [
     path('application_Master_Crate_TT', application_Master_Crate_TT, name='application_Master_Crate_TT'),
     path('application_Master_Edit_TT/<str:row_id>/<str:new_id>/', application_Master_Edit_TT, name='application_Master_Edit_TT'),
     path('application_Master_View_TT/<str:row_id>/<str:new_id>/', application_Master_View_TT, name='application_Master_View_TT'),
+    
+    # Contract Registration
+    
+    path('index_cr/', index_cr, name='index_cr'),
+    path('matrix_flow_cr', matrix_flow_cr, name='matrix_flow_cr'),
+    path('citizen_index_cr', citizen_index_cr, name='citizen_index_cr'),
+    path('citizen_crate_cr', citizen_crate_cr, name='citizen_crate_cr'),
+    path('citizen_edit_cr/<str:row_id>/<str:new_id>/', citizen_edit_cr, name='citizen_edit_cr'),
+    path('citizen_delete_cr/<str:row_id>/<str:new_id>/', citizen_delete_cr, name='citizen_delete_cr'),
+    path('citizen_view_cr/<str:row_id>/<str:new_id>/', citizen_view_cr, name='citizen_view_cr'),
+    path('create_partial_view', create_partial_view, name='create_partial_view'),
+    
+    # Product Approval
+    
+    path('index_pa/', index_pa, name='index_pa'),
+    path('matrix_flow_pa', matrix_flow_pa, name='matrix_flow_pa'),
+    path('citizen_index_pa', citizen_index_pa, name='citizen_index_pa'),
+    path('citizen_crate_pa', citizen_crate_pa, name='citizen_crate_pa'),
+    path('citizen_edit_pa/<str:row_id>/<str:new_id>/', citizen_edit_pa, name='citizen_edit_pa'),
+    path('citizen_view_pa/<str:row_id>/<str:new_id>/', citizen_view_pa, name='citizen_view_pa'),
     
     # Verification Screen 
     

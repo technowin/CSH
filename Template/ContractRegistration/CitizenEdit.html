@@ -1,0 +1,265 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/applicationForm.css' %}" />
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
+<body>
+    
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                  <u>Application Form</u>
+                </h2>
+                <br>
+                
+                <form method="POST" action="{% url 'citizen_edit_cr' row_id=viewDetails.id new_id=new_id  %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                
+                    <div class="row mb-3">
+                        <div class="form-group col-md-3">
+                            <label for="contractor_type" class="form-label">Contractor Type<span style="color:red;"> *</span> :</label>
+                            <select name="contractor_type" id="contractor_type" class="form-control" style="border-radius:15px;" disabled required>
+                                <option value="" disabled>Select Type</option>
+                                {% for item in contractorType %}
+                                    <option value="{{ item.0 }}" {% if viewDetails.contractor_type == item.0 %}selected{% endif %}>{{ item.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="applicant_name" class="form-label">Company Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="applicant_name" class="form-control" id="applicant_name" placeholder="Enter Company Name" value="{{ viewDetails.company_name }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="gstin" class="form-label">GSTIN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="gstin" class="form-control" id="gstin" placeholder="Enter GSTIN" value="{{ viewDetails.gstin }}">
+                        </div>
+                        <div class="col-md-3">
+                            <!-- <label for="pan_no" class="form-label">PAN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="pan_no" class="form-control" id="pan_no" placeholder="Enter PAN" value="{{ viewDetails.pan_no }}"> -->
+                            <label for="pan_no" class="form-label">PAN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="pan_no" class="form-control" id="pan_no" placeholder="Enter PAN" value="{{ viewDetails.pan_no }}" required onchange="validatePAN()">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="cin" class="form-label">CIN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="cin" class="form-control" id="cin" placeholder="Enter CIN" value="{{ viewDetails.cin }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="contact_person_name" class="form-label">Contact Person Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="contact_person_name" class="form-control" id="contact_person_name" placeholder="Enter Contact Person Name" value="{{ viewDetails.contact_person_name }}">
+                        </div>
+                        <div class="col-md-3">
+                            <!-- <label for="mobile_no" class="form-label">Mobile Number<span style="color:red;"> *</span> :</label>
+                            <input type="number" name="mobile_no" class="form-control" id="mobile_no" placeholder="Enter Mobile Number" value="{{ viewDetails.mobile_no }}"> -->
+                            <label for="mobile_no" class="form-label">Mobile Number<span style="color:red;"> *</span> :</label>
+                            <input type="number" name="mobile_no" class="form-control" id="mobile_no" placeholder="Enter Mobile Number" value="{{ viewDetails.mobile_no }}" required onchange="validateMobileNumber()">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="email" class="form-label">Email<span style="color:red;"> *</span> :</label>
+                            <input type="email" name="email" class="form-control" id="email" placeholder="Enter Email" value="{{ viewDetails.email }}">
+                        </div>
+                    </div>
+                    
+                    
+                    {% comment %} table here {% endcomment %}
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Document Name</th>
+                                <th>ReUpload Document</th>
+                                <th>Uploaded Document</th>
+                                {% if viewDetails.status_id == 4 %}
+                                <th>Remark</th>
+                                <th>Comment</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loop for documents that already have been uploaded -->
+                            {% for document in uploaded_documents %}
+                            <tr>
+                                <td>
+                                    {{ document.document.doc_name }}
+                                    {% if document.document.mandatory == 1 %}
+                                        <span style="color: red;">*</span>
+                                    {% endif %}
+
+                                    {% if document.doc_subpath %}
+                                        <a href="{% url 'download_doc' filepath=document.encrypted_subpath %}" target="_blank" style="color: #4e73df; margin-left: 10px;"  >
+                                            <i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                </td>
+                                <td>
+                                    <input type="file" name="upload_{{ document.document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.document.doc_id }})">
+                                </td>
+                                <td>
+                                    {% if document.filepath %}
+                                        <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
+                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                            <span class="edit-text">View</span>
+                                        </a>
+                                    {% else %}
+                                        <span>No file uploaded</span>
+                                    {% endif %}
+                                </td>
+
+                                {% if viewDetails.status_id == 4 %}
+                                    {% if document.correct_mark == '0' %}
+                                        <td>
+                                            <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
+                                        </td>
+                                    {% elif document.correct_mark == '1' %}
+                                        <td>
+                                            <i class="fa-solid fa-check" style="font-size: 24px; color: green;"></i>
+                                        </td>
+                                    {% else %}   
+                                        <td></td>
+                                    {% endif %}    
+                                {% endif %}
+
+                                {% if viewDetails.status_id == 4 %}
+                                    {% if document.comment != null %}
+                                        <td style="color:red;">
+                                            {{ document.comment }}
+                                        </td>
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                    
+                            <!-- Loop for documents not uploaded yet -->
+                            {% for document in not_uploaded_documents %}
+                            <tr>
+                                <td>
+                                    {{ document.doc_name }}
+                                    {% if document.mandatory == 1 %}
+                                        <span style="color: red;">*</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <input type="file" name="upload_{{ document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.doc_id }})">
+                                </td>
+                                <td>
+                                    <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ document.doc_id }}" 
+                                        target="_blank" style="display: none;">
+                                        <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                        <span class="edit-text">View</span>
+                                    </a>
+                                </td>
+                                {% if viewDetails.status_id == 4 %}
+                                    <td></td>
+                                    <td></td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                
+                    <div class="text-center">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
+                        <!-- <a href="{% url 'citizen_index_cr' %}" class="btn btn-secondary">Go Back</a> -->
+                    </div>
+                
+                </form>
+                
+
+            </div>
+        </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'sweetalert2/dist/sweetalert2.min.js' %}"></script>
+
+    <script>
+        
+        /* upload Function */
+       
+        function previewFile(input, counter) {
+            const file = input.files[0];
+            if (file) {
+
+                const fileURL = URL.createObjectURL(file);
+        
+                const viewLink = document.getElementById(`viewFile_${counter}`);
+                viewLink.href = fileURL;
+        
+                viewLink.style.display = 'inline-block';
+            }
+        }
+        
+        function openInNewTab(url) {
+            const newWindow = window.open(url, '_blank');
+            if (newWindow) {
+                newWindow.focus();
+            } else {
+                alert("Please allow popups for this website.");
+            }
+        }
+
+    </script>
+
+    {% if message %}
+        <script>
+            Swal.fire({
+                title: "Error",
+                text: "{{ message }}",
+                icon: "error",
+                confirmButtonText: "OK",
+            });
+        </script>
+    {% endif %}
+    
+    <script>
+        function validatePAN() {
+            var panCardValue = document.getElementById("pan_no").value.toLowerCase(); 
+            var panCardRegex = /^[a-z]{5}[0-9]{4}[a-z]{1}$/;
+
+            if (!panCardRegex.test(panCardValue)) {
+                alert('PAN card is wrong!');
+                document.getElementById("submitBtn").disabled = true;  
+            } else {
+                document.getElementById("submitBtn").disabled = false;
+            }
+        }
+
+        function validateMobileNumber() {
+            var mobileNumber = document.getElementById("mobile_no").value;
+            var mobileRegex = /^[6-9]\d{9}$/; 
+
+            if (!mobileRegex.test(mobileNumber)) {
+                alert('Mobile number is wrong! It should be a 10-digit number starting with 6, 7, 8, or 9.');
+                document.getElementById("submitBtn").disabled = true;  
+            } else {
+                document.getElementById("submitBtn").disabled = false; 
+            }
+        }
+
+    </script>
+
+</body>
+{% endblock %}

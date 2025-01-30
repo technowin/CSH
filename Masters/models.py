@@ -71,6 +71,7 @@ class document_master(models.Model):
     doc_id = models.AutoField(primary_key=True)
     doc_name = models.TextField(null=True, blank=True)
     doc_subpath =models.TextField(null=True, blank=True)
+    doc_type =models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
