@@ -30,6 +30,7 @@ from Masters.views import site_master as sm
 from Masters.views import company_master as cm
 from django.urls import path
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # APP URLS
