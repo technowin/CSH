@@ -61,7 +61,7 @@
                                     <form class="user" action="citizenLoginAccount" method="post" onsubmit="return validatePhoneNumber()">
                                         {% csrf_token %}
                                         <input type="hidden" id="service_db" name="service_db" value="{{service_db}}" />
-                                        <input type="hidden" id="service" name="service" value="{{service}}" />
+                                        <input type="hidden" id="service" name="service" value="{% if service is None or service == '' %}{% else %}{{service}}{% endif %}" />
 
                                         <div class="form-group">
                                             {% if service is None or service == '' %}

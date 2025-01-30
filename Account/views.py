@@ -382,8 +382,9 @@ def citizenLoginAccount(request):
 
             service_db = request.POST.get('services')
             service = request.POST.get('service')
-            if service is not None or service != "":
-                service_db = service
+            if service is None or service == "":
+                service_db = service_db
+            else: service_db = service
             request.session['service_db'] = service_db
             phone_number = request.POST.get('username', '').strip()
 
