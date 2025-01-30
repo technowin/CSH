@@ -64,15 +64,16 @@
                                         <input type="hidden" id="service" name="service" value="{{service}}" />
 
                                         <div class="form-group">
-                                            <select name="services" id="service_id" class="form-control" style="border-radius:15px; margin-bottom:5%;" required>
-                                                <option value="" selected disabled>Select Services</option>
-                                                <option value="1">Drainage Connection</option>
-                                                <option value="2">Tree Cutting</option>
-                                                <option value="3">Tree Trimming</option>
-                                                <option value="4">Contract Registration</option>
-                                                <option value="5">Product Approval</option>
-                                            </select>
-                                            
+                                            {% if service is None or service == '' %}
+                                                <select name="services" id="service_id" class="form-control" style="border-radius:15px; margin-bottom:5%;" required>
+                                                    <option value="" selected disabled>Select Services</option>
+                                                    <option value="1">Drainage Connection</option>
+                                                    <option value="2">Tree Cutting</option>
+                                                    <option value="3">Tree Trimming</option>
+                                                    <option value="4">Contract Registration</option>
+                                                    <option value="5">Product Approval</option>
+                                                </select>
+                                            {% endif %}
 
                                             <input type="text" class="form-control form-control-user"
                                                 id="exampleInputPhone" name="username" aria-describedby="phoneHelp"
