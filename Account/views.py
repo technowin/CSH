@@ -375,10 +375,15 @@ def citizenLoginAccount(request):
             # request.session.flush()            
             # service_db = request.GET.get('service_db')
             # request.session['service_db'] = service_db
-            return render(request, 'citizenAccount/citizenLogin.html')
+            service = request.GET.get('service')
+            return render(request, 'citizenAccount/citizenLogin.html',{'service':service})
 
         elif request.method == "POST":
+
             service_db = request.POST.get('services')
+            service = request.POST.get('service')
+            if service is not None or service != "":
+                service_db = service
             request.session['service_db'] = service_db
             phone_number = request.POST.get('username', '').strip()
 
