@@ -32,12 +32,15 @@ from Masters.views import site_master as sm
 from Masters.views import company_master as cm
 from django.urls import path
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # APP URLS
 
     # Account
-    path("", citizenLoginAccount,name='citizenLoginAccount'),
+    path("", citizenLoginAccount,name='citizenLogin'),
+    path('citizenLogin', citizenLoginAccount, name='citizenLogin'), 
+
     # path("", onetimepage,name='onetimepage'),
     # path("", Login,name='Account'),
     path("Login", Login,name='Account'),
