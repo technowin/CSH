@@ -26,40 +26,50 @@
                     {% csrf_token %}
                 
                     <div class="row mb-3">
-                       
-                        <div class="col-md-3">
-                            <label for="applicant_type" class="form-label">Applicant Type<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="applicant_type" class="form-control" id="applicant_type" value="{{ viewDetails.applicant_type }}" disabled>
+                        <div class="col-md-4">
+                            <label for="factory_name" class="form-label">Factory Name:<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="factory_name" class="form-control" id="factory_name" placeholder="Enter Factory Name" value="{{ viewDetails.factory_name }}" readonly>
                         </div>
-
-                        <div class="col-md-3">
-                            <label for="applicant_name" class="form-label">Name of Applicant<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="applicant_name" class="form-control" id="applicant_name" placeholder="Enter Name" value="{{ viewDetails.name_of_applicant }}" disabled>
+                        <div class="col-md-4">
+                            <label for="gstin" class="form-label">GSTIN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="gstin" class="form-control" id="gstin" placeholder="Enter GSTIN" value="{{ viewDetails.gstin }}" readonly>
                         </div>
-                        <div class="col-md-3">
-                            <label for="plot_no" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="plot_no" class="form-control" id="plot_no" placeholder="Enter Plot No." value="{{ viewDetails.plot_no }}" disabled>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="survey_no" class="form-label">Survey No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="survey_no" class="form-control" id="survey_no" placeholder="Enter Survey No." value="{{ viewDetails.survey_no }}" disabled>
+                        <div class="col-md-4">
+                            <label for="pan_no" class="form-label">PAN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="pan_no" class="form-control" id="pan_no" placeholder="Enter PAN" value="{{ viewDetails.pan_no }}" onchange="validatePAN()" readonly>
                         </div>
                     </div>
-                
+                    
                     <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="address" class="form-label">Address<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="address" class="form-control" id="address" placeholder="Enter Address" value="{{ viewDetails.address }}" disabled>
+                        <div class="col-md-4">
+                            <label for="cin" class="form-label">CIN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="cin" class="form-control" id="cin" placeholder="Enter CIN" value="{{ viewDetails.cin }}" readonly>
                         </div>
-                        <div class="col-md-3">
-                            <label for="existing_trees" class="form-label">Total Trees to Trim<span style="color:red;"> *</span> :</label>
-                            <input type="number" name="existing_trees" class="form-control" id="existing_trees" placeholder="Enter Total Trees" value="{{ viewDetails.total_trees_to_trim }}" disabled>
+                        <div class="col-md-4">
+                            <label for="contact_person_name" class="form-label">Contact Person Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="contact_person_name" class="form-control" id="contact_person_name" placeholder="Enter Contact Person Name" value="{{ viewDetails.contact_person_name }}" readonly>
                         </div>
-                        <div class="col-md-3">
-                            <label for="removal_reason" class="form-label">Reason for Removal<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="removal_reason" class="form-control" id="removal_reason" value="{{ viewDetails.reason_for_cutting_trees }}" disabled>
+                        <div class="col-md-4">
+                            <label for="mobile_no" class="form-label">Mobile Number<span style="color:red;"> *</span> :</label>
+                            <input type="number" name="mobile_no" class="form-control" id="mobile_no" placeholder="Enter Mobile Number" value="{{ viewDetails.mobile_no }}" onchange="validateMobileNumber()" readonly>
                         </div>
                     </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="email" class="form-label">Email<span style="color:red;"> *</span> :</label>
+                            <input type="email" name="email" class="form-control" id="email" placeholder="Enter Email" value="{{ viewDetails.email }}" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="license_no" class="form-label">Factory Permit / License No<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="license_no" class="form-control" id="license_no" placeholder="Enter License No" value="{{ viewDetails.license_no }}" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="factory_location" class="form-label">Factory Location<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="factory_location" class="form-control" id="factory_location" placeholder="Enter Location" value="{{ viewDetails.factory_location }}" readonly>
+                        </div>
+                    </div>
+                    
 
                     <table class="table table-bordered">
                         <thead>

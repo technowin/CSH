@@ -40,6 +40,7 @@
                         <th>Id</th>
                         <th>Request No</th>
                         <th>Applicant Name</th>
+                        <th>Contractor Type</th>
                         <th>Form Status</th>
                         <th>Remarks</th>
                         <th>Action</th>
@@ -61,7 +62,11 @@
                         <td style="letter-spacing: 1px; font-family: 'Poppins', sans-serif; font-size: 18px; color: #333; font-weight:600">
                             {{ row.name_of_applicant }}
                         </td>
-            
+                        
+                        <td style="letter-spacing: 1px; font-family: 'Poppins', sans-serif; font-size: 18px; color: #333; font-weight:600">
+                            {{ row.contractor_type }}
+                        </td>
+
                         <td>
                             {% if row.status != "Refused" and row.status != "Rejected" and row.status != "Application Pending" %}
                                 <span class="badge badge-success" style="font-size: 1.2em; padding: 8px 12px;">

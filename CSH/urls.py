@@ -173,6 +173,7 @@ urlpatterns = [
     path('citizen_crate_pa', citizen_crate_pa, name='citizen_crate_pa'),
     path('citizen_edit_pa/<str:row_id>/<str:new_id>/', citizen_edit_pa, name='citizen_edit_pa'),
     path('citizen_view_pa/<str:row_id>/<str:new_id>/', citizen_view_pa, name='citizen_view_pa'),
+    path('create_partial_view_product', create_partial_view_product, name='create_partial_view_product'),
     
     # Verification Screen 
     

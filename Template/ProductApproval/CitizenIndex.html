@@ -10,6 +10,7 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+
 <body>
     
     <div class="card mb-4" style="zoom:85%" >
@@ -23,18 +24,38 @@
                       </h2>
                 </div>
                 
-                {% if show_apply_button %}
-                    
-                    <div class="col-md-6">
-                        <a class="LocationBtns" href="{% url 'citizen_crate_pa' %}">
-                            <div class="Locationsign"> 
-                                <i class="fa-solid fa-plus" style="color: white; font-size:20px; margin-top:-2%;"></i>
-                            </div>
-                            <div class="Locationtext">Apply</div>
-                        </a>
+                <div class="col-md-6"> 
+                    <!-- <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button"
+                            id="send_forward" data-toggle="dropdown" aria-haspopup="true"
+                            aria-expanded="false" 
+                            style="font-size: 18px; padding: 12px 24px; width: 200px;">
+                            Select
+                        </button>
+                        <div class="dropdown-menu animated--fade-in" aria-labelledby="send_forward" 
+                            style="max-height: 200px; overflow-y: auto; width: 200px; font-size: 16px;">
+                            {% for item in parameter %}
+                                <a class="dropdown-item" href="{% url 'citizen_crate_pa' %}?selected_value={{ item.0 }}">
+                                    {{ item.1 }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div> -->
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-lg dropdown-toggle" type="button"
+                            id="send_forward" data-toggle="dropdown" aria-haspopup="true"
+                            aria-expanded="false" >
+                            Select Type
+                        </button>
+                        <div class="dropdown-menu animated--fade-in" aria-labelledby="send_forward" style="max-height: 200px; overflow-y: auto;">
+                            {% for item in parameter %}
+                                <a class="dropdown-item" href="{% url 'citizen_crate_pa' %}?selected_value={{ item.0 }}">
+                                    {{ item.1 }}
+                                </a>
+                            {% endfor %}
+                        </div>
                     </div>
-                
-                {% endif %}
+                </div>
 
             </div>
          
@@ -45,6 +66,7 @@
                         <th>Id</th>
                         <th>Request No</th>
                         <th>Applicant Name</th>
+                        <th>Type</th>
                         <th>Form Status</th>
                         <th>Remarks</th>
                         <th>Action</th>
@@ -66,7 +88,11 @@
                         <td style="letter-spacing: 1px; font-family: 'Poppins', sans-serif; font-size: 18px; color: #333; font-weight:600">
                             {{ row.name_of_applicant }}
                         </td>
-            
+                        
+                        <td style="letter-spacing: 1px; font-family: 'Poppins', sans-serif; font-size: 18px; color: #333; font-weight:600">
+                            {{ row.product_type }}
+                        </td>
+
                         <td>
                             {% if row.status != "Refused" and row.status != "Rejected" and row.status != "Application Pending" %}
                                 <span class="badge badge-success" style="font-size: 1.2em; padding: 8px 12px;">
@@ -187,6 +213,17 @@
       pageLength: 10,
       /* order: [[0, 'desc']] */
     });
-  </script>
+</script>
+
+<script>
+    function handleSelection(element) {
+        var selectedValue = element.getAttribute("data-value");
+        console.log("Selected Value:", selectedValue); // For debugging
+        alert("You selected: " + selectedValue); // Display the selected value
+        
+        // You can make an AJAX call or redirect based on selection
+        window.location.href = "/matrix_flow?wf={{wf_id}}&af={{form_id}}&sf=" + selectedValue + "&ac={{ac}}";
+    }
+</script>
 
 {% endblock %}

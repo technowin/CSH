@@ -134,7 +134,7 @@ def matrix_flow_pa(request):
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.all().exclude(doc_id=5):
+            for doc_master in document_master.objects.all():
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
@@ -369,6 +369,10 @@ def citizen_index_pa(request):
             getApplicantData = []
             show_apply_button = False  
             
+            ProductType = parameter_master.objects.filter(
+                parameter_id__in=[23,24]
+            ).values_list("parameter_value", "parameter_value")
+
             applicationIndex = callproc("stp_getFormDetailsForTC", [user_id])
 
             if not applicationIndex:
@@ -382,18 +386,15 @@ def citizen_index_pa(request):
                         "id": encrypted_id,
                         "request_no": items[2],
                         "name_of_applicant": items[3],
-                        "status": items[4],
-                        "comments": items[5],
+                        "product_type": items[4],
+                        "status": items[5],
+                        "comments": items[6],
                     }
 
                     getApplicantData.append(item)
                     
-                    if items[4] == 'Refused':
-                        show_apply_button = True
+                    if items[5] == 'Refused':
                         refused_id = items[1]  
-            
-                countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id])
-                countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -405,7 +406,7 @@ def citizen_index_pa(request):
             request,
             "ProductApproval/CitizenIndex.html",
             {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "show_apply_button": show_apply_button
-            , "countRefusedDocument": countRefusedDocument},
+            , "countRefusedDocument": countRefusedDocument, "parameter":ProductType},
         )
 
 def citizen_crate_pa(request):
@@ -420,58 +421,48 @@ def citizen_crate_pa(request):
    
         if request.method == "GET":
             message = request.session.pop("message", None)
-            form_data = request.session.pop("form_data", None)
-            applicantType = parameter_master.objects.filter(
-                parameter_id__in=[11, 12]
-            ).values_list("parameter_value", "parameter_value")
-            ReasonSelect = parameter_master.objects.filter(
-                parameter_name="Reason for removal of tree"
-            ).values_list("parameter_value", "parameter_value")
-            # documentList = document_master.objects.filter(is_active=1)
-            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4,5])
-
-            for document in documentList:
-                if document.doc_subpath:
-                    document.encrypted_subpath = encrypt_parameter(document.doc_subpath)
-                else:
-                    document.encrypted_subpath = None
+            selected_value = request.GET.get('selected_value', None) 
 
             return render(
                 request,
                 "ProductApproval/CitizenCreate.html",
                 {
-                    "applicantType": applicantType,
-                    "ReasonSelect": ReasonSelect,
-                    "documentList": documentList,
                     "message": message,
-                    "form_data": form_data,
+                    "selected_value":selected_value
                 },
             )
 
         elif request.method == "POST":
-            applicant_type = request.POST.get("applicant_type")
-            name_of_applicant = request.POST.get("applicant_name")
-            plot_no = request.POST.get("plot_no")
-            survey_no = request.POST.get("survey_no")
-            address = request.POST.get("address")
-            total_trees_to_trim = request.POST.get("existing_trees")
-            reason_for_cutting_trees = request.POST.get("removal_reason")
+            
+            product_type = request.POST.get("selected_value")
+            factory_name = request.POST.get("factory_name")
+            gstin = request.POST.get("gstin")
+            pan_no = request.POST.get("pan_no")
+            cin = request.POST.get("cin")
+            contact_person_name = request.POST.get("contact_person_name")
+            mobile_no = request.POST.get("mobile_no")
+            email = request.POST.get("email")
+            license_no = request.POST.get("license_no")
+            factory_location = request.POST.get("factory_location")
 
             if not (
-                applicant_type
-                and name_of_applicant
-                and plot_no
-                and survey_no
-                and address
-                and total_trees_to_trim
-                and reason_for_cutting_trees
+                factory_name
+                and gstin
+                and pan_no
+                and cin
+                and contact_person_name
+                and mobile_no
+                and email
+                and license_no
+                and factory_location
             ):
                 messages.error(request, "All fields are required.")
-                return redirect("citizen_index_pa")
+                return redirect("citizen_index_cr")
 
             mandatory_documents = document_master.objects.filter(
-                mandatory=1, is_active=1
+                mandatory=1, is_active=1, doc_type=product_type
             )
+
             all_uploaded = True
             missing_documents = []
 
@@ -483,27 +474,34 @@ def citizen_crate_pa(request):
             if not all_uploaded:
                 message = "Please upload the mandatory documents."
                 request.session["message"] = message
+                request.session["missing_documents"] = missing_documents
                 request.session["form_data"] = {
-                    "applicant_type": applicant_type,
-                    "name_of_applicant": name_of_applicant,
-                    "plot_no": plot_no,
-                    "survey_no": survey_no,
-                    "address": address,
-                    "total_trees_to_trim": total_trees_to_trim,
-                    "reason_for_cutting_trees": reason_for_cutting_trees,
+                    "factory_name": factory_name,
+                    "gstin": gstin,
+                    "pan_no": pan_no,
+                    "cin": cin,
+                    "contact_person_name": contact_person_name,
+                    "mobile_no": mobile_no,
+                    "email": email,
+                    "license_no": license_no,
+                    "factory_location": factory_location,
                 }
+                # return redirect("citizen_crate_pa")
+                return redirect(f'/citizen_crate_pa?selected_value={product_type}')
 
-                return redirect("citizen_crate_pa")
 
             application = application_form.objects.create(
-                applicant_type=applicant_type,
-                name_of_applicant=name_of_applicant,
-                plot_no=plot_no,
-                survey_no=survey_no,
-                address=address,
-                total_trees_to_trim=total_trees_to_trim,
-                reason_for_cutting_trees=reason_for_cutting_trees,
-                created_by=user_id,
+                product_type=product_type,
+                factory_name=factory_name,
+                gstin=gstin,
+                pan_no=pan_no,
+                cin=cin,
+                contact_person_name=contact_person_name,
+                mobile_no=mobile_no,
+                email=email,
+                license_no=license_no,
+                factory_location=factory_location,
+                created_by=user_id
             )
 
             servicefetch = service_master.objects.using("default").get(
@@ -596,15 +594,10 @@ def citizen_edit_pa(request, row_id, new_id):
             row_id = decrypt_parameter(row_id)
             message = request.session.pop("message", None)
             viewDetails = get_object_or_404(application_form, id=row_id)
-            applicantType = parameter_master.objects.filter(
-                parameter_id__in=[11, 12]
-            ).values_list("parameter_value", "parameter_value")
-            ReasonSelect = parameter_master.objects.filter(
-                parameter_name="Reason for removal of tree"
-            ).values_list("parameter_value", "parameter_value")
+            
             uploaded_documents = citizen_document.objects.filter(
                 user_id=user_id, application_id=viewDetails
-            ).exclude( document__in=[4,5])
+            )
 
             for row in uploaded_documents:
                 encrypted_filepath = encrypt_parameter(str(row.filepath))
@@ -612,13 +605,11 @@ def citizen_edit_pa(request, row_id, new_id):
 
             uploaded_doc_ids = uploaded_documents.values_list("document_id", flat=True)
 
-            all_documents = document_master.objects.all()
-            
-            all_documents = document_master.objects.exclude(doc_id__in=[4,5])
+            all_documents = document_master.objects.filter(doc_type=viewDetails.product_type)
 
             not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
 
-            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4,5])
+            documentList = document_master.objects.filter(is_active=1, doc_type=viewDetails.product_type)
 
             for document in documentList:
                 if document.doc_subpath:
@@ -629,22 +620,25 @@ def citizen_edit_pa(request, row_id, new_id):
         if request.method == "POST":
 
             viewDetails = get_object_or_404(application_form, id=row_id)
-            viewDetails.applicant_type = request.POST.get("applicant_type")
-            viewDetails.name_of_applicant = request.POST.get("applicant_name")
-            viewDetails.plot_no = request.POST.get("plot_no")
-            viewDetails.survey_no = request.POST.get("survey_no")
-            viewDetails.address = request.POST.get("address")
-            viewDetails.total_trees_to_trim = request.POST.get("existing_trees")
-            viewDetails.reason_for_cutting_trees = request.POST.get("Reason_Select")
+            viewDetails.factory_name = request.POST.get("factory_name")
+            viewDetails.gstin = request.POST.get("gstin")
+            viewDetails.pan_no = request.POST.get("pan_no")
+            viewDetails.cin = request.POST.get("cin")
+            viewDetails.contact_person_name = request.POST.get("contact_person_name")
+            viewDetails.mobile_no = request.POST.get("mobile_no")
+            viewDetails.email = request.POST.get("email")
+            viewDetails.license_no = request.POST.get("license_no")
+            viewDetails.factory_location = request.POST.get("factory_location")
 
-            if not all([viewDetails.applicant_type, viewDetails.name_of_applicant, viewDetails.plot_no, viewDetails.survey_no, 
-                        viewDetails.address, viewDetails.total_trees_to_trim, viewDetails.reason_for_cutting_trees]):
+            if not all([viewDetails.factory_name, viewDetails.gstin, viewDetails.pan_no, viewDetails.cin,
+                        viewDetails.contact_person_name, viewDetails.mobile_no, viewDetails.email,
+                        viewDetails.license_no, viewDetails.factory_location]):
                 
                 new_id = encrypt_parameter(new_id)
                 row_id = encrypt_parameter(row_id)
                 message = "All fields are mandatory. Please fill in all fields."
                 request.session["message"] = message
-                return redirect("citizen_edit_pa", row_id, new_id) 
+                return redirect("citizen_edit_pa", row_id, new_id)
 
             viewDetails.save()
 
@@ -727,8 +721,6 @@ def citizen_edit_pa(request, row_id, new_id):
                 "ProductApproval/CitizenEdit.html",
                 {
                     "viewDetails": viewDetails,
-                    "applicantType": applicantType,
-                    "ReasonSelect": ReasonSelect,
                     "uploaded_documents": uploaded_documents,
                     "not_uploaded_documents": not_uploaded_documents,
                     "new_id": new_id,
@@ -760,10 +752,9 @@ def citizen_view_pa(request, row_id, new_id):
 
             # To Show Letter Of Payment And Plantation
             
-            
             uploaded_documents = citizen_document.objects.filter(
                 user_id=user_id, application_id=viewDetails.id
-            ).exclude(document__in=[4,5])
+            )
 
             for row in uploaded_documents:
                 if row.filepath:
@@ -783,63 +774,6 @@ def citizen_view_pa(request, row_id, new_id):
                 ser_id=service_db
             )
             service_name = servicefetch.ser_name
-
-            user_folder_path = os.path.join(settings.MEDIA_ROOT, f"{service_name}")
-            os.makedirs(user_folder_path, exist_ok=True)
-
-            user_folder_path = os.path.join(user_folder_path, f"User")
-            os.makedirs(user_folder_path, exist_ok=True)
-
-            application_folder_path = os.path.join(
-                user_folder_path, f"user_{user_id}", f"application_{viewDetails.id}"
-            )
-            os.makedirs(application_folder_path, exist_ok=True)
-
-            for document in document_master.objects.all():
-                uploaded_file = request.FILES.get(f"upload_{document.doc_id}")
-
-                if uploaded_file:
-                    document_folder_path = os.path.join(
-                        application_folder_path, f"document_{document.doc_id}"
-                    )
-                    os.makedirs(document_folder_path, exist_ok=True)
-
-                    for file_name in os.listdir(document_folder_path):
-                        file_path = os.path.join(document_folder_path, file_name)
-                        if os.path.isfile(file_path):
-                            os.remove(file_path)
-
-                    file_name = uploaded_file.name
-                    file_path = os.path.join(document_folder_path, file_name)
-
-                    with open(file_path, "wb+") as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
-
-                    relative_file_path = f"{service_name}/User/user_{user_id}/application_{viewDetails.id}/document_{document.doc_id}/{file_name}"
-
-                    existing_document = citizen_document.objects.filter(
-                        user_id=user_id,
-                        document=document.doc_id,
-                        application_id=viewDetails,
-                    ).first()
-
-                    if existing_document:
-                        existing_document.file_name = file_name
-                        existing_document.filepath = relative_file_path
-                        existing_document.updated_by = user_id
-                        existing_document.updated_at = timezone.now()
-                        existing_document.save()
-                    else:
-                        citizen_document.objects.create(
-                            user_id=user_id,
-                            file_name=file_name,
-                            filepath=relative_file_path,
-                            document=document,
-                            application_id=viewDetails,
-                            created_by=user_id,
-                            updated_by=user_id,
-                        )
             
             application_id = int(application.id)
             if application.status_id == 4:
@@ -851,7 +785,7 @@ def citizen_view_pa(request, row_id, new_id):
 
             status_instance = status_master.objects.get(status_id=application.status_id)
 
-            workflow, created = workflow_details.objects.get_or_paeate(
+            workflow, created = workflow_details.objects.get_or_create(
                 form_id=application,
                 defaults={
                     "status": status_instance,
@@ -893,3 +827,45 @@ def citizen_view_pa(request, row_id, new_id):
             )
         else:
             return redirect("citizen_index_pa")
+
+def create_partial_view_product(request):
+    try:
+        if request.method == "POST":
+            selected_Type = request.POST.get('selectedType')  
+            phone_number = request.session.get("phone_number")
+            user_id = None
+            if phone_number:
+                user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
+                user_id = user.id
+                service_db = request.session.get("service_db", "default")
+            
+            documents = document_master.objects.filter(doc_type=selected_Type, is_active=1)
+
+            document_list = []
+            for document in documents:
+                document_list.append({
+                    'doc_id': document.doc_id,
+                    'doc_name': document.doc_name,
+                    'doc_subpath': document.doc_subpath,
+                    'mandatory': document.mandatory,
+                    'encrypted_subpath': document.doc_subpath,  # Assuming you want to send the encrypted path
+                    'doc_type': document.doc_type
+            })
+
+            # Send back a JsonResponse with data
+            return JsonResponse({
+                "message": "Data processed successfully",
+                "documentList": document_list
+            })
+
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        # Log the error
+        callproc("stp_error_log", [fun, str(e), ""])
+        return JsonResponse({
+            "error": "An error occurred", 
+            "details": str(e)
+        }, status=500)
+    

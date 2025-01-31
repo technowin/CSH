@@ -3,37 +3,35 @@ from django.db import models
 # Create your models here.
 from Account.managers import ServiceManager
 
-
 class application_form(models.Model):
     id = models.AutoField(primary_key=True)
+    product_type = models.TextField(null=True, blank=True)
+    factory_name = models.TextField(null=True, blank=True)
+    gstin = models.TextField(null=True, blank=True)
+    license_no = models.TextField(null=True, blank=True)
+    cin = models.TextField(null=True, blank=True)
+    pan_no = models.TextField(null=True, blank=True)
+    factory_location = models.TextField(null=True, blank=True)
+    contact_person_name = models.TextField(null=True, blank=True)
+    mobile_no = models.TextField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
     request_no = models.TextField(null=True, blank=True)
-    status = models.ForeignKey('Masters.status_master', on_delete=models.CASCADE, null=True, blank=True, related_name='status_form_pa')
-    applicant_type = models.TextField(null=True, blank=True)
-    name_of_applicant = models.TextField(null=True, blank=True)
-    plot_no = models.TextField(null=True, blank=True)
-    survey_no = models.TextField(null=True, blank=True)
-    address = models.TextField(null=True, blank=True)
-    total_trees_to_trim = models.IntegerField(null=True, blank=True)
-    reason_for_cutting_trees = models.TextField(null=True, blank=True)
-    request_no = models.TextField(null=True, blank=True)
-    comments = models.TextField(null=True, blank=True)
-    approved_remark = models.TextField(null=True, blank=True)
-    issued_certificate_remark = models.TextField(null=True, blank=True)
-    refused_reason = models.TextField(null=True, blank=True)
+    status = models.ForeignKey('Masters.status_master', on_delete=models.CASCADE, null=True, blank=True, related_name='status_form_pa')    
     rejected_reason = models.TextField(null=True, blank=True)
-    committee_refusal = models.TextField(null=True, blank=True)
-    committee_approval = models.TextField(null=True, blank=True)
+    refused_reason = models.TextField(null=True, blank=True)
+    issued_certificate_remark = models.TextField(null=True, blank=True)
+    approved_remark = models.TextField(null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.TextField(null=True, blank=True)
     objects = ServiceManager()
-    
-    objects = ServiceManager()
+
     class Meta:
         db_table = "application_form"  
-        app_label = 'ProductApproval'   
-
+        app_label = 'ProductApproval'
+        
 
 class citizen_document(models.Model):
     id = models.AutoField(primary_key=True) 

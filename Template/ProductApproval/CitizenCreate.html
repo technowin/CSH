@@ -1,6 +1,7 @@
 {% extends "Shared/Layout.html" %} 
 {% load static %}
 {% block content %}
+{% csrf_token %}
 <link rel="stylesheet" href="{% static 'css/applicationForm.css' %}" />
 <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
 <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
@@ -24,54 +25,54 @@
                 
                 <form method="POST" action="{% url 'citizen_crate_pa' %}" enctype="multipart/form-data">
                     {% csrf_token %}
-                
+                    
+                    <input type="hidden" name="selected_value" id="selected_value" value="{{ selected_value }}">
+                    
                     <div class="row mb-3">
-                        <div class="form-group col-md-3">
-                            <label for="applicant_type" class="form-label">Applicant Type<span style="color:red;"> *</span> :</label>
-                            <select name="applicant_type" id="applicant_type" class="form-control select" style="border-radius:15px;" required>
-                                <option value="" {% if not form_data.applicant_type %}selected{% endif %} disabled>Select Type</option>
-                                {% for item in applicantType %}
-                                    <option value="{{ item.0 }}" {% if item.0 == form_data.applicant_type %}selected{% endif %}>{{ item.1 }}</option>
-                                {% endfor %}
-                            </select>
+                        <div class="col-md-4">
+                            <label for="factory_name" class="form-label">Factory Name:<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="factory_name" class="form-control" id="factory_name" placeholder="Enter Factory Name" value="{{ form_data.factory_name }}" required>
                         </div>
-                        <div class="col-md-3">
-                            <label for="applicant_name" class="form-label">Name of Applicant<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="applicant_name" class="form-control" id="applicant_name" placeholder="Enter Name" value="{{ form_data.name_of_applicant }}" required>
+                        <div class="col-md-4">
+                            <label for="gstin" class="form-label">GSTIN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="gstin" class="form-control" id="gstin" placeholder="Enter GSTIN" value="{{ form_data.gstin }}" required>
                         </div>
-                        <div class="col-md-3">
-                            <label for="plot_no" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="plot_no" class="form-control" id="plot_no" placeholder="Enter Plot No." value="{{ form_data.plot_no }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="survey_no" class="form-label">Survey No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="survey_no" class="form-control" id="survey_no" placeholder="Enter Survey No." value="{{ form_data.survey_no }}" required>
+                        <div class="col-md-4">
+                            <label for="pan_no" class="form-label">PAN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="pan_no" class="form-control" id="pan_no" placeholder="Enter PAN" value="{{ form_data.pan_no }}" required onchange="validatePAN()">
                         </div>
                     </div>
                     
                     <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="address" class="form-label">Address<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="address" class="form-control" id="address" placeholder="Enter Address" value="{{ form_data.address }}" required>
+                        <div class="col-md-4">
+                            <label for="cin" class="form-label">CIN<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="cin" class="form-control" id="cin" placeholder="Enter CIN" value="{{ form_data.cin }}" required>
                         </div>
-                        <div class="col-md-3">
-                            <label for="existing_trees" class="form-label">Total Trees to Trim<span style="color:red;"> *</span> :</label>
-                            <input type="number" name="existing_trees" class="form-control" id="existing_trees" placeholder="Enter Total Trees" value="{{ form_data.total_trees_to_trim }}" required>
+                        <div class="col-md-4">
+                            <label for="contact_person_name" class="form-label">Contact Person Name<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="contact_person_name" class="form-control" id="contact_person_name" placeholder="Enter Contact Person Name" value="{{ form_data.contact_person_name }}" required>
                         </div>
-                        <div class="form-group col-md-3">
-                            <label for="removal_reason" class="form-label">Reason for Removal<span style="color:red;"> *</span> :</label>
-                            <select name="removal_reason" id="removal_reason" class="form-control select" style="border-radius:15px;" required>
-                                <option value="" {% if not form_data.reason_for_cutting_trees %}selected{% endif %} disabled>Select Type</option>
-                                {% for item in ReasonSelect %}
-                                    <option value="{{ item.0 }}" {% if item.0 == form_data.reason_for_cutting_trees %}selected{% endif %}>{{ item.1 }}</option>
-                                {% endfor %}
-                            </select>
+                        <div class="col-md-4">
+                            <label for="mobile_no" class="form-label">Mobile Number<span style="color:red;"> *</span> :</label>
+                            <input type="number" name="mobile_no" class="form-control" id="mobile_no" placeholder="Enter Mobile Number" value="{{ form_data.mobile_no }}" required onchange="validateMobileNumber()">
                         </div>
                     </div>
                     
                     <div class="row mb-3">
-                        
+                        <div class="col-md-4">
+                            <label for="email" class="form-label">Email<span style="color:red;"> *</span> :</label>
+                            <input type="email" name="email" class="form-control" id="email" placeholder="Enter Email" value="{{ form_data.email }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="license_no" class="form-label">Factory Permit / License No<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="license_no" class="form-control" id="license_no" placeholder="Enter License No" value="{{ form_data.license_no }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="factory_location" class="form-label">Factory Location<span style="color:red;"> *</span> :</label>
+                            <input type="text" name="factory_location" class="form-control" id="factory_location" placeholder="Enter Location" value="{{ form_data.factory_location }}" required>
+                        </div>
                     </div>
+                    
 
                     {% comment %} Table For Document {% endcomment %}
 
@@ -83,43 +84,18 @@
                                 <th>Uploaded Document</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for document in documentList %}
-                            <tr>
-                                <td>{{ document.doc_name }}
-                                    {% if document.mandatory == 1 %}
-                                        <span style="color: red;">*</span>
-                                    {% endif %}
-                                    
-                                    {% if document.doc_subpath %}
-                                        <a href="{% url 'download_doc' filepath=document.encrypted_subpath %}" target="_blank" style="color: #4e73df; margin-left: 10px;"  >
-                                            <i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i>
-                                        </a>
-                                    {% endif %}
-
-                                <td>
-                                    <input type="file" name="upload_{{ forloop.counter }}" class="form-control" onchange="previewFile(this, '{{ forloop.counter }}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"> 
-                                </td>
-                                <td>
-                                    <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ forloop.counter }}" 
-                                        target="_blank" style="display: none;">
-                                        <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
-                                        <span class="edit-text">View</span>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
+                        <tbody id="documentTableBody">
+                            <!-- Table content will be dynamically inserted here -->
                         </tbody>
                     </table>
                     
-                
+                    <!-- submit -->
+
                     <div class="text-center">
                         <button type="submit" id="submitBtn" class="btn btn-primary">Submit</button>
                         <a href="{% url 'citizen_index_pa' %}" class="btn btn-secondary">Go Back</a>
                     </div>
                 </form>
-                
-
             </div>
         </div>
     </div>
@@ -178,5 +154,89 @@
         </script>
     {% endif %}
     
+    <script>
+        $(document).ready(function() {
+            fetchContractorData();
+        });
+    
+        function fetchContractorData() {
+            debugger;
+            var selected = $("#selected_value").val();
+    
+            $.ajax({
+                url: 'create_partial_view_product',
+                type: 'POST',
+                data: {
+                    selectedType: selected,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    debugger;
+                    if (data.documentList && data.documentList.length > 0) {
+                        var documentListHtml = '';
+                        data.documentList.forEach(function(document) {
+                            var mandatoryIcon = document.mandatory == 1 ? '<span style="color: red;">*</span>' : '';
+                            var viewLink = document.doc_subpath ? 
+                                '<a href="/download_doc/' + document.encrypted_subpath + '" target="_blank" style="color: #4e73df; margin-left: 10px;">' +
+                                '<i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i></a>' 
+                                : '';
+    
+                            var docId = document.doc_id;
+                            
+                            documentListHtml += `
+                                <tr>
+                                    <td>${document.doc_name} ${mandatoryIcon} ${viewLink} (ID: ${docId})</td>
+                                    <td>
+                                        <input type="file" name="upload_${docId}" class="form-control" onchange="previewFile(this, '${docId}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx">
+                                    </td>
+                                    <td>
+                                        <a class="edit-link" href="javascript:void(0);" id="viewFile_${docId}" target="_blank" style="display: none;">
+                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                            <span class="edit-text">View</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+    
+                        $("#documentTableBody").html(documentListHtml);
+                    }
+    
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        }
+    </script>
+    
+    
+    <script>
+        function validatePAN() {
+            var panCardValue = document.getElementById("pan_no").value.toLowerCase(); 
+            var panCardRegex = /^[a-z]{5}[0-9]{4}[a-z]{1}$/;
+
+            if (!panCardRegex.test(panCardValue)) {
+                alert('PAN card is wrong!');
+                document.getElementById("submitBtn").disabled = true;  
+            } else {
+                document.getElementById("submitBtn").disabled = false;
+            }
+        }
+
+        function validateMobileNumber() {
+            var mobileNumber = document.getElementById("mobile_no").value;
+            var mobileRegex = /^[6-9]\d{9}$/; 
+
+            if (!mobileRegex.test(mobileNumber)) {
+                alert('Mobile number is wrong! It should be a 10-digit number starting with 6, 7, 8, or 9.');
+                document.getElementById("submitBtn").disabled = true;  
+            } else {
+                document.getElementById("submitBtn").disabled = false; 
+            }
+        }
+
+    </script>
+
 </body>
 {% endblock %}

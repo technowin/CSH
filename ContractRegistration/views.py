@@ -134,7 +134,7 @@ def matrix_flow_cr(request):
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.all().exclude(doc_id=5):
+            for doc_master in document_master.objects.all():
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
@@ -377,8 +377,9 @@ def citizen_index_cr(request):
                     "id": encrypted_id,
                     "request_no": items[2],
                     "name_of_applicant": items[3],
-                    "status": items[4],
-                    "comments": items[5],
+                    "contractor_type": items[4],
+                    "status": items[5],
+                    "comments": items[6],
                 })
 
     except Exception as e:
