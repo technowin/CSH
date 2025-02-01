@@ -26,12 +26,13 @@
                 {% if show_apply_button %}
                     
                     <div class="col-md-6">
-                        <a class="LocationBtns" href="{% url 'application_Master_Crate_TT' %}">
+                        {% comment %} <a class="LocationBtns" href="{% url 'application_Master_Crate_TT' %}">
                             <div class="Locationsign"> 
                                 <i class="fa-solid fa-plus" style="color: white; font-size:20px; margin-top:-2%;"></i>
                             </div>
                             <div class="Locationtext">Apply</div>
-                        </a>
+                        </a> {% endcomment %}
+                        <a href="{% url 'applicationMasterCrate' %}" style="font-size:16px;" class="btn btn-lg btn-primary">Apply</a>
                     </div>
                 
                 {% endif %}
