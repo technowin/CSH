@@ -793,7 +793,11 @@ def application_Form_Final_Submit(request):
 
             if application.request_no is None:
                 service = callproc('stp_generateRequestNo', [service_db, application.id, workflow_id, user_id])
-
+                trackId = request.session.get('trackId', '')
+                if trackId:
+                    from Account.views import upd_citizen
+                    request.session["applicationId"]=(str(service[0][0]))
+                    upd_citizen(request)
             return redirect('applicationFormIndex')
 
         except application_form.DoesNotExist:

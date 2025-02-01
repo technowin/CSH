@@ -43,12 +43,14 @@ from django.http import HttpResponseBadRequest
 import logging
 import requests
 from django.db import models
-
+LiveURL = "https://www.cidcoindia.com/AapleMiddlewareAPI/api"
+TestURL = "https://www.cidcoindia.com/AapleMiddlewareApiTest/api"
 # Set up logging
 logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def Login(request):
+    data = upd_citizen()
     if request.method=="GET":
        request.session.flush()
        return render(request,'Account/login.html')
@@ -94,6 +96,155 @@ def services(request):
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), request.user.id])
         messages.error(request, 'Oops...! Something went wrong!')
+
+def citizen_api(request):
+    try:
+        all_params = request.GET.dict()
+        service_db = all_params.get('service', None)
+        userId = all_params.get('userId', None)
+        trackId = all_params.get('trackId', None)
+        serviceId = all_params.get('serviceId', None)
+        request.session["service_db"]=(str(service_db))
+        request.session["userId"]=(str(userId))
+        request.session["trackId"]=(str(trackId))
+        request.session["serviceId"]=(str(serviceId))
+        user = get_user_info(request)
+        userName,mobileno,emailId,fullname  = '','','',''
+        if user and isinstance(user, list): 
+            first_item = user[0]    
+            userName = first_item.get("userName")
+            mobileno = first_item.get("mobileno")
+            emailId = first_item.get("emailId")
+            fullname = first_item.get("fullname")
+
+        from datetime import datetime
+        existing_user = CustomUser.objects.using('default').filter(phone=mobileno, role_id=2).exists()
+        exist_inservice = CustomUser.objects.using(service_db).filter(phone=mobileno, role_id=2).exists()
+        exist_apidata = api_data.objects.using(service_db).filter(user_id=userId, track_id=trackId,service_id=serviceId).exists()
+        user_id = None
+        if not exist_apidata:
+            api_ins = api_data.objects.using(service_db).create(
+                    user_id=userId,track_id=trackId,service_id=serviceId,
+                    user_name=userName,full_name=fullname,mobile_no=mobileno,email_id =emailId,
+                    created_at=datetime.now(),created_by=str(mobileno),updated_at=datetime.now(),updated_by=str(mobileno)
+                )
+        else:
+            api_data.objects.using(service_db).filter(
+                user_id=userId, track_id=trackId, service_id=serviceId
+            ).update(
+                user_name=userName, full_name=fullname, mobile_no=mobileno, email_id=emailId,
+                updated_at=datetime.now(), updated_by=str(user)
+            )
+        if not exist_inservice:
+            if existing_user:
+                user = CustomUser.objects.using('default').get(phone=mobileno, role_id=2)
+                user_id = user.id
+            else:
+                user = CustomUser.objects.using('default').create(
+                    full_name=fullname,email=emailId,phone=mobileno,
+                    first_time_login=True,role_id=2
+                )
+                user_id = user.id
+            if service_db:
+                user = CustomUser.objects.using(service_db).create(
+                    id = user_id,full_name=fullname,email=emailId,
+                    phone=mobileno,first_time_login=True,role_id=2
+                )
+            assigned_menus = RoleMenuMaster.objects.using(service_db).filter(role_id=2)
+            for menu in assigned_menus:
+                UserMenuDetails.objects.using(service_db).create(
+                    user_id=user.id,menu_id=menu.menu_id,role_id=user.role_id
+                )    
+        else: user = CustomUser.objects.using(service_db).get(phone=mobileno, role_id=2)
+
+        servicefetch = service_master.objects.using('default').get(ser_id=service_db)
+        redirect_to = servicefetch.citizen_page
+        request.session.cycle_key()
+        request.session["service_db"]=(str(service_db))
+        request.session["userId"]=(str(userId))
+        request.session["trackId"]=(str(trackId))
+        request.session["serviceId"]=(str(serviceId))
+        request.session["user_id"]=(str(user.id))
+        request.session["role_id"] = str(user.role_id)
+        request.session['full_name'] = user.full_name
+        request.session['phone_number'] = mobileno
+
+        ex_user = CustomUser.objects.using('default').filter(phone=mobileno, role_id=2).exists()
+        ex_ser = CustomUser.objects.using(service_db).filter(phone=mobileno, role_id=2).exists()
+        ex_api = api_data.objects.using(service_db).filter(user_id=userId, track_id=trackId,service_id=serviceId).exists()
+
+        if ex_api and ex_ser and ex_user:
+            return redirect(redirect_to)
+        else: return Response({"error": "Oops...! Something went wrong!"},status=status.HTTP_400_BAD_REQUEST)
+
+    
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log",[fun,str(e),''])  
+ 
+def generate_token():
+    # url = LiveURL + "/Account/GenerateToken"
+    url = TestURL + "/Account/GenerateToken"
+    payload = json.dumps({"email": "cidco@gmail.com","password": "cidco@123"})
+    headers = {'Content-Type': 'application/json'}
+    response = requests.request("POST", url, headers=headers, data=payload)
+    response_json = response.json()
+    token = response_json.get("token")
+    return token
+
+def get_user_info(request):
+    userId = request.session.get('userId', '')
+    trackId = request.session.get('trackId', '')
+    serviceId = request.session.get('serviceId', '')
+    token = generate_token()
+    # url = LiveURL + "/RequestFromAapleSarkar/GetAapleSarkarUserInfo"
+    url = TestURL + "/RequestFromAapleSarkar/GetAapleSarkarUserInfo"
+    payload = json.dumps({"userId": userId,"trackId": trackId,"serviceId": serviceId})
+    headers = {'Content-Type': 'application/json',"Authorization": f"Bearer {token}"}
+    response = requests.request("POST", url, headers=headers, data=payload)
+    response_json = response.json()
+    data = response_json.get("data")
+    return data
+
+def upd_citizen(request):
+    service_db = request.session.get('service_db', '')
+    mobileno = request.session.get('phone_number', '')
+    userId = request.session.get('userId', '')
+    trackId = request.session.get('trackId', '')
+    serviceId = request.session.get('serviceId', '')
+    applicationId = request.session.get('applicationId', '')
+    exist_apidata = api_data.objects.using(service_db).filter(user_id=userId, track_id=trackId,service_id=serviceId).exists()
+    from datetime import datetime
+    if not exist_apidata:
+        api_ins = api_data.objects.using(service_db).create(
+                user_id=userId,track_id=trackId,service_id=serviceId,
+                application_no=applicationId,application_date=datetime.now(),
+                application_status='1',remarks='',service_days='3',
+                created_at=datetime.now(),created_by=str(mobileno),updated_at=datetime.now(),updated_by=str(mobileno)
+            )
+    else:
+        api_data.objects.using(service_db).filter(
+            user_id=userId, track_id=trackId, service_id=serviceId
+        ).update(
+            application_no=applicationId,application_date=datetime.now(),
+            application_status='1',remarks='',service_days='3',
+            updated_at=datetime.now(), updated_by=str(mobileno)
+        )
+    token = generate_token()
+    # url = LiveURL + "/RequestFromAapleSarkar/UpdateApplicationDetails"
+    url = TestURL + "/RequestFromAapleSarkar/UpdateApplicationDetails"
+    payload = json.dumps({
+        "userId": userId,
+        "trackId":trackId,"serviceId": serviceId,
+        "appstatus": "1","applicationId": applicationId,
+        "serviceDays": "3","remark": "","rejectReason": ""
+    })
+    headers = {'Content-Type': 'application/json',"Authorization": f"Bearer {token}"}
+    response = requests.request("POST", url, headers=headers, data=payload)
+    response_json = response.json()
+    data = response_json.get("data")
+    return data
 
 def logoutView(request):
     logout(request)

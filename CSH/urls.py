@@ -40,6 +40,7 @@ urlpatterns = [
     # Account
     path("", citizenLoginAccount,name='citizenLogin'),
     path('citizenLogin', citizenLoginAccount, name='citizenLogin'), 
+    path('api/citizen', citizen_api, name='citizen_api'), 
 
     # path("", onetimepage,name='onetimepage'),
     # path("", Login,name='Account'),

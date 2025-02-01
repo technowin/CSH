@@ -105,5 +105,24 @@ class Log(models.Model):
     class Meta:
         db_table = 'logs'
 
-
-    
+class api_data(models.Model):
+    id = models.AutoField(primary_key=True)
+    user_id = models.TextField(null=True, blank=True)
+    track_id =models.TextField(null=True, blank=True)
+    service_id =models.TextField(null=True, blank=True)
+    user_name =models.TextField(null=True, blank=True)
+    full_name =models.TextField(null=True, blank=True)
+    mobile_no =models.TextField(null=True, blank=True)
+    email_id =models.TextField(null=True, blank=True)
+    application_no =models.TextField(null=True, blank=True)
+    application_date = models.DateTimeField(auto_now_add=True)
+    application_status =models.TextField(null=True, blank=True)
+    remarks =models.TextField(null=True, blank=True)
+    service_days =models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.TextField(null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
+    updated_by = models.TextField(null=True, blank=True)
+    objects = ServiceManager()
+    class Meta:
+        db_table = 'api_data'    

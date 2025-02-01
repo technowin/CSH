@@ -876,6 +876,11 @@ def application_Master_View_TT(request, row_id, new_id):
 
             if application.request_no is None:
                 service = callproc('stp_generateRequestNo', [service_db, application.id, workflow_id, user_id])
+                trackId = request.session.get('trackId', '')
+                if trackId:
+                    from Account.views import upd_citizen
+                    request.session["applicationId"]=(str(service[0][0]))
+                    upd_citizen(request)
     
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
