@@ -13,7 +13,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
-ALLOWED_HOSTS = ['13.127.171.88','172.16.20.48']
+ALLOWED_HOSTS = ['13.127.171.88','172.16.20.48','rtsengser.cidcoindia.com']
 # ALLOWED_HOSTS = ['127.0.0.1']
 
 # SECURITY WARNING: don't run with debug turned on in production!
