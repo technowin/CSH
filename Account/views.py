@@ -101,9 +101,9 @@ def citizen_api(request):
     try:
         all_params = request.GET.dict()
         service_db = all_params.get('service', None)
-        userId = all_params.get('userId', None)
-        trackId = all_params.get('trackId', None)
-        serviceId = all_params.get('serviceId', None)
+        userId = all_params.get('UserID', None)
+        trackId = all_params.get('TrackID', None)
+        serviceId = all_params.get('ServiceID', None)
         request.session["service_db"]=(str(service_db))
         request.session["userId"]=(str(userId))
         request.session["trackId"]=(str(trackId))
