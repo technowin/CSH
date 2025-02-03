@@ -148,6 +148,8 @@ INSTALLED_APPS = [
     'DrainageConnection',
     'TreeCutting',
     'TreeTrimming',
+    'ContractRegistration',
+    'ProductApproval',
 ]
 
 # SESSION_ENGINE ="django.contrib.sessions.backends.signed_cookies"
