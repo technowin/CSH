@@ -410,8 +410,8 @@ def applicationFormIndex(request):
         encrypted_new_id_Value = encrypt_parameter(str(new_id_Value))
         
         getApplicantData = []
-        show_apply_button = True  
-        # show_apply_button = False  
+        # show_apply_button = True  
+        show_apply_button = False  
 
         if request.method == "GET":
             applicationIndex = callproc("stp_getFormDetails", [user_id])
