@@ -50,7 +50,6 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def Login(request):
-    data = upd_citizen()
     if request.method=="GET":
        request.session.flush()
        return render(request,'Account/login.html')
