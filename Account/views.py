@@ -183,8 +183,8 @@ def citizen_api(request):
         callproc("stp_error_log",[fun,str(e),''])  
  
 def generate_token():
-    # url = LiveURL + "/Account/GenerateToken"
-    url = TestURL + "/Account/GenerateToken"
+    url = LiveURL + "/Account/GenerateToken"
+    # url = TestURL + "/Account/GenerateToken"
     payload = json.dumps({"email": "cidco@gmail.com","password": "cidco@123"})
     headers = {'Content-Type': 'application/json'}
     response = requests.request("POST", url, headers=headers, data=payload)
@@ -197,8 +197,8 @@ def get_user_info(request):
     trackId = request.session.get('trackId', '')
     serviceId = request.session.get('serviceId', '')
     token = generate_token()
-    # url = LiveURL + "/RequestFromAapleSarkar/GetAapleSarkarUserInfo"
-    url = TestURL + "/RequestFromAapleSarkar/GetAapleSarkarUserInfo"
+    url = LiveURL + "/RequestFromAapleSarkar/GetAapleSarkarUserInfo"
+    # url = TestURL + "/RequestFromAapleSarkar/GetAapleSarkarUserInfo"
     payload = json.dumps({"userId": userId,"trackId": trackId,"serviceId": serviceId})
     headers = {'Content-Type': 'application/json',"Authorization": f"Bearer {token}"}
     response = requests.request("POST", url, headers=headers, data=payload)
@@ -231,8 +231,8 @@ def upd_citizen(request):
             updated_at=datetime.now(), updated_by=str(mobileno)
         )
     token = generate_token()
-    # url = LiveURL + "/RequestFromAapleSarkar/UpdateApplicationDetails"
-    url = TestURL + "/RequestFromAapleSarkar/UpdateApplicationDetails"
+    url = LiveURL + "/RequestFromAapleSarkar/UpdateApplicationDetails"
+    # url = TestURL + "/RequestFromAapleSarkar/UpdateApplicationDetails"
     payload = json.dumps({
         "userId": userId,
         "trackId":trackId,"serviceId": serviceId,
