@@ -66,10 +66,10 @@ def Login(request):
             request.session["full_name"]=(str(user.full_name))
             request.session["user_id"]=(str(user.id))
             request.session["role_id"] = str(user.role_id)
-            if remember_me == 'on':
-                request.session.set_expiry(1209600)  # 2 weeks
-            else:
-                request.session.set_expiry(0)  # Browser close
+            # if remember_me == 'on':
+            #     request.session.set_expiry(1209600)  # 2 weeks
+            # else:
+            #     request.session.set_expiry(0)  # Browser close
             if user.role_id == 1:
                 request.session['service_db'] = '1'
                 return redirect("masters/?entity=user&type=i")
