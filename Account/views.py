@@ -227,7 +227,7 @@ def upd_citizen(request):
             user_id=userId, track_id=trackId, service_id=serviceId
         ).update(
             application_no=applicationId,application_date=datetime.now(),
-            application_status='1',remarks='',service_days='3',
+            application_status='3',remarks='',service_days='3',
             updated_at=datetime.now(), updated_by=str(mobileno)
         )
     token = generate_token()
@@ -236,7 +236,7 @@ def upd_citizen(request):
     payload = json.dumps({
         "userId": userId,
         "trackId":trackId,"serviceId": serviceId,
-        "appstatus": "1","applicationId": applicationId,
+        "appstatus": "3","applicationId": applicationId,
         "serviceDays": "3","remark": "","rejectReason": ""
     })
     headers = {'Content-Type': 'application/json',"Authorization": f"Bearer {token}"}
