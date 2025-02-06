@@ -246,10 +246,25 @@ def upd_citizen(request):
     return data
 
 def logoutView(request):
-    logout(request)
-    return redirect("citizenLoginAccount")  
-    # return redirect("onetimepage")  
-    # return redirect("Account")  
+    try:
+        dropdown = request.session.get('dropdown')
+        normal = request.session.get('normal')
+        
+        if dropdown is not None:
+            service_db = dropdown
+            url = '/citizenLoginAccount'
+        elif normal is not None:
+            service_db = normal
+            url = f'/citizenLoginAccount?service={service_db}'
+        else:
+            service_db = None
+            url = '/citizenLoginAccount'
+        
+        logout(request)
+        return redirect(url)
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
 
 def register_new_user(request):
     if request.method=="GET":
@@ -524,18 +539,29 @@ def citizenLoginAccount(request):
         if request.method == "GET":
             # request.session.flush()            
             # service_db = request.GET.get('service_db')
-            # request.session['service_db'] = service_db
+            
             service = request.GET.get('service')
-            return render(request, 'citizenAccount/citizenLogin.html',{'service':service})
+            
+            # if service is None or service.strip().lower() == "none":
+            #     service = request.session.get('service')  
+            
+            request.session['service'] = service
+            
+            ServiceType = service_master.objects.using('default').values_list("ser_id", "ser_name")
+
+            return render(request, 'citizenAccount/citizenLogin.html',{'service':service, "parameter":ServiceType})
 
         elif request.method == "POST":
 
             service_db = request.POST.get('services')
             service = request.POST.get('service')
+            request.session['dropdown'] = service_db
+            request.session['normal'] = service
             if service is None or service == "":
                 service_db = service_db
             else: service_db = service
             request.session['service_db'] = service_db
+            request.session['service'] = service_db
             phone_number = request.POST.get('username', '').strip()
 
 
@@ -564,34 +590,47 @@ def citizenRegisterAccount(request):
     context = {
         'firstName': '','lastName': '','email': '', 'mobileNumber': ''
     }
+    try:
+        if request.method == "GET":
+            # service_db = request.GET.get('service_db')
+            service_db = request.session['service']
+            
+            if service_db is None or service_db.strip().lower() == "none":
+                service_db = ""
+            
+            ServiceType = service_master.objects.using('default').values_list("ser_id", "ser_name")
+            
+            context['service_db'] = service_db
+            context['parameter'] = ServiceType
+            return render(request, 'citizenAccount/citizenRegister.html', context)
 
-    if request.method == "GET":
-        service_db = request.GET.get('service_db')
-        request.session['service_db'] = service_db
-        context['service_db'] = service_db
-        return render(request, 'citizenAccount/citizenRegister.html', context)
+        elif request.method == "POST":
+            service_db = request.POST.get('service_db')
+            request.session['service_db'] = service_db
+            first_name = request.POST.get('firstname').strip()
+            last_name = request.POST.get('lastname').strip()
+            email = request.POST.get('email').strip()
+            mobile_number = request.POST.get('mobileNumber').strip()
 
-    elif request.method == "POST":
-        service_db = request.POST.get('service_db')
-        request.session['service_db'] = service_db
-        first_name = request.POST.get('firstname').strip()
-        last_name = request.POST.get('lastname').strip()
-        email = request.POST.get('email').strip()
-        mobile_number = request.POST.get('mobileNumber').strip()
-
-        if CustomUser.objects.filter(phone=mobile_number, role_id=2 ).exists():
-            messages.warning(request, "This mobile number is already registered. Please LogIn.")
-            return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
-        # elif CustomUser.objects.filter(email=email, role_id=2).exists():
-        #     messages.warning(request, "This emailId is already registered. ")
-        #     return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
-        else:
-            request.session['first_name'] = first_name
-            request.session['last_name'] = last_name
-            request.session['email'] = email
-            request.session['mobile_number'] = mobile_number
-            return redirect(f'/OTPScreenRegistration?service_db={service_db}')
- 
+            if CustomUser.objects.filter(phone=mobile_number, role_id=2 ).exists():
+                messages.warning(request, "This mobile number is already registered. Please LogIn.")
+                return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
+            # elif CustomUser.objects.filter(email=email, role_id=2).exists():
+            #     messages.warning(request, "This emailId is already registered. ")
+            #     return redirect(f'/citizenRegisterAccount?service_db={service_db}') 
+            else:
+                request.session['first_name'] = first_name
+                request.session['last_name'] = last_name
+                request.session['email'] = email
+                request.session['mobile_number'] = mobile_number
+                return redirect(f'/OTPScreenRegistration?service_db={service_db}')
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log",[fun,str(e),''])  
+        messages.error(request, 'Oops...! Something went wrong!')
+        return redirect(f'/citizenRegisterAccount?service_db={service_db}')
+    
 @csrf_exempt
 def OTPScreen(request):
     
@@ -868,7 +907,8 @@ def verify_otp(request):
                 request.session['phone_number'] = phone_number
 
                 messages.success(request, "Registered successfully! OTP verified.")
-                return redirect(f'/citizenLoginAccount?service_db={service_db}')
+                return redirect(f'/citizenLoginAccount?service={service_db}')
+                # return redirect(f'/citizenLoginAccount?service_db={service_db}')
 
             else:
                 messages.error(request, "Invalid OTP. Please try again.")

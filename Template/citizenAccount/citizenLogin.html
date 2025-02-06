@@ -65,13 +65,11 @@
 
                                         <div class="form-group">
                                             {% if service is None or service == '' %}
-                                                <select name="services" id="service_id" class="form-control" style="border-radius:15px; margin-bottom:5%;" required>
-                                                    <option value="" selected disabled>Select Services</option>
-                                                    <option value="1">Drainage Connection</option>
-                                                    <option value="2">Tree Cutting</option>
-                                                    <option value="3">Tree Trimming</option>
-                                                    <option value="4">Contract Registration</option>
-                                                    <option value="5">Product Approval</option>
+                                                <select name="services" id="service_id" class="form-control select" style="border-radius:15px; margin-bottom:5%;" required>
+                                                    <option value="">Select Type</option>
+                                                    {% for item in parameter %}
+                                                        <option value="{{ item.0 }}">{{ item.1 }}</option>
+                                                    {% endfor %}
                                                 </select>
                                             {% endif %}
 
@@ -82,15 +80,11 @@
                                         <button type="submit" class="btn btn-primary btn-user btn-block">
                                             Login
                                         </button>
-                                        {% comment %} <a class="textSignUp" href="citizenRegisterAccount">SignUp Now</a> {% endcomment %}
-                                        {% comment %} <a class="textSignUp" href="citizenRegisterAccount?service_db={{service_db}}">SignUp Now</a>
-                                        <a class="textSignUp" href="Login">Employee Login</a> {% endcomment %}
                                     </form>
                                     <div class="okGoogle">
-                                        <a class=" d-block mb-2 text-right" href="citizenRegisterAccount?service_db={{service_db}}">SignUp Now</a>
+                                        <a class="d-block mb-2 text-right" href="citizenRegisterAccount">SignUp Now</a>
                                         <a class=" d-block text-right" href="Login">Employee Login</a>
                                     </div>
-                                    
                                 </div>
                             </div>
                         </div>

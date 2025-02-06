@@ -391,9 +391,10 @@ def sample_doc(columns,file_name,user):
         return response      
 
 # application Form Index
+
 def applicationFormIndex(request):
     try:
-        # full_name = request.session.get('full_name')
+        
         phone_number = request.session['phone_number']
         
         if phone_number:
@@ -410,39 +411,32 @@ def applicationFormIndex(request):
         encrypted_new_id_Value = encrypt_parameter(str(new_id_Value))
         
         getApplicantData = []
-        # show_apply_button = True  
-        show_apply_button = False  
 
         if request.method == "GET":
             applicationIndex = callproc("stp_getFormDetails", [user_id])
             
-            if not applicationIndex:
-                show_apply_button = True
-            else:
-                for items in applicationIndex:
-                    encrypted_id = encrypt_parameter(str(items[1]))
-                    item = {
-                        "srno": items[0],
-                        "id": encrypted_id,
-                        "request_no": items[2],       
-                        "name_of_owner": items[3],   
-                        "status": items[4],          
-                        "comments": items[5]          
-                    }
-                    
-                    getApplicantData.append(item)
-                    
-                    # if items[4] == 'Refused' or items[4] == 'New':
-                    if items[4] == 'Refused':
-                        show_apply_button = True
-                        refused_id = items[1]
+            for items in applicationIndex:
+                encrypted_id = encrypt_parameter(str(items[1]))
+                item = {
+                    "srno": items[0],
+                    "id": encrypted_id,
+                    "request_no": items[2],       
+                    "name_of_owner": items[3],   
+                    "status": items[4],          
+                    "comments": items[5]          
+                }
+                
+                getApplicantData.append(item)
+                
+                # if items[4] == 'Refused' or items[4] == 'New':
+                if items[4] == 'Refused':
+                    refused_id = items[1]
             
-                countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id] )
-                countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
+            countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id] )
+            countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
                     
         return render(request, "DrainageConnection/applicationFormIndex.html", {
             "data": getApplicantData,
-            "show_apply_button": show_apply_button,  
             "encrypted_new_id": encrypted_new_id,  
             "encrypted_new_id_Value": encrypted_new_id_Value,
             "countRefusedDocument": countRefusedDocument

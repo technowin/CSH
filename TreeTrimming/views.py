@@ -189,6 +189,9 @@ def matrix_flow_tt(request):
             for file in files:
                  response =  internal_docs_upload(file,role_id,user,wf,ser,'')
             
+            if response:
+                return JsonResponse(response, safe=False)
+            
             Refusalfile = request.FILES.get('file')
             response = None
 
@@ -369,33 +372,26 @@ def applicationFormIndexTT(request):
             encrypted_new_id = encrypt_parameter(str(new_id))
 
             getApplicantData = []
-            show_apply_button = False  
             
             applicationIndex = callproc("stp_getFormDetailsForTC", [user_id])
 
-            if not applicationIndex:
-                show_apply_button = True
-            else:
-                    
-                for items in applicationIndex:
-                    encrypted_id = encrypt_parameter(str(items[1]))
-                    item = {
-                        "srno": items[0],
-                        "id": encrypted_id,
-                        "request_no": items[2],
-                        "name_of_applicant": items[3],
-                        "status": items[4],
-                        "comments": items[5],
-                    }
-
-                    getApplicantData.append(item)
-                    
-                    if items[4] == 'Refused':
-                        show_apply_button = True
-                        refused_id = items[1]  
-            
-                countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id])
-                countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
+            for items in applicationIndex:
+                encrypted_id = encrypt_parameter(str(items[1]))
+                item = {
+                    "srno": items[0],
+                    "id": encrypted_id,
+                    "request_no": items[2],
+                    "name_of_applicant": items[3],
+                    "status": items[4],
+                    "comments": items[5],
+                }
+                getApplicantData.append(item)
+                
+                if items[4] == 'Refused':
+                    refused_id = items[1]  
+        
+            countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id])
+            countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -407,8 +403,7 @@ def applicationFormIndexTT(request):
         return render(
             request,
             "TreeTrimming/TreeTrimmingIndex.html",
-            {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "show_apply_button": show_apply_button
-            , "countRefusedDocument": countRefusedDocument},
+            {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "countRefusedDocument": countRefusedDocument},
         )
 
 def application_Master_Crate_TT(request):
