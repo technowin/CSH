@@ -213,21 +213,30 @@ def upd_citizen(request):
     trackId = request.session.get('trackId', '')
     serviceId = request.session.get('serviceId', '')
     applicationId = request.session.get('applicationId', '')
-    exist_apidata = api_data.objects.using(service_db).filter(user_id=userId, track_id=trackId,service_id=serviceId).exists()
+    w_id = request.session.get('workflow_id', '')
+    f_id = request.session.get('form_id', '')
+    f_user_id = request.session.get('form_user_id', '')
+    status = request.session.get('application_status', '')
+    rmks = request.session.get('remarks', '')
+    timeline = '3'
+   
+    exist_apidata = api_data.objects.using(service_db).filter(user_id=userId,track_id=trackId,service_id=serviceId,
+    workflow_id=w_id,form_id=f_id,form_user_id=f_user_id).exists()
     from datetime import datetime
     if not exist_apidata:
         api_ins = api_data.objects.using(service_db).create(
                 user_id=userId,track_id=trackId,service_id=serviceId,
                 application_no=applicationId,application_date=datetime.now(),
-                application_status='1',remarks='',service_days='3',
+                application_status=status,remarks=rmks,service_days=timeline,
+                workflow_id=w_id,form_id=f_id,form_user_id=f_user_id,
                 created_at=datetime.now(),created_by=str(mobileno),updated_at=datetime.now(),updated_by=str(mobileno)
             )
     else:
         api_data.objects.using(service_db).filter(
-            user_id=userId, track_id=trackId, service_id=serviceId
+            user_id=userId, track_id=trackId, service_id=serviceId,workflow_id=w_id,form_id=f_id,form_user_id=f_user_id
         ).update(
             application_no=applicationId,application_date=datetime.now(),
-            application_status='3',remarks='',service_days='3',
+            application_status=status,remarks=rmks,service_days=timeline,
             updated_at=datetime.now(), updated_by=str(mobileno)
         )
     token = generate_token()
@@ -236,8 +245,8 @@ def upd_citizen(request):
     payload = json.dumps({
         "userId": userId,
         "trackId":trackId,"serviceId": serviceId,
-        "appstatus": "3","applicationId": applicationId,
-        "serviceDays": "3","remark": "","rejectReason": ""
+        "appstatus": status,"applicationId": applicationId,
+        "serviceDays": timeline,"remark": "","rejectReason": rmks
     })
     headers = {'Content-Type': 'application/json',"Authorization": f"Bearer {token}"}
     response = requests.request("POST", url, headers=headers, data=payload)

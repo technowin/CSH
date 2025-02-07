@@ -920,6 +920,10 @@ def application_Master_View_TT(request, row_id, new_id):
                 if trackId:
                     from Account.views import upd_citizen
                     request.session["applicationId"]=(str(service[0][0]))
+                    request.session["application_status"]=str(3)
+                    request.session["workflow_id"] = workflow.id
+                    request.session["form_id"]=application.id
+                    request.session["form_user_id"]=str(user_id)
                     upd_citizen(request)
     
     except Exception as e:
