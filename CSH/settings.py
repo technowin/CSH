@@ -88,8 +88,8 @@ DATABASES = {
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'D:/Python Project/Documents/')
-# MEDIA_ROOT = os.path.join(BASE_DIR, '/home/ubuntu/Documents/')
-MEDIA_ROOT = os.path.join(BASE_DIR, '/home/services/Documents/')
+MEDIA_ROOT = os.path.join(BASE_DIR, '/home/ubuntu/Documents/')
+# MEDIA_ROOT = os.path.join(BASE_DIR, '/home/services/Documents/')
 MEDIA_URL = '/media/'
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
@@ -199,8 +199,8 @@ LOGGING = {
             'level': 'WARNING',
             'class': 'logging.FileHandler',
             # 'filename': os.path.join(BASE_DIR, 'D:/Python Project/CSH Logs', 'django.log'),  
-            # 'filename': os.path.join(BASE_DIR, '/home/ubuntu/CSH Logs', 'django.log'),  
-            'filename': os.path.join(BASE_DIR, '/home/services/CSH Logs', 'django.log'),  
+            'filename': os.path.join(BASE_DIR, '/home/ubuntu/CSH Logs', 'django.log'),  
+            # 'filename': os.path.join(BASE_DIR, '/home/services/CSH Logs', 'django.log'),  
         },
     },
     'loggers': {
