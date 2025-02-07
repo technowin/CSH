@@ -145,10 +145,17 @@ def citizen_api(request):
                 )
                 user_id = user.id
             if service_db:
-                user = CustomUser.objects.using(service_db).create(
-                    id = user_id,full_name=fullname,email=emailId,
-                    phone=mobileno,first_time_login=True,role_id=2
+                user, created = CustomUser.objects.using(service_db).get_or_create(
+                    id=user_id,
+                    defaults={
+                        "full_name": fullname,
+                        "email": emailId,
+                        "phone": mobileno,
+                        "first_time_login": True,
+                        "role_id": 2
+                    }
                 )
+
             assigned_menus = RoleMenuMaster.objects.using(service_db).filter(role_id=2)
             for menu in assigned_menus:
                 UserMenuDetails.objects.using(service_db).create(
