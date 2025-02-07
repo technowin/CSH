@@ -220,8 +220,7 @@ def upd_citizen(request):
     rmks = request.session.get('remarks', '')
     timeline = '3'
    
-    exist_apidata = api_data.objects.using(service_db).filter(user_id=userId,track_id=trackId,service_id=serviceId,
-    workflow_id=w_id,form_id=f_id,form_user_id=f_user_id).exists()
+    exist_apidata = api_data.objects.using(service_db).filter(user_id=userId,track_id=trackId,service_id=serviceId).exists()
     from datetime import datetime
     if not exist_apidata:
         api_ins = api_data.objects.using(service_db).create(
@@ -233,10 +232,11 @@ def upd_citizen(request):
             )
     else:
         api_data.objects.using(service_db).filter(
-            user_id=userId, track_id=trackId, service_id=serviceId,workflow_id=w_id,form_id=f_id,form_user_id=f_user_id
+            user_id=userId,track_id=trackId,service_id=serviceId
         ).update(
             application_no=applicationId,application_date=datetime.now(),
             application_status=status,remarks=rmks,service_days=timeline,
+            workflow_id=w_id,form_id=f_id,form_user_id=f_user_id,
             updated_at=datetime.now(), updated_by=str(mobileno)
         )
     token = generate_token()
