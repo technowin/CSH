@@ -300,6 +300,27 @@ def matrix_flow(request):
                             request.session['serviceId'] = dataAPI.service_id
                             request.session['applicationId'] = dataAPI.application_no
                             request.session['application_status'] = '4'
+                            request.session['remarks'] = f_remark
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                    if status == 7:
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI.track_id:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = f_remark
                             request.session['form_id'] = dataAPI.form_id
                             request.session['form_user_id'] = dataAPI.form_user_id
                             request.session['workflow_id'] = dataAPI.workflow_id

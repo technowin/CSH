@@ -282,7 +282,7 @@ def matrix_flow_tt(request):
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 else:
                     f_remark = request.POST.get('f_remark')
-                    if f_remark!='' and status in [11, 12]:
+                    if f_remark!='' and status in [6, 7]:
                         internal_user_comments.objects.create(
                                 workflow=wf, comments=f_remark,
                                 created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
@@ -305,6 +305,27 @@ def matrix_flow_tt(request):
                             request.session['serviceId'] = dataAPI.service_id
                             request.session['applicationId'] = dataAPI.application_no
                             request.session['application_status'] = '4'
+                            request.session['remarks'] = f_remark
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                    if status == 7:
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI.track_id:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = f_remark
                             request.session['form_id'] = dataAPI.form_id
                             request.session['form_user_id'] = dataAPI.form_user_id
                             request.session['workflow_id'] = dataAPI.workflow_id
