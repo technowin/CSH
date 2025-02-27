@@ -187,9 +187,10 @@ def matrix_flow(request):
             response = None
 
             if Refusalfile:
+                
                 response3 = internal_docs_upload(Refusalfile, role_id, user, wf, ser, 'Refusal Document')
                 refusal_file_resp = citizen_docs_upload(Refusalfile, form_user_id, form_id, user, ser, id1)
-                response = response3
+                response = response3           
 
             if response:
                 return JsonResponse(response, safe=False)
@@ -226,7 +227,7 @@ def matrix_flow(request):
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
-                        if dataAPI.track_id:
+                        if dataAPI:
                             
                             request.session['userId'] = dataAPI.user_id
                             request.session['trackId'] = dataAPI.track_id
@@ -293,7 +294,7 @@ def matrix_flow(request):
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
-                        if dataAPI.track_id:
+                        if dataAPI:
                             
                             request.session['userId'] = dataAPI.user_id
                             request.session['trackId'] = dataAPI.track_id
@@ -313,7 +314,7 @@ def matrix_flow(request):
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
-                        if dataAPI.track_id:
+                        if dataAPI:
                             
                             request.session['userId'] = dataAPI.user_id
                             request.session['trackId'] = dataAPI.track_id
