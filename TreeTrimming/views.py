@@ -491,7 +491,8 @@ def application_Master_Crate_TT(request):
                 parameter_name="Reason for removal of tree"
             ).values_list("parameter_value", "parameter_value")
             # documentList = document_master.objects.filter(is_active=1)
-            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4,5])
+            # documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4,5])
+            documentList = document_master.objects.filter(is_active=1).exclude(doc_id__in=[4, 5]).order_by('order_by')
 
             for document in documentList:
                 if document.doc_subpath:

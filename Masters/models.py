@@ -78,6 +78,7 @@ class document_master(models.Model):
     updated_by = models.TextField(null=True, blank=True)
     is_active = models.IntegerField(default=1)
     mandatory = models.IntegerField(default=1)
+    order_by = models.IntegerField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'document_master'

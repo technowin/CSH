@@ -516,7 +516,8 @@ def applicationMasterCrate(request):
     try:
         # getDocumentData = document_master.objects.filter(is_active=1) 
         # getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id=15)
-        getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id__in=[15, 19])
+        # getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id__in=[15, 19])
+        getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id__in=[15, 19]).order_by('order_by')
         # success_message = request.session.pop('success_message', None)
         message = request.session.pop('message', None)
         form_data = request.session.pop("form_data", None)
