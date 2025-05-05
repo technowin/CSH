@@ -89,6 +89,14 @@
                             <label for="Septic_tank_size" class="form-label">Septic tank size (liters):</label>
                             <input type="text" value="{{ application.septic_tank_size }}" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size" readonly disabled>
                         </div>
+                        <div class="col-md-3">
+                            <label for="no_of_floors" class="form-label">No Of Floors<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.no_of_floors }}" name="no_of_floors" class="form-control" id="no_of_floors" placeholder="Enter No of floors" required readonly disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="applicant_contact_number" class="form-label">Applicant Contact Number<span style="color:red;"> *</span> :</label>
+                            <input type="text" value="{{ application.applicant_contact_number }}" name="applicant_contact_number" class="form-control" id="applicant_contact_number" placeholder="Enter Contact Number" required readonly disabled>
+                        </div>
                     </div>
 
                     {% if application.status_id == 4 %}

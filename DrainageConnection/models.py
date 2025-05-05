@@ -29,6 +29,9 @@ class application_form(models.Model):
     refused_reason = models.TextField(null=True, blank=True)
     approved_remark = models.TextField(null=True, blank=True)
     issued_certificate_remark = models.TextField(null=True, blank=True)
+    no_of_floors = models.IntegerField(null=True, blank=True)
+    applicant_contact_number = models.CharField(max_length=15, null=True, blank=True)
+    declaration = models.BooleanField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = "application_form"

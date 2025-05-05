@@ -12,6 +12,15 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
 
+
+<style>
+    .center-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f9f9f9; /* Optional: background for visibility */
+    }
+</style>
 <body>
     
     <div class="container mt-5" style="max-width: 1800px;">
@@ -88,6 +97,14 @@
                             <label for="Septic_tank_size" class="form-label">Septic tank size (liters):</label>
                             <input type="text" value="{{ form_data.Septic_tank_size }}" name="Septic_tank_size" class="form-control" id="Septic_tank_size" placeholder="Enter Septic tank size">
                         </div>
+                        <div class="col-md-3">
+                            <label for="no_of_floors" class="form-label">No Of Floors<span style="color:red;"> *</span> :</label>
+                            <input type="number" value="{{ form_data.no_of_floors }}" name="no_of_floors" class="form-control" id="no_of_floors" placeholder="Enter No of floors" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="applicant_contact_number" class="form-label">Applicant Contact Number<span style="color:red;"> *</span> :</label>
+                            <input type="number" value="{{ form_data.applicant_contact_number }}" name="applicant_contact_number" class="form-control" id="applicant_contact_number" placeholder="Enter Contact Number" required>
+                        </div>
                     </div>
                     
 
@@ -122,9 +139,16 @@
                         </tbody>
                     </table>
 
+                    <div class="row mb3 col-md-10" style="margin-left: 20px;">
+                        <label style="font-weight: 700; color: #000; font-size:1.2em; display: flex; align-items: center;">
+                            <input type="checkbox" name="declaration" required
+                                   style="width: 20px; height: 20px; margin-right: 10px;">
+                            I hereby declare that the information provided above is true and correct to the best of my knowledge and belief. I understand that any false information may lead to disqualification or legal action.
+                        </label>
+                    </div> 
+
                     <div class="text-center">
                         <button type="submit" id="submitBtn"  class="btn btn-primary">Submit</button>
-                        
                         <a href="{% url 'applicationFormIndex' %}" class="btn btn-secondary">Go Back</a>
                     </div>
 
@@ -186,8 +210,6 @@
             });
         </script>
     {% endif %}
-
-
     
     {% comment %} <script>
         $(document).ready(function() {

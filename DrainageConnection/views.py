@@ -548,6 +548,28 @@ def application_Master_Post(request):
             all_uploaded = True
             missing_documents = []
             
+            if not request.POST.get('declaration'):
+                message = 'Please confirm the declaration by checking the box before submitting the form.'
+                request.session['message'] = message
+                request.session["form_data"] = {
+                    'Name_Premises': name_of_premises,
+                    'Plot_No': plot_no,
+                    'Sector_No': sector_no,
+                    'Node': node,
+                    'Name_Owner': name_of_owner,
+                    'Address_Owner': address_of_owner,
+                    'Name_Plumber': name_of_plumber,
+                    'License_No_Plumber': license_no_of_plumber,
+                    'Address_of_Plumber': address_of_plumber,
+                    'Plot_size': plot_size,
+                    'No_of_flats': no_of_flats,
+                    'No_of_shops': no_of_shops,
+                    'Septic_tank_size': septic_tank_size,
+                    'no_of_floors': no_of_floors,
+                    'applicant_contact_number': applicant_contact_number,
+                }
+                return redirect('applicationMasterCrate')
+            
             name_of_premises = request.POST.get('Name_Premises')
             plot_no = request.POST.get('Plot_No')
             sector_no = request.POST.get('Sector_No')
@@ -561,6 +583,9 @@ def application_Master_Post(request):
             no_of_flats = request.POST.get('No_of_flats')
             no_of_shops = request.POST.get('No_of_shops')
             septic_tank_size = request.POST.get('Septic_tank_size')
+            no_of_floors = request.POST.get('no_of_floors')
+            applicant_contact_number = request.POST.get('applicant_contact_number')
+            declaration = bool(request.POST.get('declaration'))
 
             for document in mandatory_documents:
                 if not request.FILES.get(f'upload_{document.doc_id}'):
@@ -584,6 +609,8 @@ def application_Master_Post(request):
                     'No_of_flats': no_of_flats,
                     'No_of_shops': no_of_shops,
                     'Septic_tank_size': septic_tank_size,
+                    'no_of_floors': no_of_floors,
+                    'applicant_contact_number': applicant_contact_number,
                 }
                 return redirect('applicationMasterCrate')
                 # messages.error(request, 'Please upload the mandatory documents.')
@@ -605,6 +632,9 @@ def application_Master_Post(request):
                 no_of_flats=request.POST.get('No_of_flats', ''),
                 no_of_shops=request.POST.get('No_of_shops', ''),
                 septic_tank_size=request.POST.get('Septic_tank_size', ''),
+                no_of_floors=request.POST.get('no_of_floors', ''),
+                applicant_contact_number=request.POST.get('applicant_contact_number', ''),
+                declaration = bool(request.POST.get('declaration')),
                 created_by=user_id
             )
             
@@ -1125,6 +1155,8 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
             no_of_flats = request.POST.get('No_of_flats')
             no_of_shops = request.POST.get('No_of_shops')
             septic_tank_size = request.POST.get('Septic_tank_size')
+            no_of_floors = request.POST.get('no_of_floors')
+            applicant_contact_number = request.POST.get('applicant_contact_number')
 
             application.name_of_premises = name_of_premises
             application.plot_no = plot_no
@@ -1139,6 +1171,8 @@ def edit_Post_Application_Master_final_submit(request, application_id, row_id_st
             application.no_of_flats = no_of_flats
             application.no_of_shops = no_of_shops
             application.septic_tank_size = septic_tank_size
+            application.no_of_floors = no_of_floors
+            application.applicant_contact_number = applicant_contact_number
 
             application.save()
 
