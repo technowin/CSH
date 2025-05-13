@@ -19,6 +19,8 @@ import pandas as pd
 import calendar
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib import messages
+from django.shortcuts import redirect
 
 # Create your views here.
 import logging
@@ -134,7 +136,8 @@ def matrix_flow_pa(request):
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.all():
+            for doc_master in document_master.objects.exclude(is_active=0).exclude(doc_id__in=[10]):
+            # for doc_master in document_master.objects.all():
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
@@ -184,21 +187,22 @@ def matrix_flow_pa(request):
                         created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
                 )  
                 response = f"Your comment has been submitted: '{comment}'"
+                
             for file in files:
                  response =  internal_docs_upload(file,role_id,user,wf,ser,'')
-            
-            Refusalfile = request.FILES.get('file')
-            response = None
-
-            if Refusalfile:
-
-                response1 = internal_docs_upload(Refusalfile, role_id, user, wf, ser, 'Refusal Document')
-                file_resp = citizen_docs_upload(Refusalfile, form_user_id, form_id, user, ser, id1)
-                
-                response = response1
-                    
+                 
             if response:
                 return JsonResponse(response, safe=False)
+            
+            paymentReceipt = request.FILES.get('receipt_upload_file')
+            response = None
+            status =  request.POST.get('btnclk', '')
+            if status == '1' or status == '2':
+                if paymentReceipt:
+                    response = internal_docs_upload(paymentReceipt, role_id, user, wf, ser, 'Payment Receipt')
+                else:
+                    messages.warning(request, "Please upload the payment receipt.")
+                    return redirect('matrix_flow_pa')    
 
             ref = decrypt_parameter(matrix_ref) if (matrix_ref := request.POST.get('matrix_ref', '')) else ''
             ac = decrypt_parameter(ac) if (ac := request.POST.get('ac', '')) else ''

@@ -205,7 +205,18 @@
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body" style="font-weight:bold;font:size:20px;">
-                      Are you sure you want to proceed? This action cannot be undone.
+                    Are you sure you want to proceed? This action cannot be undone.
+                            
+                    <div class="formupl" style="margin-top: 20px;">
+                        <span class="formupl-title" style="font-size:18px;">Upload Receipt</span>
+                        <p class="formupl-paragraph">Upload your file</p>
+                        <label for="receipt-input" class="drop-container">
+                            <span class="drop-title">Drop files here</span>
+                            or
+                            <input type="file" id="receipt-input" name="receipt_upload_file" required>
+                        </label>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -923,6 +934,65 @@
                 text: 'Please try again.',
                 timer: 3000,
                 showConfirmButton: false
+            });
+        });
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    function uploadReceipt() {
+        const fileInput = document.getElementById("receipt-input");
+        const file = fileInput.files[0];
+
+        if (!file) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No File Selected',
+                text: 'Please select a receipt file before uploading.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('receipt_upload_file', file);
+
+        const wfh_id = document.getElementById('wfh_id').value;
+        const formh_id = document.getElementById('formh_id').value;
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        formData.append("wf_id", wfh_id);
+        formData.append("form_id", formh_id);
+
+        fetch("{% url 'matrix_flow_cr' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Upload failed");
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire({
+                icon: 'success',
+                title: 'File Uploaded Successfully',
+                text: data,
+                showConfirmButton: false,
+                timer: 3000
+            }).then(() => location.reload());
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'File upload failed',
+                text: 'Please try again.',
+                showConfirmButton: false,
+                timer: 3000
             });
         });
     }
