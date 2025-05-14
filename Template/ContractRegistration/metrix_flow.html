@@ -42,7 +42,7 @@
 </style>
 
  <!-- Begin Page Content -->
- <div>
+<div>
 
     <div class="row col-lg-12 mb-2 shadow justify-content-center" style="padding: 10px;text-align:center;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;">
         <input type="hidden" id="wfh_id" name="wf_id" value="{{wf_id}}" />
@@ -182,7 +182,7 @@
             {% endif %}
         </div>
         <div class="col-md-2">
-            <a type="button" href="/index_tt" id="Btn3" class="btn btn-primary">Back</a>
+            <a type="button" href="/index_cr" id="Btn3" class="btn btn-primary">Back</a>
         </div>
     </div>
 </div>
@@ -590,6 +590,7 @@
             }
         });
     }
+    
     function show_sweet_popup(id,type) {
       return new Promise(function(resolve, reject) { 
         if(type == "file")
@@ -637,85 +638,85 @@
       });
     }
   
-  function handle_sweet_popup(fileInput,id,type) {
-    return new Promise(function(resolve, reject) {
-      var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-      const formData = new FormData();
-      if (fileInput.length > 0) {
-        if(type == "file"){
-            for (var i = 0; i < fileInput.length; i++) {
-                formData.append('files[]', fileInput[i]);
+    function handle_sweet_popup(fileInput,id,type) {
+        return new Promise(function(resolve, reject) {
+        var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const formData = new FormData();
+        if (fileInput.length > 0) {
+            if(type == "file"){
+                for (var i = 0; i < fileInput.length; i++) {
+                    formData.append('files[]', fileInput[i]);
+                }
+            } else if(type == "comment"){
+                formData.append('comment', fileInput);
             }
-        } else if(type == "comment"){
-            formData.append('comment', fileInput);
         }
-      }
 
-      var wfh_id = $('#wfh_id').val();
-      var formh_id = $('#formh_id').val();
-      formData.append("wf_id", wfh_id);
-      formData.append("form_id", formh_id);
+        var wfh_id = $('#wfh_id').val();
+        var formh_id = $('#formh_id').val();
+        formData.append("wf_id", wfh_id);
+        formData.append("form_id", formh_id);
 
-      fetch('/matrix_flow_cr', {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': csrftoken 
-        },
-        body: formData
-      })
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error('Failed to upload files');
-        }
-      })
-      .then(data => {
-        if (data != "") {
-          Swal.fire({
-            icon: 'success',
-            title: 'Submitted!',
-            text:data,
-            showConfirmButton: false,
-            timer: 3000
-          }).then(() => {
-            location.reload(); 
-          });
-    
-          resolve();
-        } else {
-    
-          throw new Error('File upload failed');
-        }
-        resolve();
-      })
-      .catch(error => {
-        console.error('Error uploading files:', error);
-        var err_title = "";
-        if(type=="file")
-        {
-            err_title = 'File upload failed';
-        } else if(type == "comment"){
-            err_title = 'Oops...! Something went wrong!';
-        }
-        Swal.fire({
-            icon: 'error',
-            title: err_title,
-            text: 'Please try again.',
-            timer: 3000, 
-            showConfirmButton: false
-        });
-
+        fetch('/matrix_flow_cr', {
+            method: 'POST',
+            headers: {
+            'X-CSRFToken': csrftoken 
+            },
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+            return response.json();
+            } else {
+            throw new Error('Failed to upload files');
+            }
+        })
+        .then(data => {
+            if (data != "") {
+            Swal.fire({
+                icon: 'success',
+                title: 'Submitted!',
+                text:data,
+                showConfirmButton: false,
+                timer: 3000
+            }).then(() => {
+                location.reload(); 
+            });
         
-        reject(error);
-      });
-      
-    });
-  }
-  
-  </script>
+            resolve();
+            } else {
+        
+            throw new Error('File upload failed');
+            }
+            resolve();
+        })
+        .catch(error => {
+            console.error('Error uploading files:', error);
+            var err_title = "";
+            if(type=="file")
+            {
+                err_title = 'File upload failed';
+            } else if(type == "comment"){
+                err_title = 'Oops...! Something went wrong!';
+            }
+            Swal.fire({
+                icon: 'error',
+                title: err_title,
+                text: 'Please try again.',
+                timer: 3000, 
+                showConfirmButton: false
+            });
 
-  <script>
+            
+            reject(error);
+        });
+        
+        });
+    }
+  
+</script>
+
+<script>
         
     function dual_file_upload(id1, id2) {
         debugger;
