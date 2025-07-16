@@ -1,0 +1,287 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% csrf_token %}
+
+
+</style>
+ <!-- Custom styles for this html-->
+ <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+ <link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
+ <link href="{% static 'css/menuButton.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/deletebtn.css' %}" rel="stylesheet" type="text/css" >
+
+ <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+ <!-- Include DataTables CSS -->
+ <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+ <!-- Include DataTables JS -->
+ <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<style>
+    /* Wrapper for each document group */
+    .document-group {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+    }
+
+    .removeDocBtn {
+        float: right;
+    }
+
+    .document-group {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px 20px 10px 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    /* Flex row for top buttons (Add More / Remove) */
+    .document-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    /* Remove button */
+    .removeDocBtn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    /* Add More button */
+    #addDocument {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        font-size: 14px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    /* Inputs and selects spacing */
+    .document-group input,
+    .document-group select {
+        margin-bottom: 12px;
+        width: 100%;
+        padding: 6px 10px;
+    }
+
+    /* Button wrapper at bottom center */
+    .button-wrapper {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    /* Submit & Go Back buttons */
+    .button-wrapper button {
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .button-wrapper .submitBtn {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .button-wrapper .goBackBtn {
+        background-color: #6c757d;
+        color: white;
+    }
+
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Index Card -->
+        <div class="card mb-4" style="zoom: 90%;">
+            <div class="card-body">
+                <div class="mb-4">
+                    <h3><strong style="color: #4e73df;"><u>Create Document :</u></strong></h3>
+                </div>
+                
+                {% comment %} <form id="documentForm" method="POST" action="{% url 'Create_Document_Master' %}">
+                    <div id="documentWrapper">
+                        <!-- Document block template -->
+                        <div class="document-group border p-3 mb-3 rounded">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <input type="text" name="doc_name[]" placeholder="Document Name" class="form-control" required />
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button type="button" class="btn btn-danger removeDocBtn">Remove</button>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <select name="is_active[]" class="form-control" required>
+                                        <option value="">-- Do you want to activate this document? --</option>
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4 mb-2">
+                                    <select name="is_mandatory[]" class="form-control" required>
+                                        <option value="">-- Is this document mandatory? --</option>
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <select name="doc_type[]" class="form-control" required>
+                                        <option value="">-- Select Document Type --</option>
+                                        {% for product in Product_types %}
+                                            <option value="{{ product.parameter_value }}">{{ product.parameter_value }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons Row -->
+                    <div class="d-flex justify-content-between mb-4">
+                        <button type="button" id="addDocument" class="btn btn-secondary">+ Add More</button>
+                    </div>
+
+                    <!-- Centered Submit and Go Back Buttons -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary me-2">Submit All</button>
+                        <a href="{% url 'documentMaster' %}" class="btn btn-outline-secondary">Go Back</a>
+                    </div>
+                </form> {% endcomment %}
+                
+                <form id="documentForm" method="POST" action="{% url 'Create_Document_Master' %}">
+                    {% csrf_token %}
+                    <div id="documentWrapper">
+                        <!-- Document block template -->
+                        <div class="document-group border p-3 mb-3 rounded">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <input type="text" name="doc_name[]" placeholder="Document Name" class="form-control" required />
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button type="button" class="btn btn-danger removeDocBtn">Remove</button>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <select name="is_active[]" class="form-control" required>
+                                        <option value="">-- Do you want to activate this document? --</option>
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4 mb-2">
+                                    <select name="is_mandatory[]" class="form-control" required>
+                                        <option value="">-- Is this document mandatory? --</option>
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                </div>
+
+                                {% if service_id == '5' %}
+                                <div class="col-md-4 mb-2">
+                                    <select name="doc_type[]" class="form-control" required>
+                                        <option value="">-- Select Document Type --</option>
+                                        {% for product in Product_types %}
+                                            <option value="{{ product.parameter_value }}">{{ product.parameter_value }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% elif service_id == '4' %}
+                                <div class="col-md-4 mb-2">
+                                    <select name="doc_type[]" class="form-control" required>
+                                        <option value="">-- Select Document Type --</option>
+                                        {% for product in contractor_types %}
+                                            <option value="{{ product.parameter_value }}">{{ product.parameter_value }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% else %}
+                                <!-- No dropdown for other service_ids -->
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons Row -->
+                    <div class="d-flex justify-content-between mb-4">
+                        <button type="button" id="addDocument" class="btn btn-secondary">+ Add More</button>
+                    </div>
+
+                    <!-- Centered Submit and Go Back Buttons -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary me-2">Submit All</button>
+                        <a href="{% url 'documentMaster' %}" class="btn btn-outline-secondary">Go Back</a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% if messages %}
+  {% for message in messages %}
+    <script>
+    Swal.fire({
+      title: "{{ message.tags }}",
+      text: "{{ message }}",
+      icon: "{{ message.tags }}",
+      confirmButtonText: "OK",
+    });
+  </script>
+  {% endfor %}
+{% endif %}
+
+<script type="text/javascript">
+  document.getElementById("month").min = new Date().toISOString().slice(0, 7);
+  document.getElementById("month_year").min = new Date().toISOString().slice(0, 7);
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function () {
+    $('#addDocument').click(function () {
+      let docBlock = $('.document-group').first().clone();
+      docBlock.find('input, select').val('');
+      $('#documentWrapper').append(docBlock);
+    });
+
+    $(document).on('click', '.removeDocBtn', function () {
+      if ($('.document-group').length > 1) {
+        $(this).closest('.document-group').remove();
+      } else {
+        alert('At least one document entry is required.');
+      }
+    });
+  });
+</script>
+
+<!-- End of Main Content -->
+{% endblock %}
+

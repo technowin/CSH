@@ -1,0 +1,329 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% csrf_token %}
+
+
+</style>
+ <!-- Custom styles for this html-->
+ <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+ <link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
+ <link href="{% static 'css/menuButton.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/deletebtn.css' %}" rel="stylesheet" type="text/css" >
+
+ <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+ <!-- Include DataTables CSS -->
+ <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+ <!-- Include DataTables JS -->
+ <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        .custom-select-box {
+            border: 2px solid #0d6efd;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .custom-select-box:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            border-color: #0d6efd;
+            outline: none;
+            background-color: #fff;
+        }
+    </style>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <!-- Index Card -->
+            <div class="card mb-4" style="zoom: 90%;">
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h3><strong style="color: #4e73df;"><u>Edit Document :</u></strong></h3>
+                    </div>
+
+                    {% comment %} Edit Form {% endcomment %}
+
+                    {% if service_id == '5' %}
+                        <form method="post" action="{% url 'Edit_Document_master' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="doc_id" value="{{ document.doc_id }}">
+                        
+                            <!-- Document Type Dropdown -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Product Type</strong></label>
+                                <select class="form-select custom-select-box" name="doc_type" required>
+                                    {% for type in Product_types %}
+                                        <option value="{{ type.parameter_value }}" {% if document.doc_type == type.parameter_value %}selected{% endif %}>
+                                            {{ type.parameter_value }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Document Name -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Document Name</strong></label>
+                                <textarea class="form-control" name="doc_name" rows="3">{{ document.doc_name }}</textarea>
+                            </div>
+
+                            <!-- Is Active -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Do you want to activate this document?</strong></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_active" id="activeYes" value="1" {% if document.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="activeYes">Yes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_active" id="activeNo" value="0" {% if not document.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="activeNo">No</label>
+                                </div>
+                            </div>
+
+                            <!-- Mandatory -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Do you want to make this document mandatory?</strong></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="mandatory" id="mandatoryYes" value="1" {% if document.mandatory %}checked{% endif %}>
+                                    <label class="form-check-label" for="mandatoryYes">Yes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="mandatory" id="mandatoryNo" value="0" {% if not document.mandatory %}checked{% endif %}>
+                                    <label class="form-check-label" for="mandatoryNo">No</label>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary px-4">Submit</button>
+                            </div>
+                        </form>
+                    {% elif service_id == '4' %}
+                        <form method="post" action="{% url 'Edit_Document_master' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="doc_id" value="{{ document.doc_id }}">
+                        
+                            <!-- Document Type Dropdown -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Contractor Type</strong></label>
+                                <select class="form-select custom-select-box" name="doc_type" required>
+                                    {% for type in contractor_types %}
+                                        <option value="{{ type.parameter_value }}" {% if document.doc_type == type.parameter_value %}selected{% endif %}>
+                                            {{ type.parameter_value }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Document Name -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Document Name</strong></label>
+                                <textarea class="form-control" name="doc_name" rows="3">{{ document.doc_name }}</textarea>
+                            </div>
+
+                            <!-- Is Active -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Do you want to activate this document?</strong></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_active" id="activeYes" value="1" {% if document.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="activeYes">Yes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_active" id="activeNo" value="0" {% if not document.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="activeNo">No</label>
+                                </div>
+                            </div>
+
+                            <!-- Mandatory -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Do you want to make this document mandatory?</strong></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="mandatory" id="mandatoryYes" value="1" {% if document.mandatory %}checked{% endif %}>
+                                    <label class="form-check-label" for="mandatoryYes">Yes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="mandatory" id="mandatoryNo" value="0" {% if not document.mandatory %}checked{% endif %}>
+                                    <label class="form-check-label" for="mandatoryNo">No</label>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary px-4">Submit</button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'Edit_Document_master' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="doc_id" value="{{ document.doc_id }}">
+
+                            <!-- Document Name -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Document Name</strong></label>
+                                <textarea class="form-control" name="doc_name" rows="3" >{{ document.doc_name }}</textarea>
+                            </div>
+
+                            <!-- Is Active -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Do you want to activate this document?</strong></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_active" id="activeYes" value="1" {% if document.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="activeYes">Yes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_active" id="activeNo" value="0" {% if not document.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="activeNo">No</label>
+                                </div>
+                            </div>
+
+                            <!-- Mandatory -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Do you want to make this document mandatory?</strong></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="mandatory" id="mandatoryYes" value="1" {% if document.mandatory %}checked{% endif %}>
+                                    <label class="form-check-label" for="mandatoryYes">Yes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="mandatory" id="mandatoryNo" value="0" {% if not document.mandatory %}checked{% endif %}>
+                                    <label class="form-check-label" for="mandatoryNo">No</label>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary px-4">Submit</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% if messages %}
+  {% for message in messages %}
+    <script>
+    Swal.fire({
+      title: "{{ message.tags }}",
+      text: "{{ message }}",
+      icon: "{{ message.tags }}",
+      confirmButtonText: "OK",
+    });
+  </script>
+  {% endfor %}
+{% endif %}
+
+<script type="text/javascript">
+  document.getElementById("month").min = new Date().toISOString().slice(0, 7);
+  document.getElementById("month_year").min = new Date().toISOString().slice(0, 7);
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+      $("#dataTable").DataTable({
+        //order: [[0, 'desc']],
+        "ordering": false,
+        initComplete: function () {
+          this.api()
+            .columns()
+            .every(function () {
+              var column = this;
+              var select = $(
+                '<select style="width:100%;border-radius: 10px;background-color:whitesmoke ;color: black;"><option value="">All</option></select>'
+              )
+                .appendTo($(column.header()).empty())
+                .on("change", function () {
+                  var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                  column.search(val ? "^" + val + "$" : "", true, false).draw();
+                });
+              column
+                .data()
+                .unique()
+                .sort()
+                .each(function (d, j) {
+                  var ce = d;
+                  if (
+                    ce.includes("<a") ||
+                    ce.includes("span") ||
+                    ce.includes("<input") ||
+                    ce.includes("select") ||
+                    ce.includes("textarea")
+                  ) {
+                  } else {
+                    select.append('<option value="' + d + '">' + d + "</option>");
+                  }
+                });
+            });
+        },
+        pageLength: 10,
+        lengthMenu: [
+          [5, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+          [5, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+        ],
+      });
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      $('#myModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); 
+        var menuId = button.data('id'); 
+        var modal = $(this);
+        modal.find('#menu_id_to_delete').val(menuId); 
+      });
+    });
+  </script>
+
+<script>
+
+  function delete_menu(menu_id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{% url 'delete_menu' %}?type=delete",  // Ensure this URL is correct
+                type: 'POST',
+                data: {
+                    'menu_id': menu_id,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                  if (response.success) {
+                      Swal.fire(
+                          'Deleted!',
+                          response.message,
+                          'success'
+                      ).then(() => {
+                          location.reload();  // Reload the page after successful deletion
+                      });
+                  } else {
+                      Swal.fire('Error!', response.message, 'error');
+                  }
+              },
+              error: function(xhr, status, error) {
+                  Swal.fire('Error!', 'There was a problem with the request.', 'error');
+              }
+            });
+        }
+    });
+}
+
+
+</script>  
+
+<!-- End of Main Content -->
+{% endblock %}
+

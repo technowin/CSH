@@ -1,0 +1,143 @@
+{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% block content %}
+{% load static %}
+{% csrf_token %}
+
+
+ <!-- Custom styles for this html-->
+ <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+ <link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
+ <link href="{% static 'css/menuButton.css' %}" rel="stylesheet" type="text/css" >
+ <link href="{% static 'css/deletebtn.css' %}" rel="stylesheet" type="text/css" >
+
+ <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+ <!-- Include DataTables CSS -->
+ <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+ <!-- Include DataTables JS -->
+ <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+ 
+
+    <div class="row">
+       <div class="col-lg-12">
+           <!-- Index Card -->
+            <div class="card mb-12"style="zoom:90%" >
+                <div class="row">
+                   <div class="col-md-6">
+                       <h3> <strong style="color: #4e73df;"> <u>Document Master</u> </strong></h3>
+                   </div>
+                   <div class="col-md-6">
+                        <a href='/Create_Document_Master' class="btn btn-primary" style="border-radius:15px;">
+                            Create Document
+                        </a>
+                   </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table style="width: 100%;"  class="table"  id="dataTable">   
+                            <thead>
+                                <tr>
+                                    <th>Sr No</th>
+                                    <th>Document Name</th>
+                                    <th>Document Type</th>
+                                    <th>Mandatory</th>
+                                    <th>Action</th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th><select class="form-control form-control-sm"><option value="">All</option></select></th>
+                                    <th><select class="form-control form-control-sm"><option value="">All</option></select></th>
+                                    <th><select class="form-control form-control-sm"><option value="">All</option></select></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in data %}
+                                <tr style="color: {% if row.is_active == 0 %}gray{% else %}black{% endif %};">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ row.doc_name }}</td>
+                                    <td>{{ row.doc_type }}</td>
+                                    <td>
+                                        {% if row.mandatory %}
+                                            ✅ Yes
+                                        {% else %}
+                                            ❌ No
+                                        {% endif %}
+                                    </td>
+                                    <td style="display: flex; gap: 10px;">
+                                        <a href='/Edit_Document_master?doc_id={{ row.doc_id }}' class="edit-button">
+                                            <svg class="edit-svgIcon" viewBox="0 0 512 512">
+                                                <path d="M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z"></path>
+                                            </svg>
+                                        </a>
+                                        {% comment %} <a href="#" onclick="deleteDocument('{{ row.doc_id }}'); return false;" class="text-danger">🗑️ Delete</a> {% endcomment %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var table = $('#dataTable').DataTable({
+                ordering: false,
+                pageLength: 10,
+                lengthMenu: [
+                    [5, 10, 25, 50, 100, -1],
+                    [5, 10, 25, 50, 100, "All"]
+                ],
+                initComplete: function () {
+                    this.api().columns([1, 2, 3]).every(function () {
+                        var column = this;
+                        var select = $('select', column.header().parentNode.children[column.index()]);
+                        column.data().unique().sort().each(function (d) {
+                            // Strip HTML if any
+                            var cleanText = d.replace(/<\/?[^>]+(>|$)/g, "");
+                            if (select.find("option[value='" + cleanText + "']").length === 0) {
+                                select.append('<option value="' + cleanText + '">' + cleanText + '</option>');
+                            }
+                        });
+
+                        select.on('change', function () {
+                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                            column.search(val ? '^' + val + '$' : '', true, false).draw();
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                Swal.fire({
+                title: "{{ message.tags }}",
+                text: "{{ message }}",
+                icon: "{{ message.tags }}",
+                confirmButtonText: "OK",
+                });
+            </script>
+        {% endfor %}
+    {% endif %}
+
+<!-- End of Main Content -->
+{% endblock %}
+

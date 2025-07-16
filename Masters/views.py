@@ -46,6 +46,9 @@ from CSH.settings import *
 import logging
 from django.http import FileResponse, Http404
 import mimetypes
+from django.utils.timezone import now
+from django.db.models import Max
+
 logger = logging.getLogger(__name__)
 
 @login_required
@@ -616,3 +619,146 @@ def onetimepage(request):
         logger.error(f"Error rendering onetimepage.html: {str(e)}")
         return HttpResponse("An error occurred while trying to load the page.", status=500)
 
+# document Master
+
+def documentMaster(request):
+    try:
+        if request.method == "GET":
+            service_id = request.session.get("service_db")  # not used yet, keeping it
+
+            # Fetch all active documents
+            documents = document_master.objects.all().order_by('order_by')
+            for doc in documents:
+                doc.doc_id = encrypt_parameter(str(doc.doc_id))
+                
+            context = {
+                'data': documents,
+                'service_id': service_id
+            }
+
+            return render(request, 'Master/documentMaster.html', context)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), ''])
+        logger.error(f"Error rendering documentMaster: {str(e)}")
+        return HttpResponse("An error occurred while trying to load the page.", status=500)
+
+# Create Document 
+
+def Create_Document_Master(request):
+    try:
+        if request.method == "GET":
+            service_id = request.session.get("service_db")  # not used yet, keeping it
+            # Fetch all active documents
+            documents = document_master.objects.all().order_by('order_by')
+            contractor_types = parameter_master.objects.filter(parameter_name='contractor Type')
+            Product_types = parameter_master.objects.filter(parameter_name='Product')
+            context = {
+                'data': documents,
+                'service_id': service_id,
+                'contractor_types': contractor_types,
+                'Product_types': Product_types,
+            }
+
+            return render(request, 'Master/Create_Document_Master.html', context)
+        
+        elif request.method == "POST":
+            service_id = request.session.get("service_db") 
+            doc_names = request.POST.getlist('doc_name[]')
+            is_active_list = request.POST.getlist('is_active[]')
+            is_mandatory_list = request.POST.getlist('is_mandatory[]')
+            doc_types = request.POST.getlist('doc_type[]') if service_id in ['4', '5'] else []
+            
+            user_id = request.session.get("user_id")
+            if not user_id or not CustomUser.objects.filter(id=user_id).exists():
+                messages.error(request, "Invalid session. Please log in again.")
+                return redirect("documentMaster")
+
+            # Get last order_by value from DB, or 0 if empty
+            last_order = document_master.objects.using(service_id).aggregate(Max('order_by'))['order_by__max'] or 0
+
+            for i in range(len(doc_names)):
+                new_doc = document_master.objects.using(service_id).create(
+                    doc_name=doc_names[i],
+                    is_active=int(is_active_list[i]),
+                    mandatory=int(is_mandatory_list[i]),
+                    doc_type=doc_types[i] if service_id in ['4', '5'] else None,
+                    created_at=now(),
+                    created_by=int(user_id),  
+                    order_by=last_order + i + 1
+                )
+
+            messages.success(request, "Documents saved successfully.")
+            return redirect('documentMaster')
+
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        # callproc("stp_error_log", [fun, str(e), user_id])
+        callproc("stp_error_log", [fun, str(e), ''])
+        logger.error(f"Error rendering documentMaster: {str(e)}")
+        return HttpResponse("An error occurred while trying to load the page.", status=500)
+    
+# Edit Document
+
+def Edit_Document_master(request):
+    try:
+        if request.method == "GET":
+            service_id = request.session.get("service_db")
+            document_id = decrypt_parameter(str(request.GET.get("doc_id")))
+            contractor_types = parameter_master.objects.filter(parameter_name='contractor Type')
+            Product_types = parameter_master.objects.filter(parameter_name='Product')
+
+            if not document_id:
+                return HttpResponse("Document ID not provided.", status=400)
+
+            document = get_object_or_404(document_master, doc_id=document_id)
+            document.doc_id = encrypt_parameter(str(document.doc_id))
+                
+            context = {
+                'service_id': service_id,
+                'document': document,
+                'contractor_types': contractor_types,
+                'Product_types': Product_types,
+            }
+
+            return render(request, 'Master/Edit_Document_master.html', context)
+
+        elif request.method == "POST":
+            
+            document_id = decrypt_parameter(str(request.POST.get("doc_id")))
+
+            if not document_id:
+                return HttpResponse("Document ID missing.", status=400)
+
+            document = get_object_or_404(document_master, doc_id=document_id)
+
+            # Grab session + form data
+            service_id = request.session.get("service_db")
+            updated_by = request.session.get("user_id")
+
+            doc_name = request.POST.get("doc_name", "").strip()
+            is_active = request.POST.get("is_active") == "1"
+            mandatory = request.POST.get("mandatory") == "1"
+
+            # Update document fields
+            document.doc_name = doc_name
+            document.is_active = is_active
+            document.mandatory = mandatory
+            document.updated_by = updated_by
+            document.updated_at = now()
+
+            # Only update doc_type if service_id == 5
+            if service_id == '5' or service_id == '4':
+                doc_type = request.POST.get("doc_type", "").strip()
+                document.doc_type = doc_type
+
+            document.save()
+
+            return redirect('documentMaster')  # Change if needed
+
+    except Exception as e:
+        return HttpResponse(f"An error occurred: {str(e)}", status=500)

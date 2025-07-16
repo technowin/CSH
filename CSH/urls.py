@@ -74,6 +74,9 @@ urlpatterns = [
     path("upload_excel",upload_excel, name="upload_excel"),
     path("site_master",sm, name="site_master"),
     path("get_access_control",get_access_control, name="get_access_control"),
+    path("documentMaster",documentMaster, name="documentMaster"),
+    path("Edit_Document_master",Edit_Document_master, name="Edit_Document_master"),
+    path("Create_Document_Master",Create_Document_Master, name="Create_Document_Master"),
 
     #Reports 
     path('common_html', common_html, name='common_html'),

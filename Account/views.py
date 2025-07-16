@@ -70,10 +70,11 @@ def Login(request):
             #     request.session.set_expiry(1209600)  # 2 weeks
             # else:
             #     request.session.set_expiry(0)  # Browser close
-            if user.role_id == 1:
-                request.session['service_db'] = '1'
-                return redirect("masters/?entity=user&type=i")
-            else : return redirect('services') 
+            # if user.role_id == 1:
+            #     request.session['service_db'] = '1'
+            #     return redirect("masters/?entity=user&type=i")
+            # else : 
+            return redirect('services') 
         else:
             messages.error(request, 'Invalid Credentials')
             return redirect("Login")
