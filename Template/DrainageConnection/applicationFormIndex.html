@@ -8,25 +8,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% comment %} <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> {% endcomment %}
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+<style>
+    .custom-file-input {
+  all: unset; /* Remove all default styles */
+  display: block;
+  font: inherit;
+  cursor: pointer;
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+</style>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 <body>
     
-    <div class="card mb-4" style="zoom:85%" >
+    <div class="card mb-4" style="zoom:85%">
         <div class="card-body">
            
             <div class="row">
-                
                 <div class="col-md-6">
                     <h1 style="color:#4e73df;font-weight:bold">
                         <u>Application Form</u>
-                      </h2>
+                    </h1>
                 </div>
 
                 <div class="col-md-6">
                     <a href="{% url 'applicationMasterCrate' %}" style="font-size:16px;" class="btn btn-lg btn-primary">Apply</a>
                 </div>
-                
             </div>
          
             <div class="table-responsive">
@@ -46,7 +59,6 @@
                     <tr>
                         <td>{{ row.srno }}</td>
                         
-                        {% comment %} <td>{{ row.request_no }}</td> {% endcomment %}
                         <td>
                             {% if row.request_no == None %}
                                 &nbsp;
@@ -59,12 +71,10 @@
                         
                         <td>
                             {% if row.status != "Refused" and row.status != "Rejected" and row.status != "Application Pending" %}
-                                {% comment %} <span style='background-color:green; padding:2%; border-radius:10px; color:white'> {% endcomment %}
                                 <span class="badge badge-success" style="font-size: 1.2em; padding: 8px 12px;">
                                     {{ row.status }}
                                 </span>
                             {% else %}
-                                {% comment %} <span style='background-color:red; padding:2%; border-radius:10px; color:white'> {% endcomment %}
                                 <span class="badge badge-danger" style="font-size: 1.2em; padding: 8px 12px;">
                                     {{ row.status }}
                                 </span>
@@ -85,10 +95,7 @@
                                 <span class="edit-text">View</span>
                             </a>
                             
-                            {% comment %} Note:- On Reject Edit is disable 09-05-2025 {% endcomment %}
-                            {% comment %} {% if row.status == 'Application Pending' or row.status == 'Rejected' %} {% endcomment %}
                             {% if row.status == 'Application Pending'%}
-
                                 <a class="edit-link" href="{% url 'EditApplicationFormFinalSubmit' row.id encrypted_new_id %}">
                                     <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="edit-text">Edit</span>
@@ -98,23 +105,46 @@
                                     <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="download-text">Download Certificate</span>
                                 </a> 
+
+                            {% elif row.status == 'Issue Permission'  %}
+                                <a class="download-link" href="{% url 'PermissionLetter' row.id %}">
+                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="download-text">Download Permission Letter</span>
+                                </a> 
+                                <button type="button"
+                                    class="btn btn-info uploadPhotoBtn"
+                                    data-toggle="modal"
+                                    data-target="#uploadPhotoModal"
+                                    data-form-id="{{ row.id }}"
+                                    data-ser-id="{{ row.ser_id }}">
+                                <i class="fa fa-upload"></i> Photo Upload
+                            </button>
+
                             {% endif %}
 
-                            {% if countRefusedDocument != 0 %}
-                                
-                                {% if row.status == 'Refused' %}
-                                    
-                                    <a class="download-link" href="{% url 'downloadRefusalDocument' row.id %}">
-                                        <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
-                                        <span class="download-text">Download</span>
-                                    </a> 
-
-                                {% endif %}
-                                
+                            {% if countRefusedDocument != 0 and row.status == 'Refused' %}
+                                <a class="download-link" href="{% url 'downloadRefusalDocument' row.id %}">
+                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="download-text">Download</span>
+                                </a> 
                             {% endif %}
 
-                        </td>
-                        
+                        {% if row.status == 'Challan Uploaded' %}
+                            <!-- View Button -->
+                            <a href="{% url 'view_uploaded_challan' row.id %}" class="btn btn-primary " target="_blank">View Challan</a>
+                            <button type="button"
+                                    class="btn btn-info uploadChallanBtn"
+                                    data-toggle="modal"
+                                    data-target="#uploadChallanModal"
+                                    data-form-id="{{ row.id }}"
+                                    data-ser-id="{{ row.ser_id }}"
+                                    {% comment %} data-challan-url="{% url 'download_doc' row.challan_file_path %}"> {% endcomment %}
+                                <i class="fa fa-upload"></i> Upload
+                            </button>
+                            {% endif %}
+
+
+                        </td>                
                     </tr>
                     {% endfor %}       
                 </tbody>
@@ -123,12 +153,80 @@
         </div>
     </div>
 
+       <!-- ✅ Single Reusable Modal -->
+    <div class="modal fade" id="uploadChallanModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Challan & Receipt</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                
+                    <!-- Upload Receipt Form -->
+                    
+                        <form id="uploadChallanForm" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_id" id="form_id">
+                            <input type="hidden" name="ser_id" id="ser_id">
+
+                            <div class="form-group">
+                                <label for="challan_file">Upload Challan Receipt</label>
+                                <input type="file" class="form-control custom-file-input " id="challan_file" name="challan_file" required>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <!-- Change to type=button to avoid double submit -->
+                                <button type="button" class="btn btn-primary" id="confirmUploadBtn">Submit</button>
+                            </div>
+                        </form>
+
+
+                </div>
+
+            </div>
+    </div>
+</div>
+
+        <div class="modal fade" id="uploadPhotoModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="uploadPhotoForm" enctype="multipart/form-data">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title">Upload Connection Photographs</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                <input type="file" name="photo_file" id="photo_file" class="form-control custom-file-input" required>
+                <input type="hidden" name="form_id" id="photo_form_id">
+                </div>
+
+                <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Upload</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+            </form>
+        </div>
+        </div>
+
+
+
+  
+
   <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
   <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  {% comment %} <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script> {% endcomment %}
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
-    {% if messages %}
+
+  {% if messages %}
     {% for message in messages %}
         <script>
         Swal.fire({
@@ -139,30 +237,143 @@
         });
         </script>
     {% endfor %}
-    {% endif %} 
+  {% endif %} 
 
-  
-  {% comment %} {% if messages %}
-  {% for message in messages %}
-    <script>
-    Swal.fire({
-      title: "{{ message.tags }}",
-      text: "{{ message }}",
-      icon: "{{ message.tags }}",
-      confirmButtonText: "OK",
+ <script>
+    $("#dt").dataTable({
+      pageLength: 10,
     });
-  </script>
-  {% endfor %}
-{% endif %} {% endcomment %}
+    </script> 
 
-</body>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie("csrftoken");
+
+    document.addEventListener("DOMContentLoaded", function () {
+        $('#uploadChallanModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var formId = button.data('form-id');
+            $('#uploadChallanForm').attr('action', '/upload-challan/' + formId + '/');
+        });
+
+        document.getElementById("confirmUploadBtn").addEventListener("click", function (e) {
+            e.preventDefault();
+            const form = document.getElementById("uploadChallanForm");
+
+            if (!document.getElementById("challan_file").value) {
+                Swal.fire("Warning", "Please select a file to upload.", "warning");
+                return;
+            }
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to upload the receipt?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Yes, upload it!",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: { 
+                            "X-Requested-With": "XMLHttpRequest",
+                            "X-CSRFToken": csrftoken
+                        }
+                    })
+                    .then(async (res) => {
+                        const contentType = res.headers.get("content-type");
+                        if (contentType && contentType.includes("application/json")) {
+                            return res.json();
+                        } else {
+                            const text = await res.text();
+                            throw new Error("Server returned non-JSON response: " + text.substring(0, 200));
+                        }
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire("Success", data.message, "success").then(() => {
+                                $("#uploadChallanModal").modal("hide");
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire("Error", data.message || "Upload failed.", "error");
+                            console.error("Upload failed:", data);
+                        }
+                    })
+                    .catch(err => {
+                        Swal.fire("Error", err.message, "error");
+                        console.error("Fetch error:", err);
+                    });
+                }
+            });
+        });
+    });
+</script>
 
 
 <script>
-    $("#dt").dataTable({
-      pageLength: 10,
-      /* order: [[0, 'desc']] */
+   
+    document.addEventListener("DOMContentLoaded", function () {
+        // When modal opens, set form_id
+        $('#uploadPhotoModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var formId = button.data('form-id');
+            $('#photo_form_id').val(formId);
+        });
+
+        // Handle form submit
+        $("#uploadPhotoForm").submit(function (e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            var formId = $("#photo_form_id").val();
+
+            $.ajax({
+                url: "/upload-connection-photographs/" + formId + "/",  // ✅ Django URL
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {"X-CSRFToken": getCookie("csrftoken")},
+                success: function (response) {
+                    alert(response.message);
+                    $('#uploadPhotoModal').modal('hide');
+                    location.reload(); // refresh table to see new status
+                },
+                error: function (xhr) {
+                    alert("Error: " + xhr.responseJSON.message);
+                }
+            });
+        });
     });
-  </script>
+</script>
+
+     
+
+    
+
+</body>
 
 {% endblock %}

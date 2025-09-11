@@ -129,7 +129,17 @@ urlpatterns = [
     path('viewapplicationform/<str:row_id>/<str:new_id>/', viewapplicationform, name='viewapplicationform'),
     path('edit_Post_Application_Master/<int:application_id>/<int:row_id_status>/', edit_Post_Application_Master, name='edit_Post_Application_Master'),
     path('edit_Post_Application_Master_final_submit/<int:application_id>/<int:row_id_status>/', edit_Post_Application_Master_final_submit, name='edit_Post_Application_Master_final_submit'),
-    
+
+
+
+    path("upload-challan/<str:form_id>/", upload_challan_receipt, name="upload_challan_receipt"),
+    path('view-challan/<str:form_id>/', viewUploadedChallan, name='view_uploaded_challan'),
+    path('permission-letter/<str:row_id>/', PermissionLetter, name='PermissionLetter'),
+    path("upload-connection-photographs/<str:form_id>/", upload_connection_photographs, name="upload_connection_photographs"),
+
+
+
+
     # path('EditApplicationFormFinalSubmit/<int:row_id>/<int:row_id_status>/', EditApplicationFormFinalSubmit, name='EditApplicationFormFinalSubmit'),
     # path('viewapplicationform/<int:row_id>/<int:new_id>/', viewapplicationform, name='viewapplicationform'),
     # path('EditApplicationForm/<int:row_id>/<int:row_id_status>/', EditApplicationForm, name='EditApplicationForm'),

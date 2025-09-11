@@ -1,3 +1,4 @@
+
 {% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
 {% block content %}
 {% load static %}
@@ -53,7 +54,7 @@
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="forward" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11"  %} disabled {% endif %}>
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18"  %} disabled {% endif %}>
                     Marked For
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="forward" style="max-height: 200px; overflow-y: auto;">
@@ -64,7 +65,7 @@
             </div>
         </div>
         <div class="col-md-2">
-            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11" or act_comp %}
+            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18" or act_comp %}
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
             {% elif workflow.level != 1 and workflow.send_forward == user_id|to_str %}
                 <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&sb=1&ac={{ac}}">Send Back</a>
@@ -90,7 +91,7 @@
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="send_forward" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11"  %} disabled {% endif %}>
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18"  %} disabled {% endif %}>
                     Send Forward
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="send_forward" style="max-height: 200px; overflow-y: auto;">
@@ -174,9 +175,9 @@
         <div class="col-md-3">
             {% if ac != "view" and matrix.action and matrix.action != "View"  %}
                 {% if workflow.send_forward|to_int == user_id %}
-                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
                 {% elif workflow.status_id|in_list:"1,2" and role_id == 3 %}
-                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
                 {% endif %}
             {% endif %}
         </div>
@@ -304,50 +305,78 @@
                     <button type="button" class="btn btn-danger" id="scru_r" onclick ="btn_confirm(this.id,'btnclkid')">Reject </button>
                 </div>
             {% elif matrix.reference == "inspection" %} 
-                <div class="modal-header">
-                    <h3 class="modal-title" style="color:black;font-weight:bold" >Inspection</h3>
-                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                </div>
-                <div class="modal-body" style="font-weight:bold;font:size:20px;">
-                    <div class="col-md-12 row">
+                 <div class="modal-header">
+                 <h3 class="modal-title" style="color:black;font-weight:bold">Inspection</h3>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+               </div>
+
+                <div class="modal-body" style="font-weight:bold;font-size:20px;">
+                    <div class="row">
+
+                        <!-- Checklist -->
                         <div class="col-md-6 formupl">
                             <a type="button" class="btn btn-primary" href="{% url 'download_doc' down_chklst %}" id="dochk" target="_blank">Download Checklist</a>
                             <hr>
                             <span class="formupl-title">Upload Checklist</span>
-                            <p class="formupl-paragraph">
-                                Upload your file
-                              </p>
-                             <label for="file-input1" class="drop-container">
-                            <span class="drop-title">Drop files here</span>
-                            or
-                            <input type="file" id="file-input1" name="cheklist_upl_file" required >
-                          </label>
+                            <p class="formupl-paragraph">Upload your file</p>
+                            <label for="file-input1" class="drop-container">
+                                <span class="drop-title">Drop files here</span> or
+                                {% comment %} <input type="file" id="file-input1" name="checklist_upl_file" required> {% endcomment %}
+                                <input type="file" id="file-input1" name="cheklist_upl_file" required>
+                            </label>
                         </div>
-                        <div class="col-md-6 formupl">
-                            <a type="button" class="btn btn-primary" id="doinsp" href="{% url 'download_doc' down_insp %}" target="_blank">Download Inspection </a>
+
+                        <!-- Inspection -->
+                        {% comment %} <div class="col-md-6 formupl">
+                            <a type="button" class="btn btn-primary" id="doinsp" href="{% url 'download_doc' down_insp %}" target="_blank">Download Inspection</a>
                             <hr>
                             <span class="formupl-title">Upload Inspection</span>
-                            <p class="formupl-paragraph">
-                                Upload your file
-                              </p>
-                             <label for="file-input2" class="drop-container">
-                            <span class="drop-title">Drop files here</span>
-                            or
-                            <input type="file" id="file-input2" name="inspection_upl_file" required >
-                          </label>
+                            <p class="formupl-paragraph">Upload your file</p>
+                            <label for="file-input2" class="drop-container">
+                                <span class="drop-title">Drop files here</span> or
+                                <input type="file" id="file-input2" name="inspection_upl_file" required>
+                            </label>
+                        </div> {% endcomment %}
+
+                        <!-- Preliminary Inspection Report -->
+                        <div class="col-md-6 formupl">
+                            <a type="button" class="btn btn-primary" id="doinsp" href="{% url 'download_doc' down_insp %}" target="_blank">Download Inspection</a>
+                            <hr>
+                            <span class="formupl-title">Upload Preliminary Inspection Report</span>
+                            <p class="formupl-paragraph">Upload your file</p>
+                            <label for="file-input3" class="drop-container">
+                                <span class="drop-title">Drop files here</span> or
+                                <input type="file" id="file-input3" name="prelim_insp_upl_file" required>
+                            </label>
                         </div>
+
+                        <!-- Challan for Payment -->
+                        <div class="col-md-6 formupl">
+                            <a type="button" class="btn btn-primary" id="doinsp" href="{% url 'download_doc' down_insp %}" target="_blank">Download Challan</a>
+                            <hr>
+                            <span class="formupl-title">Upload Challan for Payment</span>
+                            <p class="formupl-paragraph">Upload your file</p>
+                            <label for="file-input4" class="drop-container">
+                                <span class="drop-title">Drop files here</span> or
+                                <input type="file" id="file-input4" name="challan_upl_file" >
+                            </label>
+                        </div>
+
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="insp" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
-                </div>
-            {% elif matrix.reference == "approve" %} 
+
+             <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="insp" onclick="btn_confirm(this.id,'btnclkid')">Submit</button>
+             </div>
+
+
+            {% comment %} {% elif matrix.reference == "approve" %} 
                 <div class="modal-header">
                     <h3 class="modal-title" style="color:black;font-weight:bold" >Action Required</h3>
                     <button type="button" class="btn btn-primary" id="singleUploadButton" style="margin-left:2%" 
                         onclick="single_file_upload(19)" 
-                        {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11" %}
+                        {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18" %}
                             disabled
                         {% endif %}>
                         Upload
@@ -368,7 +397,32 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="app" onclick ="btn_confirm(this.id,'btnclkid')">Approve </button>
                     <button type="submit" class="btn btn-danger" id="ref" onclick ="btn_confirm(this.id,'btnclkid')">Refuse </button>
-                </div>  
+                </div>  {% endcomment %}
+
+            {% elif matrix.reference == "issue_permission" %} 
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color:black;font-weight:bold" >Issue Permission</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font-weight:bold;font:size:20px;">
+                    <div class="col-md-12 row">
+                        <div class="formupl">
+                            <span class="formupl-title">Upload Permission Letter</span>
+                            <p class="formupl-paragraph">
+                                Upload your file
+                              </p>
+                             <label for="file-input1" class="drop-container">
+                            <span class="drop-title">Drop files here</span>
+                            or
+                            <input type="file" id="file-input1" name="issue_permission_file" required >
+                          </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="issperm" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
+                </div>
             {% elif matrix.reference == "finalInspection" %} 
                 <div class="modal-header">
                     <h5 class="modal-title" style="color:black;font-weight:bold" >Final Inspection</h5>
@@ -420,19 +474,35 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="iss" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
                 </div>
+            {% elif matrix.reference == "challanReceipt" %}
+                    <!-- Challan Receipt Modal -->
+                    <div class="modal-header">
+                        <h5 class="modal-title">Challan Receipt Review</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <iframe src="{% url 'viewChallanReceipt' form_id %}" width="100%" height="400px"></iframe>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success" id="challanApprove" onclick="btn_confirm(this.id,'btnclkid')">Approve</button>
+                        <button type="submit" class="btn btn-danger" id="challanReject" onclick="btn_confirm(this.id,'btnclkid')">Reject</button>
+                    </div>
+
             {% endif %}
-      
           </div>
         </div>
     </form>
   </div>
+
+  
+
 <!-- Comments Modal -->
 <div class="modal fade" id="comments_model_id" >
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document" >
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="color:black">Comments  &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')" {% if workflow.forward|to_int == user_id %} {% elif ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11"  %} disabled {% endif %} >Add Comments</button>
+                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')" {% if workflow.forward|to_int == user_id %} {% elif ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18"  %} disabled {% endif %} >Add Comments</button>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
@@ -467,7 +537,6 @@
   </div>
   
   
-
 <!-- Documents Modal -->
 <div class="modal fade" id="docs_model_id" >
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document" >
@@ -475,7 +544,7 @@
             <div class="modal-header">
                 
                 <h5 class="modal-title" style="color:black">Internal Documents &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button type="button" class="btn btn-primary" id="uploadButton"  onclick ="sweet_popup(this.id,'file')"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11"  %} disabled {% endif %} >Upload</button>
+                <button type="button" class="btn btn-primary" id="uploadButton"  onclick ="sweet_popup(this.id,'file')"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18"  %} disabled {% endif %} >Upload</button>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span>
                 </button>
             </div>
@@ -518,6 +587,10 @@
     </div>
   </div>
 
+
+
+
+
 {% if messages %}
   {% for message in messages %}
     <script>
@@ -546,8 +619,10 @@
     function btn_confirm(chk, set) {
         const values = {
             "ack": 2,"scru_c": 3,"scru_r": 4,"dochk": 'dochk',"doinsp": 'doinsp',"insp": 5,
-            "app": 6,"ref": 7,"senbak": 8,"finalinsp":10,"iss": 11
-        };
+            "app": 6,"ref": 7,"senbak": 8,"issperm": 18,"finalinsp":10,"iss": 11,"challanReceipt": 17,"challanUpload": 16
+        }; 
+
+       
         
         if (values.hasOwnProperty(chk)) {
             $("#" + set).val(values[chk]);
@@ -774,8 +849,8 @@
             Swal.fire({
                 title: 'Upload File',
                 html: `
-                    <label for="file">Refusal Justification Document</label><br>
-                    <label for="file" style="color: red">Note: If you choose to refuse, then proceed with the upload.</label>
+                    {% comment %} <label for="file">Refusal Justification Document</label><br>
+                    <label for="file" style="color: red">Note: If you choose to refuse, then proceed with the upload.</label> {% endcomment %}
                     <input type="file" id="file" accept="*/*" style="display: block; margin-bottom: 10px;">
                 `,
                 showCancelButton: true,
@@ -847,6 +922,14 @@
         });
     }
 </script>
+<script>
+    function openChallanReview(url) {
+  $("#challanReceiptFrame").attr("src", url);
+  $("#challanReviewModal").modal("show");
+}
 
+
+
+</script>
 <!-- End of Main Content -->
 {% endblock %}

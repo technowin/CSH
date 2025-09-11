@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render,redirect
 from Account.models import *
@@ -12,6 +13,7 @@ from CSH.encryption import *
 import os
 from CSH.settings import *
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 import openpyxl
 import mimetypes
 from openpyxl.styles import Font, Border, Side
@@ -57,6 +59,7 @@ def index(request):
 def matrix_flow(request):
     docs,label,input,data = [],[],[],[]
     form_id,context,wf_id,sf,f,sb,rb,rb1  = '','','','','','','',''
+    #context ={}
     try:
         if request.user.is_authenticated ==True:                
             global user,role_id
@@ -243,16 +246,60 @@ def matrix_flow(request):
                             from Account.views import upd_citizen
                             upd_citizen(request)
                     
+                # elif status == 7 and ref == 'inspection':
+                #     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
+                #     inspection_upl_file = request.FILES.get('prelim_insp_upl_file')
+                #     challan_upl_file = request.FILES.get('challan_upl_file')
+                #     if cheklist_upl_file and inspection_upl_file:
+                #         file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser,'Checklist')
+                #         file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser,'Inspection')
+                #         file_resp = internal_docs_upload(challan_upl_file,role_id,user,wf,ser,'ChallanForInspection')
+                #     #r2 = callproc("stp_post_workflow", [wf_id, form_id, 16, 'challanReceipt', ser, user, ''])
+                #     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                #     if r[0][0] not in (""):
+                #         messages.success(request, str(r[0][0]))
+                #     else: messages.error(request, 'Oops...! Something went wrong!')
+
                 elif status == 5 and ref == 'inspection':
-                    cheklist_upl_file = request.FILES.get('cheklist_upl_file')
-                    inspection_upl_file = request.FILES.get('inspection_upl_file')
-                    if cheklist_upl_file and inspection_upl_file:
-                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser,'Checklist')
-                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser,'Inspection')
+                    # Get uploaded files
+                    files = {
+                        'Checklist': request.FILES.get('cheklist_upl_file'),
+                        'Inspection': request.FILES.get('prelim_insp_upl_file'),
+                        'ChallanForInspection': request.FILES.get('challan_upl_file')
+                    }
+
+                    # Upload each file if it exists
+                    for doc_type, file_obj in files.items():
+                        if file_obj:
+                            internal_docs_upload(file_obj, role_id, user, wf, ser, doc_type)
+
+                    # Determine workflow status
+                    if files['ChallanForInspection']:
+                        new_status = 16
+                        new_ref = 'challanUploaded'
+                    else:
+                        new_status = status
+                        new_ref = ref
+
+                    # Call workflow procedure
+                    r = callproc("stp_post_workflow", [wf_id, form_id, new_status, new_ref, ser, user, ''])
+                    if r[0][0]:
+                        messages.success(request, str(r[0][0]))
+                    else:
+                        messages.error(request, 'Oops...! Something went wrong!')
+
+                elif status == 18 and ref == 'issue_permission':
+                    
+                    issue_permission_file = request.FILES.get('issue_permission_file')
+                    if issue_permission_file:
+                        internal_resp = internal_docs_upload(issue_permission_file,role_id,user,wf,ser,'Permission Letter')
+                        #citizen_resp = citizen_docs_upload(issue_permission_file, form_user_id, form_id, user, ser, id1)
+                        
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    
                 elif status == 10 and ref == 'finalInspection':
                     final_cheklist_upl_file = request.FILES.get('final_cheklist_upl_file')
                     if final_cheklist_upl_file:
@@ -289,6 +336,8 @@ def matrix_flow(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+
+
                     
                     if status == 6:
                         
@@ -791,6 +840,34 @@ def download_doc(request, filepath):
         callproc("stp_error_log", [fun, str(e), ''])  
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
+
+
+
+
+from django.http import FileResponse, Http404
+
+# def download_doc(request, filepath):
+#     try:
+#         # Full path inside MEDIA_ROOT
+#         file_path = os.path.join(settings.MEDIA_ROOT, filepath)
+
+#         # Check if file exists
+#         if not os.path.exists(file_path):
+#             raise Http404("File not found")
+
+#         # Detect MIME type
+#         mime_type, _ = mimetypes.guess_type(file_path)
+#         if not mime_type:
+#             mime_type = "application/octet-stream"
+
+#         # Stream file back
+#         return FileResponse(open(file_path, "rb"), as_attachment=True, content_type=mime_type)
+
+#     except Exception as e:
+#         # Log for debugging
+#         print(f"Download error: {e}")
+#         raise Http404("Error fetching file")
+
     
 # View Application Form 
 def viewapplicationform(request, row_id, new_id):
@@ -1306,4 +1383,199 @@ def downloadRefusalDocument(request, row_id):
         callproc("stp_error_log", [fun, str(e), user.id])
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
+
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.http import Http404, HttpResponse
+
+
+logger = logging.getLogger(__name__)
+
+def viewUploadedChallan(request, form_id):
+    try:
+        # Decrypt workflow_id
+        form_id1 = decrypt_parameter(form_id)
+        rows = callproc("stp_get_challan_doc", [form_id1])
+
+        filepath = ''
+        for row in rows:
+            filepath = str(row[0])
+
+        # Full path inside MEDIA_ROOT
+        file_path = os.path.join(settings.MEDIA_ROOT, filepath)
+
+        if not os.path.exists(file_path):
+            raise Http404("File not found")
+
+        # Detect MIME type
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            mime_type = "application/octet-stream"
+
+        response = FileResponse(open(file_path, "rb"), content_type=mime_type)
+
+        # ✅ Open inline instead of download
+        response["Content-Disposition"] = f'inline; filename="{os.path.basename(file_path)}"'
+        return response
+
+    except Exception as e:
+        print(f"View challan error: {e}")
+        raise Http404("Error fetching file")
+
+
+
+
+def upload_challan_receipt(request, form_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
+
+    try:
+        app_id = decrypt_parameter(form_id)
+        application = application_form.objects.get(id=app_id)
+
+        # Prevent duplicate upload
+        if application.status_id == 17:
+            return JsonResponse({
+                "success": False,
+                "message": "Receipt has already been uploaded. You cannot upload again."
+            })
+
+        challan_file = request.FILES.get("challan_file")
+        if not challan_file:
+            return JsonResponse({"success": False, "message": "No file selected."})
+
+        # Use logged-in user safely
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+            user_id = user.id
+            full_name = request.session.get("full_name", user.full_name or user.username)
+        else:
+            user_id = None 
+        
+    
+       
+
+        # Save document (doc_id hardcoded as 24 for Challan Receipt)
+        upload_challan_wrapper(
+            challan_file,
+            user_id,
+            app_id,
+            created_by=full_name,
+            ser='1',
+            doc_id1=24
+        )
+
+        # Update status to 17
+        callproc("sp_update_status", [app_id, application.id, 17, user_id])
+
+        return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
+
+    except application_form.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Application not found."}, status=404)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({"success": False, "message": f"Upload failed: {str(e)}"}, status=500)
+
+def upload_challan_wrapper(file, user, form_id, created_by, ser, doc_id1):
+    """
+    Wrapper function for citizen_docs_upload that handles form ID conversion
+    """
+    try:
+        if isinstance(form_id, str):
+            form_id = int(form_id)
+    except (ValueError, TypeError):
+        raise ValueError("Invalid form ID format. Form ID must be a valid integer.")
+
+    return citizen_docs_upload(file, user, form_id, created_by, ser, doc_id1)
+
+def PermissionLetter(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id=2)
+        request.session['full_name'] = user.full_name
+
+        # Decrypt row_id
+        row_id = decrypt_parameter(row_id)
+        rows = callproc("stp_get_permission_doc", [row_id])
+
+        filepath = ''
+        for row in rows:
+            filepath = str(row[0]) if row[0] else ''
+
+        # ✅ If no filepath in DB
+        if not filepath:
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # ✅ Build full path and check
+        file_path = os.path.join(settings.MEDIA_ROOT, filepath)
+        if not os.path.exists(file_path):
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # ✅ Encrypt relative path before redirecting to download_doc
+        encrypted_filepath = encrypt_parameter(filepath)
+        return redirect('download_doc', encrypted_filepath)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name if tb else "PermissionLetter"
+        callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
+        logger.error(f"Error downloading permission letter: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+
+def upload_connection_photographs(request, form_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
+
+    try:
+        # Decrypt form_id and fetch application
+        app_id = decrypt_parameter(form_id)
+        application = application_form.objects.get(id=app_id)
+
+        #  Prevent duplicate upload (assume status 18 = photographs uploaded)
+        if application.status_id == 19:
+            return JsonResponse({
+                "success": False,
+                "message": "Connection photographs have already been uploaded. You cannot upload again."
+            })
+
+        #  Get uploaded file
+        photo_file = request.FILES.get("photo_file")
+        if not photo_file:
+            return JsonResponse({"success": False, "message": "No file selected."})
+
+        #  Identify logged-in user
+        phone_number = request.session.get('phone_number')
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
+            user_id = user.id
+            full_name = request.session.get("full_name", user.full_name or user.username)
+        else:
+            user_id = None
+            full_name = "System"
+
+        #  Save document (assign doc_id = 25 for Connection Photographs)
+        upload_challan_wrapper(
+            photo_file,
+            user_id,
+            app_id,
+            created_by=full_name,
+            ser='1',
+            doc_id1=25
+        )
+
+        #  Update application status (19 = photographs uploaded)
+        callproc("sp_update_status", [app_id, application.id, 19, user_id])
+
+        return JsonResponse({"success": True, "message": "Connection photographs uploaded successfully."})
+
+    except application_form.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Application not found."}, status=404)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({"success": False, "message": f"Upload failed: {str(e)}"}, status=500)
+
 
