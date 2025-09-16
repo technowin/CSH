@@ -398,6 +398,36 @@
                     <button type="submit" class="btn btn-primary" id="app" onclick ="btn_confirm(this.id,'btnclkid')">Approve </button>
                     <button type="submit" class="btn btn-danger" id="ref" onclick ="btn_confirm(this.id,'btnclkid')">Refuse </button>
                 </div>  {% endcomment %}
+            {% elif matrix.reference == "reject" %}
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold">Action Required</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+
+                <div class="modal-body" style="font-weight:bold;font-size:20px;">
+                    Please provide remarks and upload any supporting document before rejecting this request.
+                    <br><br>
+                    
+                    <div>
+                        <label for="reject_remark">Remark:</label>
+                        <textarea id="reject_remark" name="reject_remark" rows="3" cols="30" 
+                                placeholder="Write your remark here..." 
+                                style="height:30%; border-color: black; border-radius: 10px;" 
+                                class="form-control" required></textarea>
+                    </div>
+                    <br>
+                    <div>
+                        <label for="reject_file">Upload File:</label>
+                        <input type="file" id="reject_file" name="reject_file" class="form-control">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" 
+                            id="reject_btn" 
+                            onclick="submitReject(this.id)">Reject</button>
+                </div>
 
             {% elif matrix.reference == "issue_permission" %} 
                 <div class="modal-header">
@@ -423,6 +453,9 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="issperm" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
                 </div>
+
+            
+
             {% elif matrix.reference == "finalInspection" %} 
                 <div class="modal-header">
                     <h5 class="modal-title" style="color:black;font-weight:bold" >Final Inspection</h5>
@@ -930,6 +963,43 @@
 
 
 
+</script>
+
+<script>
+        function submitReject(btnId) {
+        const wf_id = "{{ wf_id|default:'' }}";  // pass via template context or data-attribute
+        const form_id = "{{ form_id|default:'' }}";
+        const remarks = document.getElementById('reject_remark').value;
+        const fileInput = document.getElementById('reject_file');
+        const file = fileInput.files[0];
+
+        if (!remarks) {
+            alert("Please enter a remark.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("wf_id", wf_id);
+        formData.append("form_id", form_id);
+        formData.append("status", "7");  // rejection status
+        formData.append("ref", "rejected");
+        formData.append("remarks", remarks);
+        if (file) formData.append("refusal_file", file);
+
+        fetch("{% url 'submit_refusal' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            location.reload(); // refresh page or close modal
+        })
+        .catch(error => console.error("Error:", error));
+    }
 </script>
 <!-- End of Main Content -->
 {% endblock %}

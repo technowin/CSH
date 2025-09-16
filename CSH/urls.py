@@ -136,6 +136,7 @@ urlpatterns = [
     path('view-challan/<str:form_id>/', viewUploadedChallan, name='view_uploaded_challan'),
     path('permission-letter/<str:row_id>/', PermissionLetter, name='PermissionLetter'),
     path("upload-connection-photographs/<str:form_id>/", upload_connection_photographs, name="upload_connection_photographs"),
+     path("submit_refusal/", submit_refusal, name="submit_refusal"),
 
 
 
@@ -188,7 +189,10 @@ urlpatterns = [
     path('citizen_edit_pa/<str:row_id>/<str:new_id>/', citizen_edit_pa, name='citizen_edit_pa'),
     path('citizen_view_pa/<str:row_id>/<str:new_id>/', citizen_view_pa, name='citizen_view_pa'),
     path('create_partial_view_product', create_partial_view_product, name='create_partial_view_product'),
-    
+    path('chalan_doc/<str:row_id>/', Chalan, name='Chalan'),
+    path('registrationchalan/<str:row_id>/',RegistrationChalan, name='RegistrationChalan'),
+    path("upload-receipt/<str:form_id>/", upload_chalan_receipt, name="upload_chalan_receipt"),
+    path("upload_registration_receipt/<str:form_id>/", upload_registration_receipt, name="upload_registration_receipt"),
     # Verification Screen 
     
     path('VerificationForm', VerificationForm, name='VerificationForm'), 
@@ -210,6 +214,7 @@ urlpatterns = [
     path('downloadIssuedCertificate/<str:row_id>/', downloadIssuedCertificate, name='downloadIssuedCertificate'), 
     path('downloadIssuedCertificatetc/<str:row_id>/', downloadIssuedCertificatetc, name='downloadIssuedCertificatetc'), 
     path('downloadIssuedCertificatett/<str:row_id>/', downloadIssuedCertificatett, name='downloadIssuedCertificatett'), 
+    path('downloadIssuedCertificatedc/<str:row_id>/', downloadIssuedCertificatedc, name='downloadIssuedCertificatedc'), 
     
     path('downloadRefusalDocument/<str:row_id>/', downloadRefusalDocument, name='downloadRefusalDocument'), 
     path('downloadRefusalDocumenttt/<str:row_id>/', downloadRefusalDocumenttt, name='downloadRefusalDocumenttt'), 
