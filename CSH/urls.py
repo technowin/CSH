@@ -191,7 +191,7 @@ urlpatterns = [
     path('create_partial_view_product', create_partial_view_product, name='create_partial_view_product'),
     path('chalan_doc/<str:row_id>/', Chalan, name='Chalan'),
     path('registrationchalan/<str:row_id>/',RegistrationChalan, name='RegistrationChalan'),
-    path("upload-receipt/<str:form_id>/", upload_chalan_receipt, name="upload_chalan_receipt"),
+    path("upload_chalan_receipt/<str:form_id>/", upload_chalan_receipt, name="upload_chalan_receipt"),
     path("upload_registration_receipt/<str:form_id>/", upload_registration_receipt, name="upload_registration_receipt"),
     # Verification Screen 
     

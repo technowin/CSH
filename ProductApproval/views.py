@@ -19,8 +19,9 @@ import pandas as pd
 import calendar
 from django.utils import timezone
 from datetime import timedelta
-from django.contrib import messages
 from django.shortcuts import redirect
+from django.http import Http404, HttpResponse 
+
 
 # Create your views here.
 import logging
@@ -136,8 +137,7 @@ def matrix_flow_pa(request):
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.exclude(is_active=0).exclude(doc_id__in=[10]):
-            # for doc_master in document_master.objects.all():
+            for doc_master in document_master.objects.all().exclude(doc_id=18):
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
@@ -181,36 +181,60 @@ def matrix_flow_pa(request):
             comment =  request.POST.get('comment', '')
             ser= request.session.get('service_db','default')
             id1 = request.POST.get('id1', None)
+            id2 = request.POST.get('id2', None)
+            id3 = request.POST.get('id3', None)
             if comment!='':
                 internal_user_comments.objects.create(
                         workflow=wf, comments=comment,
                         created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
                 )  
                 response = f"Your comment has been submitted: '{comment}'"
-                
             for file in files:
                  response =  internal_docs_upload(file,role_id,user,wf,ser,'')
-                 
+            
+            filess = request.FILES.getlist('filess[]')
+
+            if len(filess) >= 1:
+                file1 = filess[0]
+
+                if len(filess) > 1:
+                    file2 = filess[1]
+                else:
+                    file2 = None
+
+                response1 = internal_docs_upload(file1, role_id, user, wf, ser, '')
+                file_resp = citizen_docs_upload(file1, form_user_id, form_id, user, ser, id1)
+                
+                response2 = None 
+                
+                if file2:
+                    response2 = internal_docs_upload(file2, role_id, user, wf, ser, '')
+                    file_resp = citizen_docs_upload(file2, form_user_id, form_id, user, ser, id2)
+
+                response = response1 or response2
+                    
             if response:
                 return JsonResponse(response, safe=False)
-            
-            paymentReceipt = request.FILES.get('receipt_upload_file')
-            response = None
-            status =  request.POST.get('btnclk', '')
-            if status == '1' or status == '2':
-                if paymentReceipt:
-                    response = internal_docs_upload(paymentReceipt, role_id, user, wf, ser, 'Payment Receipt')
-                else:
-                    messages.warning(request, "Please upload the payment receipt.")
-                    return redirect('matrix_flow_pa')    
 
+            # Refusalfile = request.FILES.get('file')
+            # response = None
+
+            # if Refusalfile:
+                
+            #     response3 = internal_docs_upload(Refusalfile, role_id, user, wf, ser, 'Refusal Document')
+            #     refusal_file_resp = citizen_docs_upload(Refusalfile, form_user_id, form_id, user, ser, id3)
+            #     response = response3
+
+            # if response:
+            #     return JsonResponse(response, safe=False)
+            
             ref = decrypt_parameter(matrix_ref) if (matrix_ref := request.POST.get('matrix_ref', '')) else ''
             ac = decrypt_parameter(ac) if (ac := request.POST.get('ac', '')) else ''
             status =  request.POST.get('btnclk', '')
             if status.isdigit():
                 status = int(status)
                 
-                if (status == 3 or status == 4) and (ref == 'scrutiny'):
+                if (status == 4 ) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
                     rej_res = request.POST.get('rej_res')
                     if rej_res!='' and status in [4]:
@@ -228,7 +252,125 @@ def matrix_flow_pa(request):
                     r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
                     if r1[0][0] not in (""):
                         messages.success(request, str(r1[0][0]))
+                        return JsonResponse({"success": True, "message": str(r1[0][0])})
+
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    
+                    # code to update api_data
+                    
+                    if status == 4:
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                elif status == 3 and ref == 'chalan':
+                    
+                    scru_chalan_file = request.FILES.get('scru_chalan_file')
+                    if scru_chalan_file:
+                        internal_resp = internal_docs_upload(scru_chalan_file,role_id,user,wf,ser,'Chalan')
+                        #citizen_resp = citizen_docs_upload(issue_permission_file, form_user_id, form_id, user, ser, id1)
+                        
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+
+                elif (status == 5) and (ref == 'scrutinyy'):
+                    doc_ids = request.POST.getlist('doc_ids')
+                    rej_res = request.POST.get('rej_res')
+                    if rej_res!='' and status in [4]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=rej_res,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
+                    for doc_id in doc_ids:
+                        if doc_id !='':
+                            doc_id = decrypt_parameter(doc_id)
+                            correct = request.POST.get(f"correct_{doc_id}")
+                            incorrect = request.POST.get(f"incorrect_{doc_id}")
+                            rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                            r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+                    r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        return JsonResponse({"success": True, "message": str(r1[0][0])})
+
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                
+
+                # elif (status == 7 or status==8) and (ref == 'approval'):
+                #     rej_res = request.POST.get('rej_res', '').strip()
+                #     # Call approval SP after reason/file save
+                #     r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
+                #     if r1[0][0] not in (""):
+                #         messages.success(request, str(r1[0][0]))
+                #     else:
+                #         messages.error(request, "Oops...! Something went wrong!")
+
+                elif (status == 7 or status==8) and (ref == 'approval'):
+                    rej_res = request.POST.get('rej_res', '').strip()
+                    refusal_file = request.FILES.get('file')
+
+                    if rej_res!='' and status in [8]:
+                        internal_user_comments.objects.create(
+                            workflow=wf,
+                            comments=rej_res,
+                            created_at=datetime.now(),
+                            created_by=str(user),
+                            updated_at=datetime.now(),
+                            updated_by=str(user)
+                        )
+
+                    # Save refusal file if provided
+                    if refusal_file:
+                        response3 = internal_docs_upload(refusal_file, role_id, user, wf, ser, 'Refusal Document')
+                        refusal_file_resp = citizen_docs_upload(refusal_file, form_user_id, form_id, user, ser, id3)
+                        # if response3:
+                        #     return JsonResponse(response3, safe=False)
+                        # else:
+                        #     # 🔑 fallback if upload fails
+                        #     messages.error(request, "File upload failed.")
+                        #     return redirect(request.META.get("HTTP_REFERER", "/"))
+
+                    # Call approval SP after reason/file save
+                    r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
+
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        
+                    else:
+                        messages.error(request, "Oops...! Something went wrong!")
+
+                    return redirect(request.META.get("HTTP_REFERER", "/"))
+
+
+
+                elif status == 9 and ref == 'registration':
+                    
+                    registration_chalan_file = request.FILES.get('registration_chalan_file')
+                    if registration_chalan_file:
+                        internal_resp = internal_docs_upload(registration_chalan_file,role_id,user,wf,ser,'Registration Chalan')
+                        #citizen_resp = citizen_docs_upload(issue_permission_file, form_user_id, form_id, user, ser, id1)
+                        
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                            
                 elif status == 5 and ref == 'inspection':
                     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
                     inspection_upl_file = request.FILES.get('inspection_upl_file')
@@ -239,7 +381,39 @@ def matrix_flow_pa(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                elif status == 8 and ref == 'certificate':
+                # elif status == 6 and ref == 'public_notice':
+                #     notice_upl_file = request.FILES.get('notice_upl_file')
+                #     objection_upl_file = request.FILES.get('objection_upl_file')
+                #     if notice_upl_file and objection_upl_file:
+                #         file_resp = internal_docs_upload(notice_upl_file,role_id,user,wf,ser,'Public Notice')
+                #         file_resp = internal_docs_upload(objection_upl_file,role_id,user,wf,ser,'Objection')
+                #     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                #     if r[0][0] not in (""):
+                #         messages.success(request, str(r[0][0]))
+                #     else: messages.error(request, 'Oops...! Something went wrong!')
+                # elif status == 7 and ref == 'department_proposal':
+                #     DepProposal_upl_file = request.FILES.get('DepProposal_upl_file')
+                #     if DepProposal_upl_file:
+                #         file_resp = internal_docs_upload(DepProposal_upl_file,role_id,user,wf,ser,'Department Proposal')
+                #     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                #     if r[0][0] not in (""):
+                #         messages.success(request, str(r[0][0]))
+                #     else: messages.error(request, 'Oops...! Something went wrong!')
+                # elif status == 10 and ref == 'letter_of_payment':
+                #     letOfPay_upl_file = request.FILES.get('letOfPay_upl_file')
+                #     plantOfLetter_upl_file = request.FILES.get('plantOfLetter_upl_file')
+                #     if letOfPay_upl_file and plantOfLetter_upl_file:
+                #         file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf,ser,'Letter of Payment')
+                #         file_resp = internal_docs_upload(plantOfLetter_upl_file,role_id,user,wf,ser,'Plantation Letter')
+                #     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                #     fui = workflow_details.objects.filter(id=wf_id).first()
+                #     form_user_id = fui.form_user_id
+                #     file_resp_1 = citizen_docs_upload(letOfPay_upl_file,form_user_id,form_id,user, ser, 13)
+                #     file_resp_2 = citizen_docs_upload(plantOfLetter_upl_file, form_user_id, form_id, user, ser, 15)
+                #     if r[0][0] not in (""):
+                #         messages.success(request, str(r[0][0]))
+                #     else: messages.error(request, 'Oops...! Something went wrong!')
+                elif status == 11 and ref == 'certificate':
                     iss_remark = request.POST.get('iss_remark')
                     if iss_remark!='':
                         internal_user_comments.objects.create(
@@ -252,13 +426,13 @@ def matrix_flow_pa(request):
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,iss_remark])
                     fui = workflow_details.objects.filter(id=wf_id).first()
                     form_user_id = fui.form_user_id
-                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,ser, 4)
+                    file_resp = citizen_docs_upload(certificate_upl_file,form_user_id,form_id,user,ser, 14)
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 else:
                     f_remark = request.POST.get('f_remark')
-                    if f_remark!='' and status in [11, 12]:
+                    if f_remark!='' and status in [8, 9, 11, 12]:
                         internal_user_comments.objects.create(
                                 workflow=wf, comments=f_remark,
                                 created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
@@ -267,6 +441,49 @@ def matrix_flow_pa(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    
+                    if status == 11:
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '4'
+                            request.session['remarks'] = f_remark
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                    if status == 12 or status == 9:
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = f_remark
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                    
+                    
                 return redirect(f'/matrix_flow_pa?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 
     except Exception as e:
@@ -881,4 +1098,265 @@ def create_partial_view_product(request):
             "error": "An error occurred", 
             "details": str(e)
         }, status=500)
+
+
+
+def Chalan(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id=2)
+        request.session['full_name'] = user.full_name
+
+        # Decrypt row_id
+        row_id = decrypt_parameter(row_id)
+        rows = callproc("sp_get_chalan_doc", [row_id])
+
+        filepath = ''
+        for row in rows:
+            filepath = str(row[0]) if row[0] else ''
+
+        # ✅ If no filepath in DB
+        if not filepath:
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # ✅ Build full path and check
+        file_path = os.path.join(settings.MEDIA_ROOT, filepath)
+        if not os.path.exists(file_path):
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # ✅ Encrypt relative path before redirecting to download_doc
+        encrypted_filepath = encrypt_parameter(filepath)
+        return redirect('download_doc', encrypted_filepath)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name if tb else "Chalan"
+        callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
+        logger.error(f"Error downloading Chalan : {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+
+
+def upload_chalan_receipt(request, form_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
+
+    try:
+        app_id = decrypt_parameter(form_id)
+        application = application_form.objects.get(id=app_id)
+
+        # Prevent duplicate upload
+        if application.status_id == 4:
+            return JsonResponse({
+                "success": False,
+                "message": "Receipt has already been uploaded. You cannot upload again."
+            })
+
+        receipt_file = request.FILES.get("receipt_file")
+        if not receipt_file:
+            return JsonResponse({"success": False, "message": "No file selected."})
+
+        # Use logged-in user safely
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+            user_id = user.id
+            full_name = request.session.get("full_name", user.full_name or user.username)
+        else:
+            user_id = None 
+        
     
+       
+
+        # Save document (doc_id hardcoded as 24 for Challan Receipt)
+        upload_challan_wrapper(
+            receipt_file,
+            user_id,
+            app_id,
+            created_by=full_name,
+            ser='5',
+            doc_id1=11
+        )
+
+        
+        callproc("sp_update_status", [4, user_id,app_id, application.id])
+
+        return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
+
+    except application_form.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Application not found."}, status=404)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({"success": False, "message": f"Upload failed: {str(e)}"}, status=500)
+
+def upload_challan_wrapper(file, user, form_id, created_by, ser, doc_id1):
+    """
+    Wrapper function for citizen_docs_upload that handles form ID conversion
+    """
+    try:
+        if isinstance(form_id, str):
+            form_id = int(form_id)
+    except (ValueError, TypeError):
+        raise ValueError("Invalid form ID format. Form ID must be a valid integer.")
+
+    return citizen_docs_upload(file, user, form_id, created_by, ser, doc_id1)
+    
+def download_doc(request, filepath):
+    file = decrypt_parameter(filepath)
+    file_path = os.path.join(settings.MEDIA_ROOT, file)
+    file_name = os.path.basename(file_path)
+    try:
+        if os.path.exists(file_path):
+            mime_type, _ = mimetypes.guess_type(file_path)
+            if not mime_type:
+                mime_type = 'application/octet-stream'
+            
+            with open(file_path, 'rb') as file:
+                response = HttpResponse(file.read(), content_type=mime_type)
+                response['Content-Disposition'] = f'inline; filename="{file_name}"'
+                return response
+        else:
+            return HttpResponse("File not found", status=404)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), ''])  
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+    
+def RegistrationChalan(request, row_id):
+    
+    try:
+    
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id=2)
+        request.session['full_name'] = user.full_name
+
+        # Decrypt row_id
+        row_id = decrypt_parameter(row_id)
+        rows = callproc("sp_get_registrationchalan_doc", [row_id])
+
+        filepath = ''
+        for row in rows:
+            filepath = str(row[0]) if row[0] else ''
+
+        # ✅ If no filepath in DB
+        if not filepath:
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # ✅ Build full path and check
+        file_path = os.path.join(settings.MEDIA_ROOT, filepath)
+        if not os.path.exists(file_path):
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # ✅ Encrypt relative path before redirecting to download_doc
+        encrypted_filepath = encrypt_parameter(filepath)
+        return redirect('download_doc', encrypted_filepath)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name if tb else "Registration Chalan"
+        callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
+        logger.error(f"Error downloading RegChalan : {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+    
+def upload_registration_receipt(request, form_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
+
+    try:
+        app_id = decrypt_parameter(form_id)
+        application = application_form.objects.get(id=app_id)
+
+        # Prevent duplicate upload
+        if application.status_id == 10:
+                return JsonResponse({
+                "success": False,
+                "message": "Receipt has already been uploaded. You cannot upload again."
+            })
+
+        receipt_file1 = request.FILES.get("receipt_file1")
+        if not receipt_file1:
+            return JsonResponse({"success": False, "message": "No file selected."})
+
+        # Use logged-in user safely
+        phone_number = request.session['phone_number']
+        
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+            user_id = user.id
+            full_name = request.session.get("full_name", user.full_name or user.username)
+        else:
+            user_id = None 
+        
+    
+        upload_receipt_wrapper(
+            receipt_file1,
+            user_id,
+            app_id,
+            created_by=full_name,
+            ser='5',
+            doc_id1=12
+        )
+
+        
+        callproc("sp_update_status", [10, user_id,app_id, application.id])
+
+        return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
+
+    except application_form.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Application not found."}, status=404)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({"success": False, "message": f"Upload failed: {str(e)}"}, status=500)
+
+def upload_receipt_wrapper(file, user, form_id, created_by, ser, doc_id1):
+    """
+    Wrapper function for citizen_docs_upload that handles form ID conversion
+    """
+    try:
+        if isinstance(form_id, str):
+            form_id = int(form_id)
+    except (ValueError, TypeError):
+        raise ValueError("Invalid form ID format. Form ID must be a valid integer.")
+
+    return citizen_docs_upload(file, user, form_id, created_by, ser, doc_id1)
+
+def downloadIssuedCertificate(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id=2)
+        request.session['full_name'] = user.full_name
+
+        # Decrypt row_id
+        row_id = decrypt_parameter(row_id)
+        rows = callproc("sp_get_issued_certificate", [row_id])
+
+        filepath = ''
+        for row in rows:
+            filepath = str(row[0]) if row[0] else ''
+
+        # ✅ If no filepath in DB
+        if not filepath:
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # ✅ Build full path and check if file exists
+        file_path = os.path.join(settings.MEDIA_ROOT, filepath)
+        if not os.path.exists(file_path):
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # ✅ Encrypt relative path before redirecting to download_doc
+        encrypted_filepath = encrypt_parameter(filepath)
+        return redirect('download_doc', encrypted_filepath)
+
+    except Exception as e:
+        # Log error but never raise Http404
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name if tb else "downloadIssuedCertificate"
+        callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
+        logger.error(f"Error in downloadIssuedCertificate: {str(e)}")
+
+        return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
