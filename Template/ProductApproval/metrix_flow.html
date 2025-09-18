@@ -53,7 +53,7 @@
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="forward" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,9,12"  %} disabled {% endif %}>
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,12"  %} disabled {% endif %}>
                     Marked For
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="forward" style="max-height: 200px; overflow-y: auto;">
@@ -64,7 +64,7 @@
             </div>
         </div>
         <div class="col-md-2">
-            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,9,12" or act_comp  %}
+            {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,12" or act_comp  %}
                 <button type="button" id="Btn2" class="btn btn-primary" disabled >Send Back</button>
             {% elif workflow.level != 1 and  workflow.sendback is None %}
                 <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow_pa?wf={{wf_id}}&af={{form_id}}&sb=1&ac={{ac}}">Send Back</a>
@@ -90,7 +90,7 @@
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="send_forward" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,9,12"  %} disabled {% endif %}>
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,12"  %} disabled {% endif %}>
                     Send Forward
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="send_forward" style="max-height: 200px; overflow-y: auto;">
@@ -175,9 +175,9 @@
         <div class="col-md-3">
             {% if ac != "view" and matrix.action and matrix.action != "View"  %}
                 {% if workflow.send_forward|to_int == user_id %}
-                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,9,12"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,12"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
                 {% elif workflow.status_id|in_list:"1,2" and role_id == 3 %}
-                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,9,12"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,12"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
                 {% endif %}
             {% endif %}
         </div>
@@ -429,6 +429,10 @@
                     <h3 class="modal-title" style="color:black;font-weight:bold">Approve or Reject</h3>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
+                <div class="modal-body" style="font-weight:bold; font-size:20px;">
+                    Are you sure you want to proceed? This action cannot be undone.
+                    
+                </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -487,7 +491,7 @@
 
                     <button type="button" class="btn btn-primary" id="singleUploadButton" style="margin-left:2%" 
                         onclick="single_file_upload(5)" 
-                        {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,9,12" %} 
+                        {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,12" %} 
                         disabled 
                         {% endif %}>
                         Upload
@@ -579,7 +583,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="color:black">Comments  &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')" {% if workflow.forward|to_int == user_id %} {% elif ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,9,12" %} disabled {% endif %} >Add Comments</button>
+                <button type="button" class="btn btn-primary" id="btn_comment"  onclick ="sweet_popup(this.id,'comment')" {% if workflow.forward|to_int == user_id %} {% elif ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,12" %} disabled {% endif %} >Add Comments</button>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
@@ -621,7 +625,7 @@
             <div class="modal-header">
                 
                 <h5 class="modal-title" style="color:black">Internal Documents &nbsp&nbsp&nbsp&nbsp&nbsp</h5>
-                <button type="button" class="btn btn-primary" id="uploadButton"  onclick ="sweet_popup(this.id,'file')"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,9,12"  %} disabled {% endif %} >Upload</button>
+                <button type="button" class="btn btn-primary" id="uploadButton"  onclick ="sweet_popup(this.id,'file')"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,12"  %} disabled {% endif %} >Upload</button>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span>
                 </button>
             </div>
@@ -688,14 +692,16 @@
           </div>
 
           <!-- Hidden fields for workflow info -->
-          <input type="hidden" name="status" value="8">   <!-- reject -->
-          <input type="hidden" name="wf" value="{{ wf }}">
-          <input type="hidden" name="ser" value="{{ ser }}">
-          <input type="hidden" name="ref" value="approval"> <!-- since your view checks ref -->
+          <input type="hidden" name="btnclk" value="8">   <!-- reject -->
+          <input type="hidden" name="wf_id" value="{{ workflow.id|to_str|enc}}">
+          <input type="hidden" name="form_id" value="{{ form_id }}">
+          <input type="hidden" name="ser" value="5">
+           <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
+          <input type="hidden" name="matrix_ref" value="{% if matrix.reference %}{{ matrix.reference|enc }}{% endif %}" > <!-- since your view checks ref -->
         </div>
 
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary" id="ref" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
+          <button type="submit" class="btn btn-primary" >Submit</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         </div>
       </form>

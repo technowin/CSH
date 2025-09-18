@@ -314,7 +314,7 @@ def matrix_flow_pa(request):
 
                 # elif (status == 7 or status==8) and (ref == 'approval'):
                 #     rej_res = request.POST.get('rej_res', '').strip()
-                #     # Call approval SP after reason/file save
+                #     # Call approval SP after reason/file save 
                 #     r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
                 #     if r1[0][0] not in (""):
                 #         messages.success(request, str(r1[0][0]))
@@ -338,11 +338,11 @@ def matrix_flow_pa(request):
                     # Save refusal file if provided
                     if refusal_file:
                         response3 = internal_docs_upload(refusal_file, role_id, user, wf, ser, 'Refusal Document')
-                        refusal_file_resp = citizen_docs_upload(refusal_file, form_user_id, form_id, user, ser, id3)
+                        refusal_file_resp = citizen_docs_upload(refusal_file, form_user_id, form_id, user, ser, 13)
                         # if response3:
                         #     return JsonResponse(response3, safe=False)
                         # else:
-                        #     # 🔑 fallback if upload fails
+                        #     #  fallback if upload fails
                         #     messages.error(request, "File upload failed.")
                         #     return redirect(request.META.get("HTTP_REFERER", "/"))
 
@@ -432,7 +432,7 @@ def matrix_flow_pa(request):
                     else: messages.error(request, 'Oops...! Something went wrong!')
                 else:
                     f_remark = request.POST.get('f_remark')
-                    if f_remark!='' and status in [8, 9, 11, 12]:
+                    if f_remark!='' and status in [2,7,8,11, 12]:
                         internal_user_comments.objects.create(
                                 workflow=wf, comments=f_remark,
                                 created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
@@ -600,22 +600,34 @@ def citizen_index_pa(request):
                 show_apply_button = True
             else:
                     
-                for items in applicationIndex:
-                    encrypted_id = encrypt_parameter(str(items[1]))
-                    item = {
-                        "srno": items[0],
-                        "id": encrypted_id,
-                        "request_no": items[2],
-                        "name_of_applicant": items[3],
-                        "product_type": items[4],
-                        "status": items[5],
-                        "comments": items[6],
-                    }
+               for items in applicationIndex:
+                encrypted_id = encrypt_parameter(str(items[1]))
 
-                    getApplicantData.append(item)
-                    
-                    if items[5] == 'Refused':
-                        refused_id = items[1]  
+                # Base dict from SP
+                item = {
+                    "srno": items[0],
+                    "id": encrypted_id,
+                    "request_no": items[2],
+                    "name_of_applicant": items[3],
+                    "product_type": items[4],
+                    "status": items[5],
+                    "comments": items[6],  # default comments from SP
+                }
+
+                # If status = 8 (Rejected), override comments with rejection remark
+                if items[5] == 'Rejected':  
+                    latest_comment = internal_user_comments.objects.filter(
+                        workflow=items[1]   
+                    ).order_by('-created_at').first()
+
+                    if latest_comment:
+                        item["comments"] = latest_comment.comments
+
+                getApplicantData.append(item)
+
+                if items[5] == 'Refused':
+                    refused_id = items[1]
+
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -1360,3 +1372,28 @@ def downloadIssuedCertificate(request, row_id):
         logger.error(f"Error in downloadIssuedCertificate: {str(e)}")
 
         return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+    
+def downloadRefusalDocumentpa(request, row_id):
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+        request.session['full_name'] = user.full_name
+        
+        row_id = decrypt_parameter(row_id)
+        document = citizen_document.objects.get(application_id=row_id, document_id=13)
+        
+        filepath = document.filepath
+        file_name = document.file_name
+
+        encrypted_filepath = encrypt_parameter(filepath)
+        
+        return redirect('download_doc', encrypted_filepath)
+    
+    except citizen_document.DoesNotExist:
+        return Http404("Document not found")
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), user.id])
+        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)

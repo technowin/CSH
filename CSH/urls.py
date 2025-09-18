@@ -193,6 +193,7 @@ urlpatterns = [
     path('registrationchalan/<str:row_id>/',RegistrationChalan, name='RegistrationChalan'),
     path("upload_chalan_receipt/<str:form_id>/", upload_chalan_receipt, name="upload_chalan_receipt"),
     path("upload_registration_receipt/<str:form_id>/", upload_registration_receipt, name="upload_registration_receipt"),
+    path('downloadRefusalDocumentpa/<str:row_id>/', downloadRefusalDocumentpa, name='downloadRefusalDocumentpa'), 
     # Verification Screen 
     
     path('VerificationForm', VerificationForm, name='VerificationForm'), 

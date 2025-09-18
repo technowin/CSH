@@ -120,12 +120,13 @@
                         </td>
                         
                         <td>
-                            {% if row.comments == None %}
-                                &nbsp;
-                            {% else %}
+                            {% if row.comments %}
                                 {{ row.comments }}
+                            {% else %}
+                                &nbsp;
                             {% endif %}
                         </td>
+
                         
                         <td>
                             <a class="edit-link" href="{% url 'citizen_view_pa' row.id encrypted_new_id %}">
@@ -186,9 +187,9 @@
                             
                             {% if countRefusedDocument != 0 %}
                                 
-                                {% if row.status == 'Refused' %}
+                                {% if row.status == 'Reject' %}
                                     
-                                    <a class="download-link" href="{% url 'downloadRefusalDocumenttt' row.id %}">
+                                    <a class="download-link" href="{% url 'downloadRefusalDocumentpa' row.id %}">
                                         <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                         <span class="download-text">Download</span>
                                     </a> 
