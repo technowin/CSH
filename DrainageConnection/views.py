@@ -881,30 +881,7 @@ def download_doc(request, filepath):
 
 
 from django.http import FileResponse, Http404
-
-# def download_doc(request, filepath):
-#     try:
-#         # Full path inside MEDIA_ROOT
-#         file_path = os.path.join(settings.MEDIA_ROOT, filepath)
-
-#         # Check if file exists
-#         if not os.path.exists(file_path):
-#             raise Http404("File not found")
-
-#         # Detect MIME type
-#         mime_type, _ = mimetypes.guess_type(file_path)
-#         if not mime_type:
-#             mime_type = "application/octet-stream"
-
-#         # Stream file back
-#         return FileResponse(open(file_path, "rb"), as_attachment=True, content_type=mime_type)
-
-#     except Exception as e:
-#         # Log for debugging
-#         print(f"Download error: {e}")
-#         raise Http404("Error fetching file")
-
-    
+   
 # View Application Form 
 def viewapplicationform(request, row_id, new_id):
     try:
