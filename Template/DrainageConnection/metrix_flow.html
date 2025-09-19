@@ -371,33 +371,25 @@
              </div>
 
 
-            {% comment %} {% elif matrix.reference == "approve" %} 
+             {% elif matrix.reference == "approval" %}
                 <div class="modal-header">
-                    <h3 class="modal-title" style="color:black;font-weight:bold" >Action Required</h3>
-                    <button type="button" class="btn btn-primary" id="singleUploadButton" style="margin-left:2%" 
-                        onclick="single_file_upload(19)" 
-                        {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,11,16,18" %}
-                            disabled
-                        {% endif %}>
-                        Upload
-                    </button>
+                    <h3 class="modal-title" style="color:black;font-weight:bold">Approve or Reject</h3>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
-                <div class="modal-body" style="font-weight:bold;font:size:20px;">
-                    Do you want to approve or refuse this request?<br>
-                    Please confirm your action.
-                    </br>
-                    </br>
-                    <div>
-                        <label for="f_remark" class="">Remark:</label>
-                        <textarea id="f_remark" name="f_remark" rows="2" cols="30" placeholder="Write your remark here..." style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1" required></textarea>
-                    </div>    
+                <div class="modal-body" style="font-weight:bold; font-size:20px;">
+                    Are you sure you want to proceed? This action cannot be undone.
+                    
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="app" onclick ="btn_confirm(this.id,'btnclkid')">Approve </button>
-                    <button type="submit" class="btn btn-danger" id="ref" onclick ="btn_confirm(this.id,'btnclkid')">Refuse </button>
-                </div>  {% endcomment %}
+                    <button type="submit" class="btn btn-primary" id="app" onclick="btn_confirm(this.id,'btnclkid')">Approve</button>
+                    <!-- Reject Button -->
+                    <button type="button" class="btn btn-danger" id="ref" data-toggle="modal" data-target="#rejectModal">Reject</button>
+
+                    {% comment %} <button type="button" class="btn btn-danger" id="ref" onclick="btn_confirm(this.id,'btnclkid')">Reject</button>  {% endcomment %}
+                </div>
+
             {% elif matrix.reference == "reject" %}
                 <div class="modal-header">
                     <h3 class="modal-title" style="color:black;font-weight:bold">Action Required</h3>
@@ -619,6 +611,47 @@
         </div>
     </div>
   </div>
+<div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+        <!-- enctype is important for file upload -->
+        <form method="POST" action="{% url 'matrix_flow_pa' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="modal-header">
+            <h5 class="modal-title">Reject Application</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+            <div class="form-group">
+                <label for="reason">Reason for Rejection</label>
+                <textarea class="form-control" name="rej_res" id="reason" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="file">Upload Refusal Document (optional)</label>
+                <input type="file" class="form-control" name="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+            </div>
+
+            <!-- Hidden fields for workflow info -->
+            <input type="hidden" name="btnclk" value="7">   <!-- reject -->
+            <input type="hidden" name="wf_id" value="{{ workflow.id|to_str|enc}}">
+            <input type="hidden" name="form_id" value="{{ form_id }}">
+            <input type="hidden" name="ser" value="1">
+            <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
+            <input type="hidden" name="matrix_ref" value="{% if matrix.reference %}{{ matrix.reference|enc }}{% endif %}" > <!-- since your view checks ref -->
+            </div>
+
+            <div class="modal-footer">
+            <button type="submit" class="btn btn-primary" >Submit</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </form>
+
+        </div>
+    </div>
+</div>
 
 
 
@@ -652,7 +685,7 @@
     function btn_confirm(chk, set) {
         const values = {
             "ack": 2,"scru_c": 3,"scru_r": 4,"dochk": 'dochk',"doinsp": 'doinsp',"insp": 5,
-            "app": 6,"ref": 7,"senbak": 8,"issperm": 18,"finalinsp":10,"iss": 11,"challanReceipt": 17,"challanUpload": 16
+            "app": 6,"rej": 7,"senbak": 8,"issperm": 18,"finalinsp":10,"iss": 11,"challanReceipt": 17,"challanUpload": 16
         }; 
 
        
