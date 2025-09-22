@@ -1044,7 +1044,7 @@
 
 </script>
 
-<script>
+{% comment %} <script>
         function submitReject(btnId) {
         const wf_id = "{{ wf_id|default:'' }}";  // pass via template context or data-attribute
         const form_id = "{{ form_id|default:'' }}";
@@ -1079,6 +1079,6 @@
         })
         .catch(error => console.error("Error:", error));
     }
-</script>
+</script> {% endcomment %}
 <!-- End of Main Content -->
 {% endblock %}
