@@ -189,14 +189,14 @@ def matrix_flow(request):
             Refusalfile = request.FILES.get('file')
             response = None
 
-            if Refusalfile:
+            # if Refusalfile:
                 
-                response3 = internal_docs_upload(Refusalfile, role_id, user, wf, ser, 'Refusal Document')
-                refusal_file_resp = citizen_docs_upload(Refusalfile, form_user_id, form_id, user, ser, id1)
-                response = response3           
+            #     response3 = internal_docs_upload(Refusalfile, role_id, user, wf, ser, 'Refusal Document')
+            #     refusal_file_resp = citizen_docs_upload(Refusalfile, form_user_id, form_id, user, ser, id1)
+            #     response = response3           
 
-            if response:
-                return JsonResponse(response, safe=False)
+            # if response:
+            #     return JsonResponse(response, safe=False)
 
             ref = decrypt_parameter(matrix_ref) if (matrix_ref := request.POST.get('matrix_ref', '')) else ''
             ac = decrypt_parameter(ac) if (ac := request.POST.get('ac', '')) else ''
@@ -288,7 +288,7 @@ def matrix_flow(request):
                     else:
                         messages.error(request, 'Oops...! Something went wrong!')
 
-                elif (status == 6 or status==7) and (ref == 'approval'):
+                elif (status == 6 or status==7) and (ref == 'approvall'):
                     rej_res = request.POST.get('rej_res', '').strip()
                     refusal_file = request.FILES.get('file')
 
@@ -322,7 +322,7 @@ def matrix_flow(request):
                     else:
                         messages.error(request, "Oops...! Something went wrong!")
 
-                    return redirect(request.META.get("HTTP_REFERER", "/"))
+                    # return redirect(request.META.get("HTTP_REFERER", "/"))
 
                 elif status == 18 and ref == 'issue_permission':
                     
@@ -335,6 +335,40 @@ def matrix_flow(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+
+                elif (status == 8 or status==9) and (ref == 'decision'):
+                    rej_res = request.POST.get('rej_res', '').strip()
+                    refusal_file = request.FILES.get('file')
+
+                    if rej_res!='' and status in [9]:
+                        internal_user_comments.objects.create(
+                            workflow=wf,
+                            comments=rej_res,
+                            created_at=datetime.now(),
+                            created_by=str(user),
+                            updated_at=datetime.now(),
+                            updated_by=str(user)
+                        )
+
+                    # Save refusal file if provided
+                    if refusal_file:
+                        response3 = internal_docs_upload(refusal_file, role_id, user, wf, ser, 'Refusal Document')
+                        refusal_file_resp = citizen_docs_upload(refusal_file, form_user_id, form_id, user, ser, 13)
+                        # if response3:
+                        #     return JsonResponse(response3, safe=False)
+                        # else:
+                        #     #  fallback if upload fails
+                        #     messages.error(request, "File upload failed.")
+                        #     return redirect(request.META.get("HTTP_REFERER", "/"))
+
+                    # Call approval SP after reason/file save
+                    r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
+
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        
+                    else:
+                        messages.error(request, "Oops...! Something went wrong!")
                     
                 elif status == 10 and ref == 'finalInspection':
                     final_cheklist_upl_file = request.FILES.get('final_cheklist_upl_file')
