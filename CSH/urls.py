@@ -136,7 +136,7 @@ urlpatterns = [
     path('view-challan/<str:form_id>/', viewUploadedChallan, name='view_uploaded_challan'),
     path('permission-letter/<str:row_id>/', PermissionLetter, name='PermissionLetter'),
     path("upload-connection-photographs/<str:form_id>/", upload_connection_photographs, name="upload_connection_photographs"),
-     path("submit_refusal/", submit_refusal, name="submit_refusal"),
+    #  path("submit_refusal/", submit_refusal, name="submit_refusal"),
 
 
 

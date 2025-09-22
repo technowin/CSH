@@ -234,7 +234,7 @@ def matrix_flow_pa(request):
             if status.isdigit():
                 status = int(status)
                 
-                if (status == 4 ) and (ref == 'scrutiny'):
+                if (status == 5) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
                     rej_res = request.POST.get('rej_res')
                     if rej_res!='' and status in [4]:
@@ -252,9 +252,10 @@ def matrix_flow_pa(request):
                     r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
                     if r1[0][0] not in (""):
                         messages.success(request, str(r1[0][0]))
-                        return JsonResponse({"success": True, "message": str(r1[0][0])})
-
+                        return redirect(request.META.get("HTTP_REFERER", "/"))
+                        # return JsonResponse({"success": True, "message": str(r1[0][0])})
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                   
                     
                     # code to update api_data
                     
@@ -289,7 +290,7 @@ def matrix_flow_pa(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
 
-                elif (status == 5) and (ref == 'scrutinyy'):
+                elif (status == 4) and (ref == 'scrutinyy'):
                     doc_ids = request.POST.getlist('doc_ids')
                     rej_res = request.POST.get('rej_res')
                     if rej_res!='' and status in [4]:

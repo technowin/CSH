@@ -1539,37 +1539,6 @@ def upload_challan_wrapper(file, user, form_id, created_by, ser, doc_id1):
     return citizen_docs_upload(file, user, form_id, created_by, ser, doc_id1)
 
 
-@csrf_exempt
-def submit_refusal(request):
-    if request.method == "POST":
-        wf_id = decrypt_parameter(request.POST.get("wf_id"))
-        form_id = decrypt_parameter(request.POST.get("form_id"))
-        status = request.POST.get("status", "")
-        ref = request.POST.get("ref", "")
-        remarks = request.POST.get("remarks", "")
-        ser = request.session.get("service_db", "default")
-        user = request.user.username
-        role_id = request.session.get("role_id")
-
-        refusal_file = request.FILES.get("refusal_file")
-        if refusal_file:
-            internal_docs_upload(refusal_file, role_id, user, wf_id, ser, "Refusal Document")
-            new_status, new_ref = 7, "refusalSubmitted"
-        else:
-            new_status, new_ref = status, ref
-
-        # save remarks
-        if remarks:
-            internal_user_comments.objects.create(
-                workflow_id=wf_id, comments=remarks,
-                created_at=datetime.now(), created_by=user,
-                updated_at=datetime.now(), updated_by=user
-            )
-
-        r = callproc("stp_post_workflow", [wf_id, form_id, new_status, new_ref, ser, user, remarks])
-        resp_msg = str(r[0][0]) if r and r[0][0] else "Workflow updated"
-
-        return JsonResponse({"message": resp_msg})
 
 
 def PermissionLetter(request, row_id):
