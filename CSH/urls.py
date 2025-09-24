@@ -179,6 +179,12 @@ urlpatterns = [
     path('citizen_delete_cr/<str:row_id>/<str:new_id>/', citizen_delete_cr, name='citizen_delete_cr'),
     path('citizen_view_cr/<str:row_id>/<str:new_id>/', citizen_view_cr, name='citizen_view_cr'),
     path('create_partial_view', create_partial_view, name='create_partial_view'),
+
+    path('chalan_doc_cr/<str:row_id>/', Chalan_cr, name='Chalan_cr'),
+    path('registrationchalan_cr/<str:row_id>/',RegistrationChalan_cr, name='RegistrationChalan_cr'),
+    path("upload_chalan_receipt_cr/<str:form_id>/", upload_chalan_receipt_cr, name="upload_chalan_receipt_cr"),
+    path("upload_registration_receipt_cr/<str:form_id>/", upload_registration_receipt_cr, name="upload_registration_receipt_cr"),
+    path('downloadRefusalDocument_cr/<str:row_id>/', downloadRefusalDocument_cr, name='downloadRefusalDocument_cr'), 
     
     # Product Approval
     
@@ -216,6 +222,7 @@ urlpatterns = [
     path('downloadIssuedCertificatetc/<str:row_id>/', downloadIssuedCertificatetc, name='downloadIssuedCertificatetc'), 
     path('downloadIssuedCertificatett/<str:row_id>/', downloadIssuedCertificatett, name='downloadIssuedCertificatett'), 
     path('downloadIssuedCertificatedc/<str:row_id>/', downloadIssuedCertificatedc, name='downloadIssuedCertificatedc'), 
+    path('downloadIssuedCertificate_cr/<str:row_id>/', downloadIssuedCertificate_cr, name='downloadIssuedCertificate_cr'), 
     
     path('downloadRefusalDocument/<str:row_id>/', downloadRefusalDocument, name='downloadRefusalDocument'), 
     path('downloadRefusalDocumenttt/<str:row_id>/', downloadRefusalDocumenttt, name='downloadRefusalDocumenttt'), 

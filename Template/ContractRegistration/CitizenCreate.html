@@ -29,7 +29,7 @@
                     <div class="row mb-3">
                         <div class="form-group col-md-3">
                             <label for="contractor_type" class="form-label">Contractor Type<span style="color:red;"> *</span> :</label>
-                            <select name="contractor_type" id="contractor_type" class="form-control select" style="border-radius:15px;" required onchange="fetchContractorData()">
+                            <select name="contractorType" id="contractor_type" class="form-control select" style="border-radius:15px;" required onchange="fetchContractorData()">
                                 <option value="" {% if not form_data.contractor_type %}selected{% endif %} disabled>Select Type</option>
                                 {% for item in ContractorType %}
                                     <option value="{{ item.0 }}" {% if item.0 == form_data.contractor_type %}selected{% endif %}>{{ item.1 }}</option>
@@ -157,17 +157,20 @@
     {% endif %}
     
     <script>
+        $(document).ready(function() {
+            fetchContractorData();
+        });
+    
         function fetchContractorData() {
             debugger;
-            var contractorT = $("#contractor_type").val(); // Make sure you use 'contractorT' consistently.
-            console.log("Selected Contractor Type:", contractorT);  
-        
+            var selected = $("#contractor_type").val();
+    
             $.ajax({
-                url: '{% url "create_partial_view" %}', // Ensure the URL is dynamically generated using the Django URL tag.
+                url: 'create_partial_view',
                 type: 'POST',
                 data: {
-                    contractorType: contractorT,
-                    csrfmiddlewaretoken: '{{ csrf_token }}' 
+                    contractorType: selected,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
                 },
                 success: function(data) {
                     debugger;
@@ -179,8 +182,8 @@
                                 '<a href="/download_doc/' + document.encrypted_subpath + '" target="_blank" style="color: #4e73df; margin-left: 10px;">' +
                                 '<i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i></a>' 
                                 : '';
-
-                            var docId = document.doc_id;  // Use the actual doc_id from the server response
+    
+                            var docId = document.doc_id;
                             
                             documentListHtml += `
                                 <tr>
@@ -197,10 +200,10 @@
                                 </tr>
                             `;
                         });
-
+    
                         $("#documentTableBody").html(documentListHtml);
                     }
-
+    
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', status, error);

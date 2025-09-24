@@ -101,17 +101,44 @@
                                     <span class="edit-text">Edit</span>
                                 </a>
 
-                                <a class="edit-link" href="{% url 'citizen_delete_cr' row.id encrypted_new_id %}">
-                                    <i class="fa-solid fa-trash" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
-                                    <span class="edit-text">Delete</span>
-                                </a>
+                            {% endif %}
 
+                            {% if row.status == 'Scrutiny Fee Uploaded'  %}
+                                <a class="download-link" href="{% url 'Chalan_cr' row.id %}">
+                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="download-text">Download Chalan</span>
+                                </a> 
+                                <button type="button"
+                                    class="btn btn-info uploadReceiptBtn"
+                                    data-toggle="modal"
+                                    data-target="#uploadReceiptModal"
+                                    data-form-id="{{ row.id }}"
+                                    data-ser-id="{{ row.ser_id }}">
+                                    <i class="fa fa-upload"></i> Upload Receipt
+                                </button>
+                            {% endif %}
+
+                            {% if row.status == 'Registration Fee Uploaded'  %}
+                                <a class="download-link" href="{% url 'RegistrationChalan_cr' row.id %}">
+                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="download-text">Download Registration Chalan</span>
+                                </a> 
+                                <!-- Upload Receipt Button -->
+                                <button type="button"
+                                        class="btn btn-info uploadReceiptBtn"
+                                        data-toggle="modal"
+                                        data-target="#uploadRegistrationReceiptModal"
+                                        data-form-id="{{ row.id }}"
+                                        data-ser-id="{{ row.ser_id }}">
+                                    <i class="fa fa-upload"></i> Upload Receipt
+                                </button>
+                                
                             {% endif %}
 
                             {% if row.status == 'Issue Certificate' %}
                                 
-                                <a class="download-link" href="{% url 'downloadIssuedCertificatett' row.id %}">
-                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF0000; margin-left: 15px;"></i>
+                                <a class="download-link" href="{% url 'downloadIssuedCertificate_cr' row.id %}">
+                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="download-text">Download Certificate</span>
                                 </a> 
 
@@ -120,9 +147,9 @@
                             
                             {% if countRefusedDocument != 0 %}
                                 
-                                {% if row.status == 'Refused' %}
+                                {% if row.status == 'Reject' %}
                                     
-                                    <a class="download-link" href="{% url 'downloadRefusalDocumenttt' row.id %}">
+                                    <a class="download-link" href="{% url 'downloadRefusalDocument_cr' row.id %}">
                                         <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                         <span class="download-text">Download</span>
                                     </a> 
@@ -139,15 +166,84 @@
             </div>
         </div>
     </div>
+<div class="modal fade" id="uploadReceiptModal" tabindex="-1" role="dialog" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="receiptModalLabel">Upload Receipt</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form id="uploadReceiptForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="form_id" id="form_id1">
+                    <input type="hidden" name="ser_id" id="ser_id1">
+
+                    <div class="form-group">
+                        <label for="receipt_file">Upload Registration Fee Receipt</label>
+                        <input type="file" class="form-control-file" id="receipt_file" name="receipt_file" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <!-- Prevents auto form submit -->
+                    <button type="button" class="btn btn-primary" id="confirmUploadBtn1">Submit</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+    <!-- Modal -->
+<div class="modal fade" id="uploadRegistrationReceiptModal" tabindex="-1" role="dialog" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="receiptModalLabel">Upload Receipt</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form id="uploadReceiptForm1" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="form_id" id="form_id">
+                    <input type="hidden" name="ser_id" id="ser_id">
+
+                    <div class="form-group">
+                        <label for="receipt_file1">Upload Registration Fee Receipt</label>
+                        <input type="file" class="form-control-file" id="receipt_file1" name="receipt_file1" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <!-- Prevents auto form submit -->
+                    <button type="submit" class="btn btn-primary" id="confirmUploadBtn">Submit</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
 
   
   <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
   <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  {% comment %} <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script> {% endcomment %}
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
   
-  {% if messages %}
+    {{% if messages %}
         {% for message in messages %}
             <script>
             Swal.fire({
@@ -160,29 +256,7 @@
         {% endfor %}
     {% endif %} 
     
-    {% comment %} {% if messages %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-            {% for message in messages %}
-                {% if message.tags == 'success' %}
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: "{{ message }}",
-                    confirmButtonColor: '#4e73df'
-                });
-                {% elif message.tags == 'error' %}
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: "{{ message }}",
-                    confirmButtonColor: '#FF5733'
-                });
-                {% endif %}
-            {% endfor %}
-            });
-        </script>
-    {% endif %} {% endcomment %}
+
 
 
 </body>
@@ -193,6 +267,168 @@
       pageLength: 10,
       /* order: [[0, 'desc']] */
     });
-  </script>
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie("csrftoken");
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // When modal opens, set form action & hidden values
+        $('#uploadReceiptModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var formId = button.data('form-id');
+            var serId = button.data('ser-id');
+
+            $('#form_id1').val(formId);
+            $('#ser_id1').val(serId);
+            $('#uploadReceiptForm').attr('action', '/upload_chalan_receipt_cr/' + formId + '/');
+        });
+
+        // Confirm upload button
+        document.getElementById("confirmUploadBtn1").addEventListener("click", function (e) {
+            debugger
+            e.preventDefault();
+            const form = document.getElementById("uploadReceiptForm");
+            const fileInput = document.getElementById("receipt_file");
+
+            //if (!fileInput.files || fileInput.files.length === 0) {
+           //     Swal.fire("Warning", "Please select a file to upload.", "warning");
+           //     return;
+           // }
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to upload the receipt?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Yes, upload it!",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: { 
+                            "X-Requested-With": "XMLHttpRequest",
+                            "X-CSRFToken": csrftoken
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire("Success", data.message, "success").then(() => {
+                                $("#uploadReceiptModal").modal("hide");
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire("Error", data.message || "Upload failed.", "error");
+                        }
+                    })
+                    .catch(err => {
+                        Swal.fire("Error", err.message, "error");
+                        console.error("Fetch error:", err);
+                    });
+                }
+            });
+
+        });
+    });
+</script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // When modal opens, set form action & hidden values
+        $('#uploadRegistrationReceiptModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var formId = button.data('form-id');
+            var serId = button.data('ser-id');
+
+            $('#form_id').val(formId);
+            $('#ser_id').val(serId);
+            $('#uploadReceiptForm1').attr('action', '/upload_registration_receipt_cr/' + formId + '/');
+        });
+
+        // Confirm upload button
+        document.getElementById("confirmUploadBtn").addEventListener("click", function (e) {
+            e.preventDefault();
+            const form = document.getElementById("uploadReceiptForm1");
+
+            //if (!document.getElementById("receipt_file1").value) {
+            //    Swal.fire("Warning", "Please select a file to upload.", "warning");
+            //    return;
+            //}
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to upload the receipt?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Yes, upload it!",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: { 
+                            "X-Requested-With": "XMLHttpRequest",
+                            "X-CSRFToken": "{{ csrf_token }}"
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire("Success", data.message, "success").then(() => {
+                                $("#uploadRegistrationReceiptModal").modal("hide");
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire("Error", data.message || "Upload failed.", "error");
+                        }
+                    })
+                    .catch(err => {
+                        Swal.fire("Error", err.message, "error");
+                        console.error("Fetch error:", err);
+                    });
+                }
+            });
+
+        });
+    });
+</script>
+
+
+<script>
+    function handleSelection(element) {
+        var selectedValue = element.getAttribute("data-value");
+        console.log("Selected Value:", selectedValue); // For debugging
+        alert("You selected: " + selectedValue); // Display the selected value
+        
+        // You can make an AJAX call or redirect based on selection
+        window.location.href = "/matrix_flow?wf={{wf_id}}&af={{form_id}}&sf=" + selectedValue + "&ac={{ac}}";
+    }
+</script>
 
 {% endblock %}
