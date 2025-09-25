@@ -1406,30 +1406,66 @@ def downloadIssuedCertificatedc(request, row_id):
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
 
+# def downloadRefusalDocument(request, row_id):
+#     try:
+#         phone_number = request.session.get('phone_number')
+#         user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+#         request.session['full_name'] = user.full_name
+        
+#         row_id = decrypt_parameter(row_id)
+#         document = citizen_document.objects.get(application_id=row_id, document_id=13)
+        
+#         filepath = document.filepath
+#         file_name = document.file_name
+
+#         encrypted_filepath = encrypt_parameter(filepath)
+        
+#         return redirect('download_doc', encrypted_filepath)
+    
+#     except citizen_document.DoesNotExist:
+#         return Http404("Document not found")
+#     except Exception as e:
+#         tb = traceback.extract_tb(e.__traceback__)
+#         fun = tb[0].name
+#         callproc("stp_error_log", [fun, str(e), user.id])
+#         logger.error(f"Error downloading file {file_name}: {str(e)}")
+#         return HttpResponse("An error occurred while trying to download the file.", status=500)
+
+
+
 def downloadRefusalDocument(request, row_id):
     try:
         phone_number = request.session.get('phone_number')
-        user = CustomUser.objects.get(phone=phone_number, role_id = 2)
+        user = CustomUser.objects.get(phone=phone_number, role_id=2)
         request.session['full_name'] = user.full_name
-        
+
         row_id = decrypt_parameter(row_id)
-        document = citizen_document.objects.get(application_id=row_id, document_id=19)
-        
+
+        # Get the latest refusal document (doc_id = 19) for this application
+        document = (
+            citizen_document.objects
+            .filter(application_id=row_id, document_id=13)
+            .order_by('-id')  # latest by primary key
+            .first()
+        )
+
+        if not document:
+            raise Http404("Refusal document not found")
+
         filepath = document.filepath
         file_name = document.file_name
 
         encrypted_filepath = encrypt_parameter(filepath)
-        
+
         return redirect('download_doc', encrypted_filepath)
-    
-    except citizen_document.DoesNotExist:
-        return Http404("Document not found")
+
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
-        fun = tb[0].name
-        callproc("stp_error_log", [fun, str(e), user.id])
-        logger.error(f"Error downloading file {file_name}: {str(e)}")
+        fun = tb[0].name if tb else "downloadRefusalDocument"
+        callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
+        logger.error(f"Error downloading refusal file {file_name if 'file_name' in locals() else ''}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
+
 
 from django.shortcuts import redirect
 from django.contrib import messages
