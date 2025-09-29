@@ -29,7 +29,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'common_db1',      # Replace with your database name
         'USER': 'root',      # Replace with your database user
-        'PASSWORD': 'Mysql_MH-047319',  # Replace with your database password
+        'PASSWORD': 'Mysql_7319',  # Replace with your database password
         # 'HOST': '13.127.171.88',       # IP FOR TEST
         'HOST': '127.0.0.1',       # IP FOR LOCAL VM
         'PORT': '3306',            
@@ -41,7 +41,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'drainage_connection_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Mysql_7319',  
         # 'HOST': '13.127.171.88',   
         'HOST': '127.0.0.1',    
         'PORT': '3306',
@@ -50,7 +50,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'tree_cutting_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Mysql_7319',  
         # 'HOST': '13.127.171.88',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
@@ -59,7 +59,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'tree_trimming_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Mysql_7319',  
         # 'HOST': '13.127.171.88',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
@@ -68,7 +68,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'contract_registration_db',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Mysql_7319',  
         # 'HOST': '13.127.171.88',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
@@ -77,7 +77,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'product_approval_db',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Mysql_7319',  
         # 'HOST': '13.127.171.88',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
