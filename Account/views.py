@@ -658,8 +658,12 @@ def OTPScreen(request):
         sms_templates = smstext.objects.all()
         
         try:
-            # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-            otp ='123456'
+
+            servicefetch = service_master.objects.using('default').get(ser_id=service_db)
+            ser_name = servicefetch.ser_name
+
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            # otp ='123456'
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
@@ -671,10 +675,10 @@ def OTPScreen(request):
                 message = sms_templates[0].template_name 
                 
                 action = "Login"  
-                service = "Drainage connection"  
+                service = ser_name  
 
                 message = format_message(message, otp, action, service)
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
@@ -690,7 +694,7 @@ def format_message(template, otp_value, action, service):
     message = message.replace("@service", service)
     return message
 
-def send_sms(mobile, message, template_id):
+def send_sms(mobile, message, template_id): 
     try:
         url = (
             f"https://push3.aclgateway.com/servlet/com.aclwireless.pushconnectivity.listeners.TextListener"
@@ -818,8 +822,11 @@ def OTPScreenRegistration(request):
             messages.error(request, "Phone number is required.")
             return redirect(f'/citizenRegisterAccount?service_db={service_db}')
 
-        # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        otp ='123456'
+        servicefetch = service_master.objects.using('default').get(ser_id=service_db)
+        ser_name = servicefetch.ser_name
+        
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        # otp ='123456'
         try:
             OTPVerification.objects.create(
                 mobile=phone_number,
@@ -832,11 +839,11 @@ def OTPScreenRegistration(request):
                 message = sms_templates[0].template_name
                 
                 action = "Registration"
-                service = "Drainage connection"
+                service = ser_name
                 
                 message = format_message(message, otp, action, service)
                 
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
