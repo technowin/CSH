@@ -662,8 +662,8 @@ def OTPScreen(request):
             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
             ser_name = servicefetch.ser_name
 
-            # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-            otp ='123456'
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            # otp ='123456'
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
@@ -825,8 +825,8 @@ def OTPScreenRegistration(request):
         servicefetch = service_master.objects.using('default').get(ser_id=service_db)
         ser_name = servicefetch.ser_name
         
-        # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        otp ='123456'
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        # otp ='123456'
         try:
             OTPVerification.objects.create(
                 mobile=phone_number,
