@@ -678,7 +678,7 @@ def OTPScreen(request):
                 service = ser_name  
 
                 message = format_message(message, otp, action, service)
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
@@ -843,7 +843,7 @@ def OTPScreenRegistration(request):
                 
                 message = format_message(message, otp, action, service)
                 
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
