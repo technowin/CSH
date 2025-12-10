@@ -61,20 +61,18 @@ def Login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            request.session.cycle_key()
-            request.session["username"]=(str(username))
-            request.session["full_name"]=(str(user.full_name))
-            request.session["user_id"]=(str(user.id))
+            request.session.cycle_key()  # regenerates session key without losing data
+            request.session["username"] = str(username)
+            request.session["full_name"] = str(user.full_name)
+            request.session["user_id"] = str(user.id)
             request.session["role_id"] = str(user.role_id)
-            # if remember_me == 'on':
-            #     request.session.set_expiry(1209600)  # 2 weeks
-            # else:
-            #     request.session.set_expiry(0)  # Browser close
-            # if user.role_id == 1:
-            #     request.session['service_db'] = '1'
-            #     return redirect("masters/?entity=user&type=i")
-            # else : 
-            return redirect('services') 
+            # If you want "remember me" behavior:
+            if request.POST.get('remember_me') == 'on':
+                request.session.set_expiry(1209600)  # 2 weeks
+            else:
+                request.session.set_expiry(None)  # default from SESSION_COOKIE_AGE
+            return redirect('services')
+
         else:
             messages.error(request, 'Invalid Credentials')
             return redirect("Login")

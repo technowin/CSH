@@ -1,73 +1,39 @@
+# Account/routers.py
+from .thread_local import get_current_service
+import logging
 
-# myapp/routers.py
-
-import threading
-
-# Create a thread-local object to store the current request
-_thread_locals = threading.local()
-
-def get_current_request():
-    return getattr(_thread_locals, 'request', None)
+logger = logging.getLogger(__name__)
 
 class ServiceRouter:
     """
-    A router to control database operations for service-specific databases.
+    Route DB operations based on service alias from thread-local storage.
     """
 
-    def db_for_read(self, model, **hints):
-        """
-        Attempts to route read operations to the appropriate database based on the 'service' hint.
-        """
-        request = get_current_request()
-        if request and hasattr(request, 'service_db'):
-            service = request.service_db
+    def _service_alias(self):
+        try:
+            return get_current_service() or 'default'
+        except Exception as e:
+            logger.exception("ServiceRouter._service_alias error: %s", e)
+            return 'default'
 
-            # Route common models in `Masters`,'Account' to the selected service database
-            if model._meta.app_label == 'Account':
-                return service
-            
-            if model._meta.app_label == 'Masters':
-                return service
-            
-            # Route service-specific models to their designated databases
-            if model._meta.app_label == 'DrainageConnection':
-                return '1'
-            elif model._meta.app_label == 'TreeCutting':
-                return '2'
-            elif model._meta.app_label == 'TreeTrimming':
-                return '3'
-            elif model._meta.app_label == 'ContractRegistration':
-                return '4'
-            elif model._meta.app_label == 'ProductApproval':
-                return '5'
-            
+    def db_for_read(self, model, **hints):
+        service = self._service_alias()
+
+        # route common apps to selected service
+        if model._meta.app_label in ('Account', 'Masters'):
             return service
-          
+
+        # route service-specific apps to configured aliases
+        app = model._meta.app_label
+        mapping = {
+            'DrainageConnection': '1',
+            'TreeCutting': '2',
+            'TreeTrimming': '3',
+            'ContractRegistration': '4',
+            'ProductApproval': '5',
+        }
+        return mapping.get(app, service)
 
     def db_for_write(self, model, **hints):
-        """
-        Attempts to route write operations to the appropriate database based on the 'service' hint.
-        """
-        request = get_current_request()
-        if request and hasattr(request, 'service_db'):
-            service = request.service_db
-
-            # Route common models in `Masters`, 'Account' to the selected service database
-            if model._meta.app_label == 'Account':
-                return service
-            
-            if model._meta.app_label == 'Masters':
-                return service
-            
-            # Route service-specific models to their designated databases
-            if model._meta.app_label == 'DrainageConnection':
-                return '1'
-            elif model._meta.app_label == 'TreeCutting':
-                return '2'
-            elif model._meta.app_label == 'TreeTrimming':
-                return '3'
-            elif model._meta.app_label == 'ContractRegistration':
-                return '4'
-            elif model._meta.app_label == 'ProductApproval':
-                return '5'
-            return service
+        # same logic as read
+        return self.db_for_read(model, **hints)
