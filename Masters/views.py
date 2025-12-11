@@ -525,7 +525,7 @@ def upload_excel(request):
                     params = tuple(str(row.get(column, '')) for column in columns)
                     r = callproc('stp_insert_employee_master', params)
                     if r[0][0] not in ("success", "updated"):
-                        cursor.callproc('stp_insert_error_log', [upload_for, company_id,'',file_name,datetime.now().date(),str(r[0][0]),checksum_id])
+                        callproc('stp_insert_error_log', [upload_for, company_id,'',file_name,datetime.now().date(),str(r[0][0]),checksum_id])
                     if r[0][0] == "success": success_count += 1 
                     elif r[0][0] == "updated": update_count += 1  
                     else: error_count += 1
@@ -650,11 +650,12 @@ def documentMaster(request):
 def Create_Document_Master(request):
     try:
         if request.method == "GET":
-            service_id = request.session.get("service_db")  # not used yet, keeping it
-            # Fetch all active documents
+
+            service_id = request.session.get("service_db")
             documents = document_master.objects.all().order_by('order_by')
             contractor_types = parameter_master.objects.filter(parameter_name='contractor Type')
             Product_types = parameter_master.objects.filter(parameter_name='Product')
+
             context = {
                 'data': documents,
                 'service_id': service_id,
@@ -663,44 +664,86 @@ def Create_Document_Master(request):
             }
 
             return render(request, 'Master/Create_Document_Master.html', context)
-        
+
         elif request.method == "POST":
-            service_id = request.session.get("service_db") 
+
+            service_id = request.session.get("service_db")
+
+            # SAME AS EDIT PAGE: service name cleaned
+            service_obj = service_master.objects.using('default').filter(ser_id=service_id).first()
+            service_name = service_obj.ser_name.replace(" ", "")
+
             doc_names = request.POST.getlist('doc_name[]')
             is_active_list = request.POST.getlist('is_active[]')
             is_mandatory_list = request.POST.getlist('is_mandatory[]')
             doc_types = request.POST.getlist('doc_type[]') if service_id in ['4', '5'] else []
-            
-            user_id = request.session.get("user_id")
-            if not user_id or not CustomUser.objects.filter(id=user_id).exists():
-                messages.error(request, "Invalid session. Please log in again.")
-                return redirect("documentMaster")
 
-            # Get last order_by value from DB, or 0 if empty
-            last_order = document_master.objects.using(service_id).aggregate(Max('order_by'))['order_by__max'] or 0
+            files = request.FILES.getlist('sample_file[]')
+            user_id = request.session.get("user_id")
+
+            # Get current last order_by
+            last_order = document_master.objects.using(service_id).aggregate(
+                Max('order_by')
+            )['order_by__max'] or 0
 
             for i in range(len(doc_names)):
-                new_doc = document_master.objects.using(service_id).create(
+
+                uploaded_file = files[i] if i < len(files) else None
+                final_relative_path = None
+
+                # =======================================
+                #   FILE SAVE LOGIC  (EDIT STYLE)
+                # =======================================
+                if uploaded_file:
+
+                    next_order = last_order + i + 1
+
+                    # Folder: MEDIA_ROOT/DownloadPDF/<ServiceName>/Document_<order>/
+                    folder_path = os.path.join(
+                        settings.MEDIA_ROOT,
+                        "DownloadPDF",
+                        service_name,
+                        f"Document_{next_order}"
+                    )
+
+                    os.makedirs(folder_path, exist_ok=True)
+
+                    # (Same as edit) – Save file inside folder
+                    file_name = uploaded_file.name
+                    absolute_path = os.path.join(folder_path, file_name)
+
+                    with open(absolute_path, "wb+") as f:
+                        for chunk in uploaded_file.chunks():
+                            f.write(chunk)
+
+                    # Relative path to store in DB
+                    final_relative_path = f"DownloadPDF/{service_name}/Document_{next_order}/{file_name}"
+
+                # =======================================
+                #   SAVE DOCUMENT RECORD
+                # =======================================
+                document_master.objects.using(service_id).create(
                     doc_name=doc_names[i],
                     is_active=int(is_active_list[i]),
                     mandatory=int(is_mandatory_list[i]),
                     doc_type=doc_types[i] if service_id in ['4', '5'] else None,
+                    doc_subpath=final_relative_path,   # <-- FIXED
                     created_at=now(),
-                    created_by=int(user_id),  
+                    created_by=user_id,
                     order_by=last_order + i + 1
                 )
 
             messages.success(request, "Documents saved successfully.")
             return redirect('documentMaster')
 
-
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        # callproc("stp_error_log", [fun, str(e), user_id])
         callproc("stp_error_log", [fun, str(e), ''])
         logger.error(f"Error rendering documentMaster: {str(e)}")
         return HttpResponse("An error occurred while trying to load the page.", status=500)
+
+
     
 # Edit Document
 
@@ -723,6 +766,7 @@ def Edit_Document_master(request):
                 'document': document,
                 'contractor_types': contractor_types,
                 'Product_types': Product_types,
+                'MEDIA_URL': settings.MEDIA_URL,  # add this
             }
 
             return render(request, 'Master/Edit_Document_master.html', context)
@@ -751,14 +795,37 @@ def Edit_Document_master(request):
             document.updated_by = updated_by
             document.updated_at = now()
 
-            # Only update doc_type if service_id == 5
-            if service_id == '5' or service_id == '4':
+            if service_id in ['4', '5']:
                 doc_type = request.POST.get("doc_type", "").strip()
                 document.doc_type = doc_type
 
-            document.save()
+            # --- Handle file upload ---
+            uploaded_file = request.FILES.get("sample_doc")
+            if uploaded_file:
+                if uploaded_file.size > 5 * 1024 * 1024:
+                    return HttpResponse("File size exceeds 5 MB.", status=400)
 
-            return redirect('documentMaster')  # Change if needed
+                # Get service name from service_master using default DB
+                from .models import service_master
+                service_obj = service_master.objects.using('default').filter(ser_id=service_id).first()
+                if not service_obj:
+                    return HttpResponse("Service not found.", status=400)
+
+                service_name = service_obj.ser_name.replace(" ", "")  # Remove spaces
+
+                # Build upload path
+                upload_dir = os.path.join(settings.MEDIA_ROOT, "DownloadPDF", service_name, f"Document_{document_id}")
+                os.makedirs(upload_dir, exist_ok=True)
+
+                fs = FileSystemStorage(location=upload_dir)
+                filename = fs.save(uploaded_file.name, uploaded_file)
+
+                # Save relative file path in doc_subpath column
+                document.doc_subpath = os.path.join("DownloadPDF", service_name, f"Document_{document_id}", filename)
+
+            document.save()
+            return redirect('documentMaster')
+
 
     except Exception as e:
         return HttpResponse(f"An error occurred: {str(e)}", status=500)

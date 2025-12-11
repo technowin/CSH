@@ -50,7 +50,7 @@
                     {% comment %} Edit Form {% endcomment %}
 
                     {% if service_id == '5' %}
-                        <form method="post" action="{% url 'Edit_Document_master' %}">
+                        <form method="post" action="{% url 'Edit_Document_master' %}"enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="hidden" name="doc_id" value="{{ document.doc_id }}">
                         
@@ -98,13 +98,28 @@
                                 </div>
                             </div>
 
+                            <!-- Sample Document Upload -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Upload Sample Document (Max 5 MB)</strong></label>
+                                <input type="file" class="form-control" name="sample_doc" accept=".pdf,.doc,.docx,.jpg,.png">
+                                
+                                {% if document.doc_subpath %}
+                                    <p class="mt-2">
+                                        Current file: 
+                                        <a href="{{ MEDIA_URL }}{{ document.doc_subpath }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            View More
+                                        </a>
+                                    </p>
+                                {% endif %}
+                            </div>
+
                             <!-- Submit Button -->
                             <div class="text-end">
                                 <button type="submit" class="btn btn-primary px-4">Submit</button>
                             </div>
                         </form>
                     {% elif service_id == '4' %}
-                        <form method="post" action="{% url 'Edit_Document_master' %}">
+                        <form method="post" action="{% url 'Edit_Document_master' %}"enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="hidden" name="doc_id" value="{{ document.doc_id }}">
                         
@@ -152,13 +167,28 @@
                                 </div>
                             </div>
 
+                            <!-- Sample Document Upload -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Upload Sample Document (Max 5 MB)</strong></label>
+                                <input type="file" class="form-control" name="sample_doc" accept=".pdf,.doc,.docx,.jpg,.png">
+                                
+                                {% if document.doc_subpath %}
+                                    <p class="mt-2">
+                                        Current file: 
+                                        <a href="{{ MEDIA_URL }}{{ document.doc_subpath }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            View More
+                                        </a>
+                                    </p>
+                                {% endif %}
+                            </div>
+
                             <!-- Submit Button -->
                             <div class="text-end">
                                 <button type="submit" class="btn btn-primary px-4">Submit</button>
                             </div>
                         </form>
                     {% else %}
-                        <form method="post" action="{% url 'Edit_Document_master' %}">
+                        <form method="post" action="{% url 'Edit_Document_master' %}"enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="hidden" name="doc_id" value="{{ document.doc_id }}">
 
@@ -192,6 +222,21 @@
                                     <input class="form-check-input" type="radio" name="mandatory" id="mandatoryNo" value="0" {% if not document.mandatory %}checked{% endif %}>
                                     <label class="form-check-label" for="mandatoryNo">No</label>
                                 </div>
+                            </div>
+
+                            <!-- Sample Document Upload -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Upload Sample Document (Max 5 MB)</strong></label>
+                                <input type="file" class="form-control" name="sample_doc" accept=".pdf,.doc,.docx,.jpg,.png">
+                                
+                                {% if document.doc_subpath %}
+                                    <p class="mt-2">
+                                        Current file: 
+                                        <a href="{{ MEDIA_URL }}{{ document.doc_subpath }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            View More
+                                        </a>
+                                    </p>
+                                {% endif %}
                             </div>
 
                             <!-- Submit Button -->

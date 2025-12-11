@@ -903,7 +903,7 @@ def create_partial_view(request):
                     'doc_name': document.doc_name,
                     'doc_subpath': document.doc_subpath,
                     'mandatory': document.mandatory,
-                    'encrypted_subpath': document.doc_subpath,  # Assuming you want to send the encrypted path
+                    'encrypted_subpath': encrypt_parameter(str(document.doc_subpath)),  # Assuming you want to send the encrypted path
                     'doc_type': document.doc_type
             })
 

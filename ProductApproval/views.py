@@ -1091,7 +1091,7 @@ def create_partial_view_product(request):
                     'doc_name': document.doc_name,
                     'doc_subpath': document.doc_subpath,
                     'mandatory': document.mandatory,
-                    'encrypted_subpath': document.doc_subpath,  # Assuming you want to send the encrypted path
+                    'encrypted_subpath': encrypt_parameter(str(document.doc_subpath)),  # Assuming you want to send the encrypted path
                     'doc_type': document.doc_type
             })
 
@@ -1217,6 +1217,7 @@ def upload_challan_wrapper(file, user, form_id, created_by, ser, doc_id1):
     
 def download_doc(request, filepath):
     file = decrypt_parameter(filepath)
+    file = file.replace("\\", "/")
     file_path = os.path.join(settings.MEDIA_ROOT, file)
     file_name = os.path.basename(file_path)
     try:

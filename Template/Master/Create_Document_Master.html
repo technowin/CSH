@@ -171,7 +171,7 @@
                     </div>
                 </form> {% endcomment %}
                 
-                <form id="documentForm" method="POST" action="{% url 'Create_Document_Master' %}">
+                <form id="documentForm" method="POST" action="{% url 'Create_Document_Master' %}"enctype="multipart/form-data">
                     {% csrf_token %}
                     <div id="documentWrapper">
                         <!-- Document block template -->
@@ -223,6 +223,10 @@
                                 {% else %}
                                 <!-- No dropdown for other service_ids -->
                                 {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                    <label class="form-label">Upload Sample Document (PDF)</label>
+                                    <input type="file" name="sample_file[]" class="form-control" accept="application/pdf">
                             </div>
                         </div>
                     </div>

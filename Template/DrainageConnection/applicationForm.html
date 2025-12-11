@@ -125,6 +125,13 @@
                                     {% if document.mandatory == 1 %}
                                         <span style="color: red;">*</span>
                                     {% endif %}
+                                    {% if document.doc_subpath %}
+                                        <a href="/download_doc/{{ document.encrypted_subpath }}/" 
+                                            target="_blank"
+                                            style="color: #4e73df; margin-left: 10px;">
+                                                <i class="fa fa-file-pdf" style="font-size: 26px; color: red;"></i>
+                                        </a>
+                                    {% endif %}
                                 <td>
                                     <input type="file" name="upload_{{ document.doc_id }}" class="form-control" onchange="previewFile(this, '{{ document.doc_id }}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"> 
                                 </td>

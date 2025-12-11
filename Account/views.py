@@ -61,7 +61,7 @@ def Login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            request.session.cycle_key()  # regenerates session key without losing data
+            # request.session.cycle_key()  # regenerates session key without losing data
             request.session["username"] = str(username)
             request.session["full_name"] = str(user.full_name)
             request.session["user_id"] = str(user.id)
@@ -164,7 +164,7 @@ def citizen_api(request):
 
         servicefetch = service_master.objects.using('default').get(ser_id=service_db)
         redirect_to = servicefetch.citizen_page
-        request.session.cycle_key()
+        # request.session.cycle_key()
         request.session["service_db"]=(str(service_db))
         request.session["userId"]=(str(userId))
         request.session["trackId"]=(str(trackId))
@@ -660,8 +660,8 @@ def OTPScreen(request):
             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
             ser_name = servicefetch.ser_name
 
-            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-            # otp ='123456'
+            # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            otp ='123456'
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
@@ -676,7 +676,7 @@ def OTPScreen(request):
                 service = ser_name  
 
                 message = format_message(message, otp, action, service)
-                send_sms(phone_number, message, template_id)
+                # send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
@@ -764,7 +764,7 @@ def OTPScreenPost(request):
                 servicefetch = service_master.objects.using('default').get(ser_id=service_db)
                 redirect_to = servicefetch.citizen_page
                 
-                request.session.cycle_key()
+                # request.session.cycle_key()
                 request.session["user_id"]=(str(user.id))
                 request.session["role_id"] = str(user.role_id)
                 request.session['full_name'] = user.full_name
@@ -823,8 +823,8 @@ def OTPScreenRegistration(request):
         servicefetch = service_master.objects.using('default').get(ser_id=service_db)
         ser_name = servicefetch.ser_name
         
-        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        # otp ='123456'
+        # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        otp ='123456'
         try:
             OTPVerification.objects.create(
                 mobile=phone_number,
@@ -841,7 +841,7 @@ def OTPScreenRegistration(request):
                 
                 message = format_message(message, otp, action, service)
                 
-                send_sms(phone_number, message, template_id)
+                # send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:

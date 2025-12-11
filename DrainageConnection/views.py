@@ -637,6 +637,9 @@ def applicationMasterCrate(request):
         # getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id=15)
         # getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id__in=[15, 19])
         getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id__in=[15, 19]).order_by('order_by')
+        for doc in getDocumentData:
+            if doc.doc_subpath:
+                doc.encrypted_subpath = encrypt_parameter(str(doc.doc_subpath))
         # success_message = request.session.pop('success_message', None)
         message = request.session.pop('message', None)
         form_data = request.session.pop("form_data", None)

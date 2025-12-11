@@ -13,12 +13,12 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
-ALLOWED_HOSTS = ['13.126.65.190','172.16.20.48','rtsengser.cidcoindia.com']
+# ALLOWED_HOSTS = ['13.126.65.190','172.16.20.48','rtsengser.cidcoindia.com']
 # ALLOWED_HOSTS = ['127.0.0.1']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-# DEBUG = True   
+# DEBUG = False
+DEBUG = True   
 
 # Adding the Router
 DATABASE_ROUTERS = ['Account.routers.ServiceRouter']
@@ -29,9 +29,9 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'common_db1',      # Replace with your database name
         'USER': 'root',      # Replace with your database user
-        'PASSWORD': 'Mysql_7319',  # Replace with your database password
-        # 'HOST': '13.127.171.88',       # IP FOR TEST
-        'HOST': '127.0.0.1',       # IP FOR LOCAL VM
+        'PASSWORD': 'Mysql_MH-047319',  # Replace with your database password
+        'HOST': '13.126.65.190',       # IP FOR TEST
+        # 'HOST': '127.0.0.1',       # IP FOR LOCAL VM
         'PORT': '3306',            
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -41,45 +41,45 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'drainage_connection_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_7319',  
-        # 'HOST': '13.127.171.88',   
-        'HOST': '127.0.0.1',    
+        'PASSWORD': 'Mysql_MH-047319',  
+        'HOST': '13.126.65.190',   
+        # 'HOST': '127.0.0.1',    
         'PORT': '3306',
     },
      '2': {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'tree_cutting_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_7319',  
-        # 'HOST': '13.127.171.88',  
-        'HOST': '127.0.0.1',      
+        'PASSWORD': 'Mysql_MH-047319',  
+        'HOST': '13.126.65.190',  
+        # 'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
      '3': {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'tree_trimming_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_7319',  
-        # 'HOST': '13.127.171.88',  
-        'HOST': '127.0.0.1',      
+        'PASSWORD': 'Mysql_MH-047319',  
+        'HOST': '13.126.65.190',  
+        # 'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
      '4': {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'contract_registration_db',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_7319',  
-        # 'HOST': '13.127.171.88',  
-        'HOST': '127.0.0.1',      
+        'PASSWORD': 'Mysql_MH-047319',  
+        'HOST': '13.126.65.190',  
+        # 'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
       '5': {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'product_approval_db',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_7319',  
-        # 'HOST': '13.127.171.88',  
-        'HOST': '127.0.0.1',      
+        'PASSWORD': 'Mysql_MH-047319',  
+        'HOST': '13.126.65.190',  
+        # 'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
 }
@@ -87,9 +87,9 @@ DATABASES = {
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'D:/Python Project/Documents/')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'D:/Python Project/Documents/')
 # MEDIA_ROOT = os.path.join(BASE_DIR, '/home/ubuntu/Documents/')
-MEDIA_ROOT = os.path.join(BASE_DIR, '/home/services/Documents/')
+# MEDIA_ROOT = os.path.join(BASE_DIR, '/home/services/Documents/')
 MEDIA_URL = '/media/'
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
@@ -110,7 +110,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 3600  # 1-hour session timeout
+SESSION_COOKIE_AGE = 3600 
+SESSION_SAVE_EVERY_REQUEST = True  # 1-hour session timeout
 # Clickjacking Protection
 X_FRAME_OPTIONS = 'DENY'
 
@@ -191,26 +192,26 @@ STATICFILES_DIRS = [
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            # 'filename': os.path.join(BASE_DIR, 'D:/Python Project/CSH Logs', 'django.log'),  
-            # 'filename': os.path.join(BASE_DIR, '/home/ubuntu/CSH Logs', 'django.log'),  
-            'filename': os.path.join(BASE_DIR, '/home/services/CSH Logs', 'django.log'),  
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'WARNING',
-            'propagate': True,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'file': {
+#             'level': 'WARNING',
+#             'class': 'logging.FileHandler',
+#             # 'filename': os.path.join(BASE_DIR, 'D:/Python Project/CSH Logs', 'django.log'),  
+#             'filename': os.path.join(BASE_DIR, '/home/ubuntu/CSH Logs', 'django.log'),  
+#             # 'filename': os.path.join(BASE_DIR, '/home/services/CSH Logs', 'django.log'),  
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['file'],
+#             'level': 'WARNING',
+#             'propagate': True,
+#         },
+#     },
+# }
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     # Add any additional authentication backends if needed
