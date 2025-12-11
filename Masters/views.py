@@ -760,6 +760,12 @@ def Edit_Document_master(request):
 
             document = get_object_or_404(document_master, doc_id=document_id)
             document.doc_id = encrypt_parameter(str(document.doc_id))
+
+            if document.doc_subpath:
+                clean_path = document.doc_subpath.replace("\\", "/")
+                document.encrypted_subpath = encrypt_parameter(clean_path)
+            else:
+                document.encrypted_subpath = None
                 
             context = {
                 'service_id': service_id,

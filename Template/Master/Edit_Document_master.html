@@ -103,10 +103,20 @@
                                 <label class="form-label"><strong>Upload Sample Document (Max 5 MB)</strong></label>
                                 <input type="file" class="form-control" name="sample_doc" accept=".pdf,.doc,.docx,.jpg,.png">
                                 
-                                {% if document.doc_subpath %}
+                                {% comment %} {% if document.doc_subpath %}
                                     <p class="mt-2">
                                         Current file: 
                                         <a href="{{ MEDIA_URL }}{{ document.doc_subpath }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            View More
+                                        </a>
+                                    </p>
+                                {% endif %} {% endcomment %}
+                                {% if document.doc_subpath %}
+                                    <p class="mt-2">
+                                        Current file:
+                                        <a href="/download_doc/{{ document.encrypted_subpath }}/"
+                                        target="_blank"
+                                        class="btn btn-sm btn-outline-primary">
                                             View More
                                         </a>
                                     </p>
@@ -172,10 +182,20 @@
                                 <label class="form-label"><strong>Upload Sample Document (Max 5 MB)</strong></label>
                                 <input type="file" class="form-control" name="sample_doc" accept=".pdf,.doc,.docx,.jpg,.png">
                                 
-                                {% if document.doc_subpath %}
+                                {% comment %} {% if document.doc_subpath %}
                                     <p class="mt-2">
                                         Current file: 
                                         <a href="{{ MEDIA_URL }}{{ document.doc_subpath }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            View More
+                                        </a>
+                                    </p>
+                                {% endif %} {% endcomment %}
+                                {% if document.doc_subpath %}
+                                    <p class="mt-2">
+                                        Current file:
+                                        <a href="/download_doc/{{ document.encrypted_subpath }}/"
+                                        target="_blank"
+                                        class="btn btn-sm btn-outline-primary">
                                             View More
                                         </a>
                                     </p>
@@ -229,10 +249,20 @@
                                 <label class="form-label"><strong>Upload Sample Document (Max 5 MB)</strong></label>
                                 <input type="file" class="form-control" name="sample_doc" accept=".pdf,.doc,.docx,.jpg,.png">
                                 
-                                {% if document.doc_subpath %}
+                                {% comment %} {% if document.doc_subpath %}
                                     <p class="mt-2">
                                         Current file: 
                                         <a href="{{ MEDIA_URL }}{{ document.doc_subpath }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            View More
+                                        </a>
+                                    </p>
+                                {% endif %} {% endcomment %}
+                                {% if document.doc_subpath %}
+                                    <p class="mt-2">
+                                        Current file:
+                                        <a href="/download_doc/{{ document.encrypted_subpath }}/"
+                                        target="_blank"
+                                        class="btn btn-sm btn-outline-primary">
                                             View More
                                         </a>
                                     </p>
