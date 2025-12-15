@@ -29,15 +29,41 @@
                     <input type="hidden" name="selected_value" id="selected_value" value="{{ selected_value }}">
                     
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="form-group col-md-3">
+                            <label for="product_service" class="form-label">
+                                Product / Service Type<span style="color:red;"> *</span> :
+                            </label>
+
+                            <select name="product_type_service"
+                                    id="product_service"
+                                    class="form-control select"
+                                    style="border-radius:15px;"
+                                    required>
+
+                                <option value="" disabled
+                                    {% if not product_type_service %}selected{% endif %}>
+                                    Select Service Type
+                                </option>
+
+                                {% for value, label in ProductService %}
+                                    <option value="{{ value }}"
+                                        {% if value == product_type_service %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                  
+
+                        <div class="col-md-3">
                             <label for="factory_name" class="form-label">Factory Name:<span style="color:red;"> *</span> :</label>
                             <input type="text" name="factory_name" class="form-control" id="factory_name" placeholder="Enter Factory Name" value="{{ form_data.factory_name }}" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="gstin" class="form-label">GSTIN<span style="color:red;"> *</span> :</label>
                             <input type="text" name="gstin" class="form-control" id="gstin" placeholder="Enter GSTIN" value="{{ form_data.gstin }}" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="pan_no" class="form-label">PAN<span style="color:red;"> *</span> :</label>
                             <input type="text" name="pan_no" class="form-control" id="pan_no" placeholder="Enter PAN" value="{{ form_data.pan_no }}" required onchange="validatePAN()">
                         </div>

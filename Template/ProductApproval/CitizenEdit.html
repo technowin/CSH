@@ -29,6 +29,26 @@
 
                     <div class="row mb-3">
                         <div class="col-md-4">
+                            <label class="form-label">
+                                Product Service Type<span style="color:red;"> *</span>
+                            </label>
+                            <select name="product_type_service"
+                                    class="form-select w-100"
+                                    style="border-radius:15px; height:38px;"
+                                    required>
+                                <option value="">-- Product Service Type --</option>
+
+                                {% for value, label in ProductService %}
+                                    <option value="{{ value }}"
+                                        {% if value == viewDetails.product_type_service %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+
+                        <div class="col-md-4">
                             <label for="factory_name" class="form-label">Factory Name:<span style="color:red;"> *</span> :</label>
                             <input type="text" name="factory_name" class="form-control" id="factory_name" placeholder="Enter Factory Name" value="{{ viewDetails.factory_name }}">
                         </div>

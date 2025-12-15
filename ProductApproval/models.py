@@ -6,6 +6,7 @@ from Account.managers import ServiceManager
 class application_form(models.Model):
     id = models.AutoField(primary_key=True)
     product_type = models.TextField(null=True, blank=True)
+    product_type_service = models.TextField(null=True, blank=True)
     factory_name = models.TextField(null=True, blank=True)
     gstin = models.TextField(null=True, blank=True)
     license_no = models.TextField(null=True, blank=True)

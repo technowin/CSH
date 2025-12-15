@@ -647,28 +647,44 @@ def citizen_crate_pa(request):
     try:
         phone_number = request.session.get("phone_number")
         user_id = None
+
         if phone_number:
-            user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
+            user = CustomUser.objects.filter(phone=phone_number, role_id=2).first()
+            if not user:
+                messages.error(request, "User not found.")
+                return redirect("login")
             user_id = user.id
 
         service_db = request.session.get("service_db", "")
-   
+
+        # ====================== GET ======================
         if request.method == "GET":
             message = request.session.pop("message", None)
-            selected_value = request.GET.get('selected_value', None) 
+            selected_value = request.GET.get("selected_value", None)
+            form_data = request.session.pop("form_data", None)
+            missing_documents = request.session.pop("missing_documents", None)
+
+            ProductService = parameter_master.objects.filter(
+                parameter_id__in=[25, 26]
+            ).values_list("parameter_value", "parameter_value")
 
             return render(
                 request,
                 "ProductApproval/CitizenCreate.html",
                 {
                     "message": message,
-                    "selected_value":selected_value
+                    "selected_value": selected_value,
+                    "form_data": form_data,
+                    "missing_documents": missing_documents,
+                    "ProductService": ProductService,
                 },
             )
 
+        # ====================== POST ======================
         elif request.method == "POST":
-            
+
             product_type = request.POST.get("selected_value")
+            product_type_service = request.POST.get("product_type_service")
             factory_name = request.POST.get("factory_name")
             gstin = request.POST.get("gstin")
             pan_no = request.POST.get("pan_no")
@@ -679,8 +695,10 @@ def citizen_crate_pa(request):
             license_no = request.POST.get("license_no")
             factory_location = request.POST.get("factory_location")
 
+            # ---------- Validation ----------
             if not (
-                factory_name
+                product_type
+                and factory_name
                 and gstin
                 and pan_no
                 and cin
@@ -691,23 +709,22 @@ def citizen_crate_pa(request):
                 and factory_location
             ):
                 messages.error(request, "All fields are required.")
-                return redirect("citizen_index_cr")
+                return redirect(f"/citizen_crate_pa?selected_value={product_type}")
 
+            # ---------- Mandatory Documents ----------
             mandatory_documents = document_master.objects.filter(
-                mandatory=1, is_active=1, doc_type=product_type
+                mandatory=1,
+                is_active=1,
+                doc_type=product_type
             )
 
-            all_uploaded = True
             missing_documents = []
-
             for document in mandatory_documents:
                 if not request.FILES.get(f"upload_{document.doc_id}"):
-                    all_uploaded = False
                     missing_documents.append(document.doc_name)
 
-            if not all_uploaded:
-                message = "Please upload the mandatory documents."
-                request.session["message"] = message
+            if missing_documents:
+                request.session["message"] = "Please upload the mandatory documents."
                 request.session["missing_documents"] = missing_documents
                 request.session["form_data"] = {
                     "factory_name": factory_name,
@@ -720,12 +737,12 @@ def citizen_crate_pa(request):
                     "license_no": license_no,
                     "factory_location": factory_location,
                 }
-                # return redirect("citizen_crate_pa")
-                return redirect(f'/citizen_crate_pa?selected_value={product_type}')
+                return redirect(f"/citizen_crate_pa?selected_value={product_type}")
 
-
+            # ---------- Create Application ----------
             application = application_form.objects.create(
                 product_type=product_type,
+                product_type_service=product_type_service, 
                 factory_name=factory_name,
                 gstin=gstin,
                 pan_no=pan_no,
@@ -735,73 +752,69 @@ def citizen_crate_pa(request):
                 email=email,
                 license_no=license_no,
                 factory_location=factory_location,
-                created_by=user_id
+                created_by=user_id,
             )
 
-            servicefetch = service_master.objects.using("default").get(
-                ser_id=service_db
-            )
+            # ---------- Folder Structure ----------
+            servicefetch = service_master.objects.using("default").get(ser_id=service_db)
             service_name = servicefetch.ser_name
 
-            user_folder_path = os.path.join(settings.MEDIA_ROOT, f"{service_name}")
-            os.makedirs(user_folder_path, exist_ok=True)
-
-            user_folder_path = os.path.join(user_folder_path, f"User")
-            os.makedirs(user_folder_path, exist_ok=True)
-
-            application_folder_path = os.path.join(
-                user_folder_path, f"user_{user_id}", f"application_{application.id}"
+            base_path = os.path.join(
+                settings.MEDIA_ROOT,
+                service_name,
+                "User",
+                f"user_{user_id}",
+                f"application_{application.id}",
             )
-            os.makedirs(application_folder_path, exist_ok=True)
+            os.makedirs(base_path, exist_ok=True)
 
-            for document in document_master.objects.all():
+            # ---------- Upload Documents (ONLY relevant) ----------
+            documents = document_master.objects.filter(
+                is_active=1,
+                doc_type=product_type
+            )
+
+            for document in documents:
                 uploaded_file = request.FILES.get(f"upload_{document.doc_id}")
+                if not uploaded_file:
+                    continue
 
-                if uploaded_file:
-                    document_folder_path = os.path.join(
-                        application_folder_path, f"document_{document.doc_id}"
-                    )
-                    os.makedirs(document_folder_path, exist_ok=True)
+                document_path = os.path.join(base_path, f"document_{document.doc_id}")
+                os.makedirs(document_path, exist_ok=True)
 
-                    for file_name in os.listdir(document_folder_path):
-                        file_path = os.path.join(document_folder_path, file_name)
-                        if os.path.isfile(file_path):
-                            os.remove(file_path)
+                # Remove old files
+                for file in os.listdir(document_path):
+                    file_path = os.path.join(document_path, file)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
 
-                    file_name = uploaded_file.name
-                    file_path = os.path.join(document_folder_path, file_name)
+                file_name = uploaded_file.name
+                file_path = os.path.join(document_path, file_name)
 
-                    with open(file_path, "wb+") as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
+                with open(file_path, "wb+") as destination:
+                    for chunk in uploaded_file.chunks():
+                        destination.write(chunk)
 
-                    relative_file_path = f"{service_name}/User/user_{user_id}/application_{application.id}/document_{document.doc_id}/{file_name}"
+                relative_path = (
+                    f"{service_name}/User/user_{user_id}/"
+                    f"application_{application.id}/document_{document.doc_id}/{file_name}"
+                )
 
-                    existing_document = citizen_document.objects.filter(
-                        user_id=user_id,
-                        document=document.doc_id,
-                        application_id=application,
-                    ).first()
+                citizen_document.objects.update_or_create(
+                    user_id=user_id,
+                    document=document,
+                    application_id=application,
+                    defaults={
+                        "file_name": file_name,
+                        "filepath": relative_path,
+                        "updated_by": user_id,
+                        "updated_at": timezone.now(),
+                        "created_by": user_id,
+                    },
+                )
 
-                    if existing_document:
-                        existing_document.file_name = file_name
-                        existing_document.filepath = relative_file_path
-                        existing_document.updated_by = user_id
-                        existing_document.updated_at = timezone.now()
-                        existing_document.save()
-                    else:
-                        citizen_document.objects.create(
-                            user_id=user_id,
-                            file_name=file_name,
-                            filepath=relative_file_path,
-                            document=document,
-                            application_id=application,
-                            created_by=user_id,
-                            updated_by=user_id,
-                        )
-
-            new_id = 0
-            new_id = encrypt_parameter(str(new_id))
+            # ---------- Redirect ----------
+            new_id = encrypt_parameter("0")
             row_id = encrypt_parameter(str(application.id))
 
             messages.success(request, "Form submitted successfully.")
@@ -811,6 +824,9 @@ def citizen_crate_pa(request):
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), user_id])
+        messages.error(request, "Something went wrong. Please try again.")
+    return redirect("citizen_crate_pa")
+
 
 def citizen_edit_pa(request, row_id, new_id):
     try:
@@ -828,6 +844,9 @@ def citizen_edit_pa(request, row_id, new_id):
             row_id = decrypt_parameter(row_id)
             message = request.session.pop("message", None)
             viewDetails = get_object_or_404(application_form, id=row_id)
+            ProductService = parameter_master.objects.filter(
+                parameter_id__in=[25, 26]
+            ).values_list("parameter_value", "parameter_value")
             
             uploaded_documents = citizen_document.objects.filter(
                 user_id=user_id, application_id=viewDetails
@@ -863,6 +882,7 @@ def citizen_edit_pa(request, row_id, new_id):
             viewDetails.email = request.POST.get("email")
             viewDetails.license_no = request.POST.get("license_no")
             viewDetails.factory_location = request.POST.get("factory_location")
+            viewDetails.product_type_service = request.POST.get("product_type_service")
 
             if not all([viewDetails.factory_name, viewDetails.gstin, viewDetails.pan_no, viewDetails.cin,
                         viewDetails.contact_person_name, viewDetails.mobile_no, viewDetails.email,
@@ -959,6 +979,7 @@ def citizen_edit_pa(request, row_id, new_id):
                     "not_uploaded_documents": not_uploaded_documents,
                     "new_id": new_id,
                     "message": message,
+                    "ProductService": ProductService,
                 },
             )
         # else:
@@ -983,6 +1004,7 @@ def citizen_view_pa(request, row_id, new_id):
             new_id = decrypt_parameter(new_id)
             viewDetails = None
             viewDetails = application_form.objects.get(id=row_id1)
+            # product_type_service = viewDetails.product_type_service
 
             # To Show Letter Of Payment And Plantation
             
@@ -1066,6 +1088,7 @@ def citizen_view_pa(request, row_id, new_id):
                     "new_id": new_id,
                     "row_id": row_id,
                     "plain_new_id": plain_new_id,
+                    # "product_type_service": product_type_service, 
                 },
             )
         else:

@@ -27,6 +27,13 @@
                 
                     <div class="row mb-3">
                         <div class="col-md-4">
+                            <label class="form-label">Product Service Type</label>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ viewDetails.product_type_service }}"
+                                readonly>
+                        </div>
+                        <div class="col-md-4">
                             <label for="factory_name" class="form-label">Factory Name:<span style="color:red;"> *</span> :</label>
                             <input type="text" name="factory_name" class="form-control" id="factory_name" placeholder="Enter Factory Name" value="{{ viewDetails.factory_name }}" readonly>
                         </div>
