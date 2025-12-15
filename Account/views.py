@@ -660,8 +660,8 @@ def OTPScreen(request):
             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
             ser_name = servicefetch.ser_name
 
-            # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-            otp ='123456'
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            # otp ='123456'
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
@@ -676,7 +676,7 @@ def OTPScreen(request):
                 service = ser_name  
 
                 message = format_message(message, otp, action, service)
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
@@ -823,8 +823,8 @@ def OTPScreenRegistration(request):
         servicefetch = service_master.objects.using('default').get(ser_id=service_db)
         ser_name = servicefetch.ser_name
         
-        # otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        otp ='123456'
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        # otp ='123456'
         try:
             OTPVerification.objects.create(
                 mobile=phone_number,
@@ -841,7 +841,7 @@ def OTPScreenRegistration(request):
                 
                 message = format_message(message, otp, action, service)
                 
-                # send_sms(phone_number, message, template_id)
+                send_sms(phone_number, message, template_id)
             
             messages.success(request, "OTP sent successfully!")
         except Exception as e:
