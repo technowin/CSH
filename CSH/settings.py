@@ -13,7 +13,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
-ALLOWED_HOSTS = ['13.126.65.190','172.16.20.48','rtsengser.cidcoindia.com']
+ALLOWED_HOSTS = ['13.126.65.190','172.16.20.48','3.7.229.137','rtsengser.cidcoindia.com']
 # ALLOWED_HOSTS = ['127.0.0.1']
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -29,7 +29,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'common_db1',      # Replace with your database name
         'USER': 'root',      # Replace with your database user
-        'PASSWORD': 'Mysql_MH-047319',  # Replace with your database password
+        'PASSWORD': 'Techno-cidco_MH-047319',  # Replace with your database password
         # 'HOST': '13.126.65.190',       # IP FOR TEST
         'HOST': '127.0.0.1',       # IP FOR LOCAL VM
         'PORT': '3306',            
@@ -41,7 +41,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'drainage_connection_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Techno-cidco_MH-047319',  
         # 'HOST': '13.126.65.190',   
         'HOST': '127.0.0.1',    
         'PORT': '3306',
@@ -50,7 +50,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'tree_cutting_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Techno-cidco_MH-047319',  
         # 'HOST': '13.126.65.190',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
@@ -59,7 +59,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'tree_trimming_db1',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Techno-cidco_MH-047319',  
         # 'HOST': '13.126.65.190',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
@@ -68,7 +68,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'contract_registration_db',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Techno-cidco_MH-047319',  
         # 'HOST': '113.126.65.190',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
@@ -77,7 +77,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'product_approval_db',  
         'USER': 'root',    
-        'PASSWORD': 'Mysql_MH-047319',  
+        'PASSWORD': 'Techno-cidco_MH-047319',  
         # 'HOST': '13.126.65.190',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
