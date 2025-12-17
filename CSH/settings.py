@@ -30,7 +30,7 @@ DATABASES = {
         'NAME': 'common_db1',      # Replace with your database name
         'USER': 'root',      # Replace with your database user
         'PASSWORD': 'Techno-cidco_MH-047319',  # Replace with your database password
-        # 'HOST': '13.126.65.190',       # IP FOR TEST
+        # 'HOST': '3.7.229.137',       # IP FOR TEST
         'HOST': '127.0.0.1',       # IP FOR LOCAL VM
         'PORT': '3306',            
         'OPTIONS': {
@@ -42,7 +42,7 @@ DATABASES = {
         'NAME': 'drainage_connection_db1',  
         'USER': 'root',    
         'PASSWORD': 'Techno-cidco_MH-047319',  
-        # 'HOST': '13.126.65.190',   
+        # 'HOST': '3.7.229.137',   
         'HOST': '127.0.0.1',    
         'PORT': '3306',
     },
@@ -51,7 +51,7 @@ DATABASES = {
         'NAME': 'tree_cutting_db1',  
         'USER': 'root',    
         'PASSWORD': 'Techno-cidco_MH-047319',  
-        # 'HOST': '13.126.65.190',  
+        # 'HOST': '3.7.229.137',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
@@ -60,7 +60,7 @@ DATABASES = {
         'NAME': 'tree_trimming_db1',  
         'USER': 'root',    
         'PASSWORD': 'Techno-cidco_MH-047319',  
-        # 'HOST': '13.126.65.190',  
+        # 'HOST': '3.7.229.137',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
@@ -69,7 +69,7 @@ DATABASES = {
         'NAME': 'contract_registration_db',  
         'USER': 'root',    
         'PASSWORD': 'Techno-cidco_MH-047319',  
-        # 'HOST': '113.126.65.190',  
+        # 'HOST': '3.7.229.137',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
@@ -78,7 +78,7 @@ DATABASES = {
         'NAME': 'product_approval_db',  
         'USER': 'root',    
         'PASSWORD': 'Techno-cidco_MH-047319',  
-        # 'HOST': '13.126.65.190',  
+        # 'HOST': '3.7.229.137',  
         'HOST': '127.0.0.1',      
         'PORT': '3306',
     },
