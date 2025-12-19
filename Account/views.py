@@ -341,7 +341,10 @@ def register_new_user(request):
                         else:
                             with transaction.atomic(using='default'):
                                 user.save(using='default') 
-                                password_storage.objects.using('default').create(user=user, passwordText=password)
+                                password_storage.objects.using('default').create(
+                                    user_id=user.id,
+                                    passwordText=password
+                                )
                             user_id = user.id
                         if department:
                             user_dept_services.objects.using('default').get_or_create(
@@ -351,8 +354,10 @@ def register_new_user(request):
                             user.id = user_id
                             with transaction.atomic(using=service_db):
                                 user.save(using=service_db)
-                                password_storage.objects.using(service_db).create(user=user, passwordText=password)
-
+                                password_storage.objects.using(service_db).create(
+                                    user_id=user.id,
+                                    passwordText=password
+                                )
                         assigned_menus = RoleMenuMaster.objects.using(service_db).filter(role_id=role_id)
                         for menu in assigned_menus:
                             UserMenuDetails.objects.using(service_db).create(
@@ -365,7 +370,7 @@ def register_new_user(request):
 
                     except ValidationError as e:
                         messages.error(request, ' '.join(e.messages))
-                    
+                   
             else:
                 firstname = request.POST.get('firstname')
                 lastname = request.POST.get('lastname')
