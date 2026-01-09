@@ -521,12 +521,19 @@ def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
             old_path = os.path.join(MEDIA_ROOT, old_doc.filepath)
             if old_doc.filepath and os.path.exists(old_path):
                 os.remove(old_path)
-            existing_doc.delete()
+    existing_doc.delete()
 
     # Step 3: Save new file
     with open(full_path, 'wb+') as destination:
         for chunk in file.chunks():
             destination.write(chunk)
+
+    citizen_document.objects.create(
+            user_id=user,file_name=file.name,filepath=sub_path,
+            document=doc,application_id=app_form,
+            created_by=str(created_by),updated_by=str(created_by),
+           created_at=datetime.now(),updated_at=datetime.now()
+       )
 
     #  Step 4: Insert new record
     citizen_document.objects.create(
