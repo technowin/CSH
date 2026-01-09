@@ -498,44 +498,39 @@ def internal_docs_upload(file,role_id,user,wf,ser,name1):
         else: file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
  
-def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
-    file_resp = None
+def citizen_docs_upload(file, user, form_id, created_by, ser, doc_id1):
     doc = document_master.objects.get(doc_id=doc_id1)
     app_form = application_form.objects.get(id=form_id)
     service = service_master.objects.using("default").get(ser_id=ser)
+
     sub_path = f'{service.ser_name}/User/user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}'
     full_path = os.path.join(MEDIA_ROOT, sub_path)
     folder_path = os.path.dirname(full_path)
-    
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path, exist_ok=True)
-    file_exists_in_folder = os.path.exists(full_path)
-    existing_doc = citizen_document.objects.filter(
+
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Step 1: Fetch ALL existing records
+    existing_docs = citizen_document.objects.filter(
         application_id=app_form,
         document=doc
     )
 
-    # Step 2: Delete old file & record
-    if existing_doc:
-       for old_doc in existing_doc:
+    #  Step 2: Delete ALL old files
+    for old_doc in existing_docs:
+        if old_doc.filepath:
             old_path = os.path.join(MEDIA_ROOT, old_doc.filepath)
-            if old_doc.filepath and os.path.exists(old_path):
+            if os.path.exists(old_path):
                 os.remove(old_path)
-    existing_doc.delete()
 
-    # Step 3: Save new file
+    # Step 3: Delete ALL old DB records (ONCE)
+    existing_docs.delete()
+
+    # Step 4: Save new file
     with open(full_path, 'wb+') as destination:
         for chunk in file.chunks():
             destination.write(chunk)
 
-    citizen_document.objects.create(
-            user_id=user,file_name=file.name,filepath=sub_path,
-            document=doc,application_id=app_form,
-            created_by=str(created_by),updated_by=str(created_by),
-           created_at=datetime.now(),updated_at=datetime.now()
-       )
-
-    #  Step 4: Insert new record
+    # Step 5: Insert ONE new record
     citizen_document.objects.create(
         user_id=user,
         file_name=file.name,
