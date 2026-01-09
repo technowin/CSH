@@ -132,7 +132,9 @@ def matrix_flow(request):
             # for doc_master in document_master.objects.all():
             # for doc_master in document_master.objects.exclude(is_active=0).exclude(doc_id=15):
             for doc_master in document_master.objects.exclude(is_active=0).exclude(doc_id__in=[15, 19]):
-                matching_doc = citizen_docs.filter(document=doc_master).first()
+                # matching_doc = citizen_docs.filter(document=doc_master).first()
+                matching_doc = citizen_docs.filter(document=doc_master).order_by('-updated_at').first()
+
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
                     full_filepath = os.path.join(MEDIA_ROOT, matching_doc.filepath)
@@ -508,30 +510,39 @@ def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path, exist_ok=True)
     file_exists_in_folder = os.path.exists(full_path)
-    file_exists_in_db = citizen_document.objects.filter(filepath=sub_path).exists()
-    if file_exists_in_db:
-        document = citizen_document.objects.filter(filepath=sub_path).first()
-        document.updated_at = datetime.now()
-        document.updated_by = str(user)
-        document.save()
-        with open(full_path, 'wb+') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
-        file_resp =  f"File '{file.name}' has been updated."
-    else:
-        with open(full_path, 'wb+') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
+    existing_doc = citizen_document.objects.filter(
+        application_id=app_form,
+        document=doc
+    )
 
-        citizen_document.objects.create(
-            user_id=user,file_name=file.name,filepath=sub_path,
-            document=doc,application_id=app_form,
-            created_by=str(created_by),updated_by=str(created_by),
-            created_at=datetime.now(),updated_at=datetime.now()
-        )
-       
-        file_resp =  f"File '{file.name}' has been inserted."
-    return file_resp
+    # Step 2: Delete old file & record
+    if existing_doc:
+       for old_doc in existing_doc:
+            old_path = os.path.join(MEDIA_ROOT, old_doc.filepath)
+            if old_doc.filepath and os.path.exists(old_path):
+                os.remove(old_path)
+            existing_doc.delete()
+
+    # Step 3: Save new file
+    with open(full_path, 'wb+') as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
+
+    #  Step 4: Insert new record
+    citizen_document.objects.create(
+        user_id=user,
+        file_name=file.name,
+        filepath=sub_path,
+        document=doc,
+        application_id=app_form,
+        created_by=str(created_by),
+        updated_by=str(created_by),
+        created_at=datetime.now(),
+        updated_at=datetime.now()
+    )
+
+    return f"File '{file.name}' uploaded successfully."
+    
 
 def sample_doc(columns,file_name,user):
     try:

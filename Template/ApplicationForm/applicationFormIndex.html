@@ -103,7 +103,7 @@
                                 </a>
                                 
                             {% elif row.status == 'Issue Certificate'  %}
-                                <a class="download-link" href="{% url 'downloadIssuedCertificate' row.id %}">
+                                <a class="download-link" href="{% url 'downloadIssuedCertificate' row.id %}"target="_blank">
                                     <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="download-text">Download Certificate</span>
                                 </a> 
