@@ -341,6 +341,19 @@ def matrix_flow(request):
                         messages.error(request, "Oops...! Something went wrong!")
 
                     # return redirect(request.META.get("HTTP_REFERER", "/"))
+                    # DESK DETAIL API 
+                    # role_id = request.session.get('role_id')
+                    # role = roles.objects.only('role_name').get(id=role_id)
+                    # designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    # from Account.desk_detail_api import upd_desk_detail
+                    # request.session["ApplicationId1"]=wf.request_no
+                    # request.session["DeskNumber"] = 'Desk ' + designation_map[role.role_name]  
+                    # request.session["ReviewActionBy"] = role.role_name
+                    # request.session["ReviewActionDetails"]="Approved"
+                    # request.session["DeskRemark"]=rej_res
+                    # desk_api_res = upd_desk_detail(request)
+                    # message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    # Log.objects.create(log_text=message)
 
                 elif status == 18 and ref == 'issue_permission':
                     
