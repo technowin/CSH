@@ -24,8 +24,10 @@ from django.http import Http404, HttpResponse
 # Create your views here.
 import logging
 logger = logging.getLogger(__name__)
+from CSH.access_control import no_direct_access
 
 @login_required 
+@no_direct_access
 def index_cr(request):
     pre_url = request.META.get('HTTP_REFERER')
     header, data = [], []
@@ -54,6 +56,7 @@ def index_cr(request):
          return render(request,'ContractRegistration/index.html', context)
 
 @login_required 
+@no_direct_access 
 def matrix_flow_cr(request):
     docs,label,input,data = [],[],[],[]
     form_id,context,wf_id,sf,f,sb,rb,rb1  = '','','','','','','',''
@@ -401,8 +404,22 @@ def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
         file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
+@no_direct_access
 def citizen_index_cr(request):
     try:
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         if request.method == "GET":
             phone_number = request.session.get("phone_number")
             user_id = None
@@ -449,8 +466,22 @@ def citizen_index_cr(request):
         },
     )
 
+@no_direct_access
 def citizen_crate_cr(request):
     try:
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         phone_number = request.session.get("phone_number")
         user_id = None
         if phone_number:
@@ -619,8 +650,22 @@ def citizen_crate_cr(request):
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), user_id])
 
+@no_direct_access
 def citizen_edit_cr(request, row_id, new_id):
     try:
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         phone_number = request.session.get("phone_number")
         user_id = None
         if phone_number:
@@ -662,6 +707,18 @@ def citizen_edit_cr(request, row_id, new_id):
                 else:
                     document.encrypted_subpath = None
 
+            return render(
+                request,
+                "ContractRegistration/CitizenEdit.html",
+                {
+                    "viewDetails": viewDetails,
+                    "contractorType": contractorType,
+                    "uploaded_documents": uploaded_documents,
+                    "not_uploaded_documents": not_uploaded_documents,
+                    "new_id": new_id,
+                    "message": message,
+                },
+            )
 
         if request.method == "POST":
 
@@ -760,20 +817,21 @@ def citizen_edit_cr(request, row_id, new_id):
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), ""])
-    finally:
-        if request.method == "GET":
-            return render(
-                request,
-                "ContractRegistration/CitizenEdit.html",
-                {
-                    "viewDetails": viewDetails,
-                    "contractorType": contractorType,
-                    "uploaded_documents": uploaded_documents,
-                    "not_uploaded_documents": not_uploaded_documents,
-                    "new_id": new_id,
-                    "message": message,
-                },
-            )
+    
+    # finally:
+    #     if request.method == "GET":
+    #         return render(
+    #             request,
+    #             "ContractRegistration/CitizenEdit.html",
+    #             {
+    #                 "viewDetails": viewDetails,
+    #                 "contractorType": contractorType,
+    #                 "uploaded_documents": uploaded_documents,
+    #                 "not_uploaded_documents": not_uploaded_documents,
+    #                 "new_id": new_id,
+    #                 "message": message,
+    #             },
+    #         )
         # else:
         #     new_id = 0
         #     new_id = encrypt_parameter(str(new_id))
@@ -781,8 +839,22 @@ def citizen_edit_cr(request, row_id, new_id):
 
         #     return redirect("application_Master_View_TT", row_id, new_id)
 
+@no_direct_access
 def citizen_view_cr(request, row_id, new_id):
     try:
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         phone_number = request.session.get("phone_number")
         user_id = None
         if phone_number:
@@ -809,6 +881,18 @@ def citizen_view_cr(request, row_id, new_id):
             new_id = str(encrypt_parameter(str(new_id)))
             row_id = str(encrypt_parameter(str(row_id1)))
 
+            return render(
+                request,
+                "ContractRegistration/CitizenView.html",
+                {
+                    "form_data": viewDetails,
+                    "uploaded_documents": uploaded_documents,
+                    "new_id": new_id,
+                    "row_id": row_id,
+                    "plain_new_id": plain_new_id,
+                },
+            )
+            
         if request.method == "POST":
 
             row_id = int(decrypt_parameter(str(row_id)))
@@ -860,28 +944,30 @@ def citizen_view_cr(request, row_id, new_id):
                     request.session["form_id"]=application.id
                     request.session["form_user_id"]=str(user_id)                    
                     upd_citizen(request)
-    
+
+            return redirect("citizen_index_cr")
+        
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), ""])
         logger.error(f"Error in applicationFormIndexTT: {str(e)}")
 
-    finally:
-        if request.method == "GET":
-            return render(
-                request,
-                "ContractRegistration/CitizenView.html",
-                {
-                    "form_data": viewDetails,
-                    "uploaded_documents": uploaded_documents,
-                    "new_id": new_id,
-                    "row_id": row_id,
-                    "plain_new_id": plain_new_id,
-                },
-            )
-        else:
-            return redirect("citizen_index_cr")
+    # finally:
+    #     if request.method == "GET":
+    #         return render(
+    #             request,
+    #             "ContractRegistration/CitizenView.html",
+    #             {
+    #                 "form_data": viewDetails,
+    #                 "uploaded_documents": uploaded_documents,
+    #                 "new_id": new_id,
+    #                 "row_id": row_id,
+    #                 "plain_new_id": plain_new_id,
+    #             },
+    #         )
+    #     else:
+    #         return redirect("citizen_index_cr")
 
 def create_partial_view(request):
     try:

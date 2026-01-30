@@ -71,6 +71,13 @@ def Login(request):
                 request.session.set_expiry(1209600)  # 2 weeks
             else:
                 request.session.set_expiry(None)  # default from SESSION_COOKIE_AGE
+                
+            # Clear any session expiry flags
+            if '_session_expired' in request.session:
+                del request.session['_session_expired']
+            if '_user_logged_out' in request.session:
+                del request.session['_user_logged_out']
+                
             return redirect('services')
 
         else:
@@ -85,6 +92,9 @@ def services(request):
         if request.method == "POST":
             service_db = request.POST.get('service')
             request.session['service_db'] = service_db
+            
+            request.session['admin_flow_completed'] = True
+            
             # return redirect('index') 
             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
             redirect_to = servicefetch.internal_page
@@ -556,6 +566,9 @@ def tables(request):
 
 def citizenLoginAccount(request):
     try:
+        if request.GET.get('expired'):
+            messages.warning(request, "Your session has expired. Please login again.")
+            
         if request.method == "GET":
             # request.session.flush()            
             # service_db = request.GET.get('service_db')
@@ -774,6 +787,16 @@ def OTPScreenPost(request):
                 request.session["role_id"] = str(user.role_id)
                 request.session['full_name'] = user.full_name
                 request.session['phone_number'] = phone_number
+                request.session['citizen_page'] = redirect_to
+                request.session['otp_verified'] = True
+                
+                if '_session_expired' in request.session:
+                    del request.session['_session_expired']
+                if '_user_logged_out' in request.session:
+                    del request.session['_user_logged_out']
+                
+                
+                
                 messages.success(request, "OTP verified successfully!")
                 return redirect(redirect_to)
             else:

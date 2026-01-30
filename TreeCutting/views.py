@@ -20,6 +20,7 @@ import calendar
 from django.utils import timezone
 from datetime import timedelta
 from django.http import Http404
+from CSH.access_control import no_direct_access
 # from DrainageConnection.models import *
 
 # Create your views here.
@@ -27,11 +28,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 @login_required 
+@no_direct_access
 def index_tc(request):
     pre_url = request.META.get('HTTP_REFERER')
     header, data = [], []
     name = ''
     try:
+        if not request.user.is_authenticated and not request.session.get('username'):
+            # Clear any session flags
+            if '_session_expired' in request.session:
+                request.session.pop('_session_expired')
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         if request.user.is_authenticated ==True:                
                 global user,role_id
                 user = request.user.id    
@@ -54,11 +63,19 @@ def index_tc(request):
     finally: 
          return render(request,'TreeCutting/index.html', context)
 
-@login_required    
+@login_required 
+@no_direct_access      
 def matrix_flow_tc(request):
     docs,label,input,data = [],[],[],[]
     form_id,context,wf_id,sf,f,sb,rb,rb1  = '','','','','','','',''
     try:
+        if not request.user.is_authenticated and not request.session.get('username'):
+            # Clear any session flags
+            if '_session_expired' in request.session:
+                request.session.pop('_session_expired')
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         if request.user.is_authenticated ==True:                
                 global user,role_id
                 user = request.user.id   
@@ -479,8 +496,16 @@ def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
         file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
+@no_direct_access
 def applicationFormIndexTC(request):
     try:
+        if not request.user.is_authenticated and not request.session.get('username'):
+            # Clear any session flags
+            if '_session_expired' in request.session:
+                request.session.pop('_session_expired')
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         if request.method == "GET":
             phone_number = request.session["phone_number"]
 
@@ -520,21 +545,28 @@ def applicationFormIndexTC(request):
             countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id])
             countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
 
+            return render(
+                request,
+                "TreeCutting/TreeCuttingIndex.html",
+                {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "countRefusedDocument": countRefusedDocument},
+            )
+                
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), ""])
         logger.error(f"Error in applicationFormIndexTC: {str(e)}")
 
-    finally:
-        return render(
-            request,
-            "TreeCutting/TreeCuttingIndex.html",
-            {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "countRefusedDocument": countRefusedDocument},
-        )
-
+@no_direct_access
 def application_Master_Crate_TC(request):
     try:
+        if not request.user.is_authenticated and not request.session.get('username'):
+            # Clear any session flags
+            if '_session_expired' in request.session:
+                request.session.pop('_session_expired')
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         phone_number = request.session.get("phone_number")
         user_id = None
         if phone_number:
@@ -715,8 +747,16 @@ def application_Master_Crate_TC(request):
         callproc("stp_error_log", [fun, str(e), user_id])
         logger.error(f"Error in applicationFormIndexTC: {str(e)}")
 
+@no_direct_access
 def application_Master_Edit_TC(request, row_id, new_id):
     try:
+        if not request.user.is_authenticated and not request.session.get('username'):
+            # Clear any session flags
+            if '_session_expired' in request.session:
+                request.session.pop('_session_expired')
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         phone_number = request.session.get("phone_number")
         user_id = None
         if phone_number:
@@ -761,6 +801,20 @@ def application_Master_Edit_TC(request, row_id, new_id):
                 else:
                     document.encrypted_subpath = None
 
+            return render(
+                request,
+                "TreeCutting/applicationMasterEditTC.html",
+                {
+                    "viewDetails": viewDetails,
+                    "applicantType": applicantType,
+                    "ReasonSelect": ReasonSelect,
+                    "uploaded_documents": uploaded_documents,
+                    "not_uploaded_documents": not_uploaded_documents,
+                    "new_id": new_id,
+                    "message": message,
+                },
+            )
+            
         if request.method == "POST":
 
             viewDetails = get_object_or_404(application_form, id=row_id)
@@ -863,21 +917,22 @@ def application_Master_Edit_TC(request, row_id, new_id):
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), ""])
-    finally:
-        if request.method == "GET":
-            return render(
-                request,
-                "TreeCutting/applicationMasterEditTC.html",
-                {
-                    "viewDetails": viewDetails,
-                    "applicantType": applicantType,
-                    "ReasonSelect": ReasonSelect,
-                    "uploaded_documents": uploaded_documents,
-                    "not_uploaded_documents": not_uploaded_documents,
-                    "new_id": new_id,
-                    "message": message,
-                },
-            )
+    
+    # finally:
+    #     if request.method == "GET":
+    #         return render(
+    #             request,
+    #             "TreeCutting/applicationMasterEditTC.html",
+    #             {
+    #                 "viewDetails": viewDetails,
+    #                 "applicantType": applicantType,
+    #                 "ReasonSelect": ReasonSelect,
+    #                 "uploaded_documents": uploaded_documents,
+    #                 "not_uploaded_documents": not_uploaded_documents,
+    #                 "new_id": new_id,
+    #                 "message": message,
+    #             },
+    #         )
         # else:
         #     new_id = 0
         #     new_id = encrypt_parameter(str(new_id))
@@ -885,8 +940,16 @@ def application_Master_Edit_TC(request, row_id, new_id):
 
         #     return redirect("application_Master_View_TC", row_id, new_id)
 
+@no_direct_access
 def application_Master_View_TC(request, row_id, new_id):
     try:
+        if not request.user.is_authenticated and not request.session.get('username'):
+            # Clear any session flags
+            if '_session_expired' in request.session:
+                request.session.pop('_session_expired')
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         phone_number = request.session.get("phone_number")
         user_id = None
         if phone_number:
@@ -930,6 +993,18 @@ def application_Master_View_TC(request, row_id, new_id):
             new_id = str(encrypt_parameter(str(new_id)))
             row_id = str(encrypt_parameter(str(row_id1)))
 
+            return render(
+                request,
+                "TreeCutting/applicationMasterViewTC.html",
+                {
+                    "viewDetails": viewDetails,
+                    "uploaded_documents": uploaded_documents,
+                    "new_id": new_id,
+                    "row_id": row_id,
+                    "plain_new_id": plain_new_id,
+                },
+            )
+            
         if request.method == "POST":
 
             row_id = int(decrypt_parameter(str(row_id)))
@@ -1041,27 +1116,29 @@ def application_Master_View_TC(request, row_id, new_id):
                     request.session["form_user_id"]=str(user_id)
                     upd_citizen(request)
 
+            return redirect("applicationFormIndexTC")
+        
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), ""])
         logger.error(f"Error in applicationFormIndexTC: {str(e)}")
 
-    finally:
-        if request.method == "GET":
-            return render(
-                request,
-                "TreeCutting/applicationMasterViewTC.html",
-                {
-                    "viewDetails": viewDetails,
-                    "uploaded_documents": uploaded_documents,
-                    "new_id": new_id,
-                    "row_id": row_id,
-                    "plain_new_id": plain_new_id,
-                },
-            )
-        else:
-            return redirect("applicationFormIndexTC")
+    # finally:
+    #     if request.method == "GET":
+    #         return render(
+    #             request,
+    #             "TreeCutting/applicationMasterViewTC.html",
+    #             {
+    #                 "viewDetails": viewDetails,
+    #                 "uploaded_documents": uploaded_documents,
+    #                 "new_id": new_id,
+    #                 "row_id": row_id,
+    #                 "plain_new_id": plain_new_id,
+    #             },
+    #         )
+    #     else:
+    #         return redirect("applicationFormIndexTC")
 
 def download_doc(request, filepath):
     file = decrypt_parameter(filepath)
