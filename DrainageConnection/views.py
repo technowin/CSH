@@ -643,10 +643,16 @@ def sample_doc(columns,file_name,user):
 @no_direct_access
 def applicationFormIndex(request):
     try:
-        if not request.user.is_authenticated and not request.session.get('username'):
-            # Clear any session flags
-            if '_session_expired' in request.session:
-                request.session.pop('_session_expired')
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
         
@@ -705,10 +711,16 @@ def applicationFormIndex(request):
 @no_direct_access
 def applicationMasterCrate(request):
     try:
-        if not request.user.is_authenticated and not request.session.get('username'):
-            # Clear any session flags
-            if '_session_expired' in request.session:
-                request.session.pop('_session_expired')
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
         
@@ -1003,10 +1015,16 @@ from django.http import FileResponse, Http404
 def viewapplicationform(request, row_id, new_id):
     try:
         
-        if not request.user.is_authenticated and not request.session.get('username'):
-            # Clear any session flags
-            if '_session_expired' in request.session:
-                request.session.pop('_session_expired')
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
         
@@ -1123,10 +1141,16 @@ def EditApplicationForm(request, row_id, row_id_status):
 
     try:
         
-        if not request.user.is_authenticated and not request.session.get('username'):
-            # Clear any session flags
-            if '_session_expired' in request.session:
-                request.session.pop('_session_expired')
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
         

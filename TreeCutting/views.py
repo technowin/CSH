@@ -499,10 +499,16 @@ def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
 @no_direct_access
 def applicationFormIndexTC(request):
     try:
-        if not request.user.is_authenticated and not request.session.get('username'):
-            # Clear any session flags
-            if '_session_expired' in request.session:
-                request.session.pop('_session_expired')
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
         
@@ -560,10 +566,16 @@ def applicationFormIndexTC(request):
 @no_direct_access
 def application_Master_Crate_TC(request):
     try:
-        if not request.user.is_authenticated and not request.session.get('username'):
-            # Clear any session flags
-            if '_session_expired' in request.session:
-                request.session.pop('_session_expired')
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
         
@@ -750,10 +762,16 @@ def application_Master_Crate_TC(request):
 @no_direct_access
 def application_Master_Edit_TC(request, row_id, new_id):
     try:
-        if not request.user.is_authenticated and not request.session.get('username'):
-            # Clear any session flags
-            if '_session_expired' in request.session:
-                request.session.pop('_session_expired')
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
         
@@ -943,10 +961,16 @@ def application_Master_Edit_TC(request, row_id, new_id):
 @no_direct_access
 def application_Master_View_TC(request, row_id, new_id):
     try:
-        if not request.user.is_authenticated and not request.session.get('username'):
-            # Clear any session flags
-            if '_session_expired' in request.session:
-                request.session.pop('_session_expired')
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
         
