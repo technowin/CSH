@@ -117,6 +117,7 @@ urlpatterns = [
 
     # Drainage Connection application 
     
+    path('clear-session-flag', clear_session_flag, name='clear_session_flag'),
     path('applicationFormIndex', applicationFormIndex, name='applicationFormIndex'),
     # path('aple_sarkar/', aple_sarkar, name='aple_sarkar'),
     path('aple_sarkar_Register', aple_sarkar_Register, name='aple_sarkar_Register'),

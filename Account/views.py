@@ -66,11 +66,20 @@ def Login(request):
             request.session["full_name"] = str(user.full_name)
             request.session["user_id"] = str(user.id)
             request.session["role_id"] = str(user.role_id)
+            
+            
             # If you want "remember me" behavior:
             if request.POST.get('remember_me') == 'on':
                 request.session.set_expiry(1209600)  # 2 weeks
             else:
                 request.session.set_expiry(None)  # default from SESSION_COOKIE_AGE
+                
+            # Clear any session expiry flags
+            if '_session_expired' in request.session:
+                del request.session['_session_expired']
+            if '_user_logged_out' in request.session:
+                del request.session['_user_logged_out']
+                
             return redirect('services')
 
         else:
@@ -260,26 +269,87 @@ def upd_citizen(request):
     data = response_json.get("data")
     return data
 
+# def logoutView(request):
+#     try:
+#         dropdown = request.session.get('dropdown')
+#         normal = request.session.get('normal')
+        
+#         if dropdown is not None:
+#             service_db = dropdown
+#             url = '/citizenLoginAccount'
+#         elif normal is not None:
+#             service_db = normal
+#             url = f'/citizenLoginAccount?service={service_db}'
+#         else:
+#             service_db = None
+#             url = '/citizenLoginAccount'
+        
+#         logout(request)
+#         return redirect(url)
+#     except Exception as e:
+#         tb = traceback.extract_tb(e.__traceback__)
+#         fun = tb[0].name
+
+# views.py
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.decorators import login_required
+
 def logoutView(request):
+    """
+    Custom logout view that properly clears session data
+    """
     try:
+        # Store redirect URL BEFORE clearing session
         dropdown = request.session.get('dropdown')
         normal = request.session.get('normal')
         
+        # Determine redirect URL
         if dropdown is not None:
-            service_db = dropdown
             url = '/citizenLoginAccount'
         elif normal is not None:
-            service_db = normal
-            url = f'/citizenLoginAccount?service={service_db}'
+            url = f'/citizenLoginAccount?service={normal}'
         else:
-            service_db = None
             url = '/citizenLoginAccount'
         
+        # Invalidate navigation tokens
+        request.session['nav_token_valid'] = False
+        
+        # Logout user (clears authentication)
         logout(request)
-        return redirect(url)
+        
+        # Clear all session data
+        session_keys = [
+            'dropdown', 'normal', 'phone_number', 'user_id',
+            'role_id', 'full_name', 'service_db',
+            'otp_verified', 'citizen_page',
+            '_session_expired'
+        ]
+        
+        for key in session_keys:
+            if key in request.session:
+                del request.session[key]
+        
+        # Mark session as modified
+        request.session.modified = True
+        
+        # Clear entire session (alternative approach)
+        request.session.flush()
+        
+        # Create new session with logout flag
+        request.session['_user_logged_out'] = True
+        
+        # Redirect with cache-busting parameter
+        import time
+        redirect_url = f"{url}?_={int(time.time())}"
+        messages.success(request, "You have been logged out successfully.")
+        return redirect(redirect_url)
+        
     except Exception as e:
-        tb = traceback.extract_tb(e.__traceback__)
-        fun = tb[0].name
+        print(f"Logout error: {e}")
+        return redirect('/citizenLoginAccount')
 
 def register_new_user(request):
     if request.method=="GET":
@@ -556,6 +626,9 @@ def tables(request):
 
 def citizenLoginAccount(request):
     try:
+        if request.GET.get('expired'):
+            messages.warning(request, "Your session has expired. Please login again.")
+    
         if request.method == "GET":
             # request.session.flush()            
             # service_db = request.GET.get('service_db')
@@ -769,11 +842,22 @@ def OTPScreenPost(request):
                 servicefetch = service_master.objects.using('default').get(ser_id=service_db)
                 redirect_to = servicefetch.citizen_page
                 
+                # login(request, user)
+                
                 # request.session.cycle_key()
                 request.session["user_id"]=(str(user.id))
                 request.session["role_id"] = str(user.role_id)
                 request.session['full_name'] = user.full_name
                 request.session['phone_number'] = phone_number
+                request.session['citizen_page'] = redirect_to
+                request.session['otp_verified'] = True
+                # request.session.modified = True
+                
+                if '_session_expired' in request.session:
+                    del request.session['_session_expired']
+                if '_user_logged_out' in request.session:
+                    del request.session['_user_logged_out']
+                    
                 messages.success(request, "OTP verified successfully!")
                 return redirect(redirect_to)
             else:

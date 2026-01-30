@@ -22,17 +22,26 @@ import calendar
 from django.utils import timezone
 from datetime import timedelta
 from django.http import Http404
+from CSH.access_control import no_direct_access
 
 # Create your views here.
 import logging
 logger = logging.getLogger(__name__)
 
 @login_required 
+@no_direct_access
 def index(request):
     pre_url = request.META.get('HTTP_REFERER')
     header, data = [], []
     name = ''
     try:
+        if not request.user.is_authenticated and not request.session.get('username'):
+            # Clear any session flags
+            if '_session_expired' in request.session:
+                request.session.pop('_session_expired')
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         if request.user.is_authenticated ==True:                
                 global user,role_id
                 user = request.user.id    
@@ -47,20 +56,27 @@ def index(request):
                 form_id = encrypt_parameter(str(row[1]))    
                 data.append((id,form_id) + row[2:])
         context = {'role_id':role_id,'name':name,'header':header,'data':data,'user_id':request.user.id,'pre_url':pre_url}
+        return render(request,'DrainageConnection/index.html', context)
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
-    finally: 
-         return render(request,'DrainageConnection/index.html', context)
 
-@login_required    
+@login_required 
+@no_direct_access    
 def matrix_flow(request):
     docs,label,input,data = [],[],[],[]
     form_id,context,wf_id,sf,f,sb,rb,rb1  = '','','','','','','',''
     #context ={}
     try:
+        if not request.user.is_authenticated and not request.session.get('username'):
+            # Clear any session flags
+            if '_session_expired' in request.session:
+                request.session.pop('_session_expired')
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         if request.user.is_authenticated ==True:                
             global user,role_id
             user = request.user.id   
@@ -459,7 +475,7 @@ def matrix_flow(request):
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally: 
-         if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == ''and rb1 == '':
+        if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == ''and rb1 == '':
             return render(request,'DrainageConnection/metrix_flow.html', context)
 
 def internal_docs_upload(file,role_id,user,wf,ser,name1):
@@ -588,9 +604,21 @@ def sample_doc(columns,file_name,user):
         return response      
 
 # application Form Index
-
+@no_direct_access
 def applicationFormIndex(request):
     try:
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
         
         phone_number = request.session['phone_number']
         
@@ -644,8 +672,22 @@ def applicationFormIndex(request):
         return JsonResponse({"error": "Failed to fetch data"}, status=500)
     
 # application Form Create
+@no_direct_access
 def applicationMasterCrate(request):
     try:
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         # getDocumentData = document_master.objects.filter(is_active=1) 
         # getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id=15)
         # getDocumentData = document_master.objects.filter(is_active=1).exclude(doc_id__in=[15, 19])
@@ -927,14 +969,24 @@ def download_doc(request, filepath):
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
 
-
-
-
 from django.http import FileResponse, Http404
    
 # View Application Form 
+@no_direct_access
 def viewapplicationform(request, row_id, new_id):
     try:
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
         
         context = {} 
         
@@ -1043,10 +1095,24 @@ def application_Form_Final_Submit(request):
     return render(request, "DrainageConnection/applicationFormIndex.html")
 
 # Edit Application Form
+@no_direct_access
 def EditApplicationForm(request, row_id, row_id_status):
     context = {}
 
     try:
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            # Set session expiry flag for middleware
+            request.session['_session_expired'] = True
+            
+            # Clear user-specific session data
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
         phone_number = request.session['phone_number']
         
         if phone_number:
@@ -1680,4 +1746,24 @@ def upload_connection_photographs(request, form_id):
         traceback.print_exc()
         return JsonResponse({"success": False, "message": f"Upload failed: {str(e)}"}, status=500)
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
+@csrf_exempt
+def clear_session_flag(request):
+    """Clear session flags when user intentionally logs out via JS"""
+    if request.method == "POST":
+        # Clear all session flags
+        flags_to_clear = ['_session_expired', '_user_logged_out', 'otp_requested']
+        for flag in flags_to_clear:
+            if flag in request.session:
+                del request.session[flag]
+        
+        # Also clear temporary OTP session data
+        temp_data = ['phone_number', 'service_db']
+        for key in temp_data:
+            if key in request.session:
+                del request.session[key]
+                
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)
