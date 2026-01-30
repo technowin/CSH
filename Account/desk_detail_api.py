@@ -27,7 +27,7 @@ def generate_token():
 
     payload = {
         "Username": "cidcoLTD",
-        "password": "cidco@12"
+        "password": "cidco@123"
     }
 
     headers = {
@@ -70,16 +70,17 @@ def upd_desk_detail(request):
     # ------------------------------------------------------------------
     # Session data
     # ------------------------------------------------------------------
-    application_id = request.session.get("ApplicationId")
+    application_id = request.session.get("ApplicationId1")
     desk_number = request.session.get("DeskNumber")
     review_action_by = request.session.get("ReviewActionBy")
-    review_action_datetime = request.session.get(
-        "ReviewActionDateTime",
-        timezone.now().isoformat()
-    )
+    # review_action_datetime = request.session.get(
+    #     "ReviewActionDateTime",
+    #     timezone.now().isoformat()
+    # )
+    review_action_datetime = timezone.now().strftime("%d-%b-%Y,%H:%M:%S")
     review_action_details = request.session.get("ReviewActionDetails")
     desk_remark = request.session.get("DeskRemark")
-
+    
     # ------------------------------------------------------------------
     # Validate required fields
     # ------------------------------------------------------------------
@@ -132,7 +133,7 @@ def upd_desk_detail(request):
         return {
             "success": True,
             "data": response_json.get("data"),
-            "message": response_json.get("message", "Desk details updated successfully")
+            "message":  "Desk details updated successfully"
         }
 
     except (RequestException, Timeout) as e:
@@ -145,5 +146,5 @@ def upd_desk_detail(request):
             "success": False,
             "message": "API request failed",
             "error": str(e)
-        }
+        }  
         
