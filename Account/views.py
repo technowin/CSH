@@ -94,6 +94,9 @@ def services(request):
         if request.method == "POST":
             service_db = request.POST.get('service')
             request.session['service_db'] = service_db
+            
+            request.session['admin_flow_completed'] = True
+            
             # return redirect('index') 
             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
             redirect_to = servicefetch.internal_page
