@@ -1,19 +1,9 @@
 import hashlib
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import logout
-
-
-def get_client_ip(request):
-    """
-    Returns the real client IP.
-    Works correctly behind proxies / load balancers.
-    """
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        return x_forwarded_for.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR')
-
+from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.csrf import csrf_exempt
+from Account.views import get_client_ip
 
 class SessionBindingMiddleware:
     """
@@ -28,7 +18,10 @@ class SessionBindingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-
+        # Skip session binding for unauthenticated users
+        if not request.session.get('_ua_hash') and not request.user.is_authenticated:
+            return self.get_response(request)
+        
         ua = request.META.get('HTTP_USER_AGENT', '')
         ip = get_client_ip(request)
 
@@ -36,23 +29,24 @@ class SessionBindingMiddleware:
         stored_ua = request.session.get('_ua_hash')
         stored_ip = request.session.get('_ip')
 
-        # 🔐 Admin user
-        if hasattr(request, 'user') and request.user.is_authenticated:
-            if stored_ua and (stored_ua != current_ua or stored_ip != ip):
-                logout(request)
-                request.session.flush()
-                
-                return redirect('citizenLoginAccount')
-
-        # 🔐 Citizen user (OTP-based)
-        elif request.session.get('user_id') and request.session.get('otp_verified'):
-            if stored_ua and (stored_ua != current_ua or stored_ip != ip):
-                request.session.flush()
-               
-                return redirect('citizenLoginAccount')
-
+        # Check if session binding exists
+        if stored_ua:
+            # 🔐 Admin user
+            if hasattr(request, 'user') and request.user.is_authenticated:
+                if stored_ua != current_ua or stored_ip != ip:
+                    logout(request)
+                    request.session.flush()
+                    messages.error(request, 'Session security violation detected')
+                    return redirect('admin:login')  # Redirect to admin login
+            
+            # 🔐 Citizen user (OTP-based)
+            elif request.session.get('user_id') and request.session.get('otp_verified'):
+                if stored_ua != current_ua or stored_ip != ip:
+                    request.session.flush()
+                    messages.error(request, 'Session security violation detected')
+                    return redirect('citizenLoginAccount')
+        
         return self.get_response(request)
-
 
 
 # from django.contrib.auth import logout

@@ -51,6 +51,16 @@ logger = logging.getLogger(__name__)
 from django.contrib.auth import login
 import hashlib
 
+def get_client_ip(request):
+    """
+    Returns the real client IP.
+    Works correctly behind proxies / load balancers.
+    """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
 @csrf_exempt
 def Login(request):
     try:
@@ -58,7 +68,6 @@ def Login(request):
             return render(request, 'Account/login.html')
 
         if request.method == "POST":
-
             username = request.POST.get('username')
             password = request.POST.get('password')
 
@@ -77,22 +86,32 @@ def Login(request):
             request.session["user_id"] = str(user.id)
             request.session["role_id"] = str(user.role_id)
 
+            # Get UA and IP (using consistent method)
             ua = request.META.get('HTTP_USER_AGENT', '')
-            ip = request.META.get('REMOTE_ADDR', '')
+            ip = get_client_ip(request)  # Use the same function as middleware
 
+            # Store session binding info
             request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
             request.session['_ip'] = ip
             
+            # Regenerate session ID
             request.session.cycle_key()  # VERY IMPORTANT
 
             # 🧹 clear flags
             request.session.pop('_session_expired', None)
             request.session.pop('_user_logged_out', None)
 
-            return redirect('services')
+            # Redirect based on user type
+            if user.is_staff or user.is_superuser:
+                return redirect('/admin/')  # Or your admin dashboard
+            else:
+                return redirect('services')
+                
     except Exception as e:
         print(f"Login error: {e}")
-    
+        messages.error(request, 'An error occurred during login')
+        return redirect('Login')
+
 def services(request):
     try:
         if request.method =="GET":
