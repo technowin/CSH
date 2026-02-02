@@ -100,12 +100,8 @@ def Login(request):
             # 🧹 clear flags
             request.session.pop('_session_expired', None)
             request.session.pop('_user_logged_out', None)
-
-            # Redirect based on user type
-            if user.is_staff or user.is_superuser:
-                return redirect('/admin/')  # Or your admin dashboard
-            else:
-                return redirect('services')
+           
+            return redirect('services')
                 
     except Exception as e:
         print(f"Login error: {e}")
