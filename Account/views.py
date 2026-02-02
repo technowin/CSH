@@ -48,44 +48,51 @@ TestURL = "https://www.cidcoindia.com/AapleMiddlewareApiTest/api"
 # Set up logging
 logger = logging.getLogger(__name__)
 
+from django.contrib.auth import login
+import hashlib
+
 @csrf_exempt
 def Login(request):
-    if request.method=="GET":
-       request.session.flush()
-       return render(request,'Account/login.html')
-    
-    if request.method=="POST":
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        remember_me = request.POST.get('remember_me')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
+    try:
+        if request.method == "GET":
+            return render(request, 'Account/login.html')
+
+        if request.method == "POST":
+
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+
+            user = authenticate(request, username=username, password=password)
+
+            if not user:
+                messages.error(request, 'Invalid credentials')
+                return redirect('Login')
+
+            # ✅ login user
             login(request, user)
-            # request.session.cycle_key()  # regenerates session key without losing data
+
+            # ✅ store only what is needed
             request.session["username"] = str(username)
             request.session["full_name"] = str(user.full_name)
             request.session["user_id"] = str(user.id)
             request.session["role_id"] = str(user.role_id)
-            
-            
-            # If you want "remember me" behavior:
-            if request.POST.get('remember_me') == 'on':
-                request.session.set_expiry(1209600)  # 2 weeks
-            else:
-                request.session.set_expiry(None)  # default from SESSION_COOKIE_AGE
-                
-            # Clear any session expiry flags
-            if '_session_expired' in request.session:
-                del request.session['_session_expired']
-            if '_user_logged_out' in request.session:
-                del request.session['_user_logged_out']
-                
-            return redirect('services')
 
-        else:
-            messages.error(request, 'Invalid Credentials')
-            return redirect("Login")
-      
+            ua = request.META.get('HTTP_USER_AGENT', '')
+            ip = request.META.get('REMOTE_ADDR', '')
+
+            request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
+            request.session['_ip'] = ip
+
+            request.session.cycle_key()  # VERY IMPORTANT
+
+            # 🧹 clear flags
+            request.session.pop('_session_expired', None)
+            request.session.pop('_user_logged_out', None)
+
+            return redirect('services')
+    except Exception as e:
+        print(f"Login error: {e}")
+    
 def services(request):
     try:
         if request.method =="GET":
@@ -860,6 +867,12 @@ def OTPScreenPost(request):
                     del request.session['_session_expired']
                 if '_user_logged_out' in request.session:
                     del request.session['_user_logged_out']
+                    
+                ua = request.META.get('HTTP_USER_AGENT', '')
+                ip = request.META.get('REMOTE_ADDR', '')
+
+                request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
+                request.session['_ip'] = ip
                     
                 messages.success(request, "OTP verified successfully!")
                 return redirect(redirect_to)
