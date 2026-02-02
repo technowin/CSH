@@ -3,44 +3,56 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.contrib.auth import logout
 
+
+def get_client_ip(request):
+    """
+    Returns the real client IP.
+    Works correctly behind proxies / load balancers.
+    """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
 class SessionBindingMiddleware:
     """
-    Middleware to bind a session to a device/browser.
-    Works for both admin (Django auth) and citizen (OTP/session-based) users.
+    Binds a session to a specific browser + IP.
+    Protects against session hijacking.
+    Works for:
+    - Admin users (Django auth)
+    - Citizen users (OTP/session-based)
     """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
 
-        # Admin user (Django auth)
+        ua = request.META.get('HTTP_USER_AGENT', '')
+        ip = get_client_ip(request)
+
+        current_ua = hashlib.sha256(ua.encode()).hexdigest()
+        stored_ua = request.session.get('_ua_hash')
+        stored_ip = request.session.get('_ip')
+
+        # 🔐 Admin user
         if hasattr(request, 'user') and request.user.is_authenticated:
-            ua = request.META.get('HTTP_USER_AGENT', '')
-            ip = request.META.get('REMOTE_ADDR', '')
-
-            current_ua = hashlib.sha256(ua.encode()).hexdigest()
-            stored_ua = request.session.get('_ua_hash')
-            stored_ip = request.session.get('_ip')
-
             if stored_ua and (stored_ua != current_ua or stored_ip != ip):
                 logout(request)
                 request.session.flush()
+                
                 return redirect('citizenLoginAccount')
 
-        # Citizen user (OTP/session-based)
+        # 🔐 Citizen user (OTP-based)
         elif request.session.get('user_id') and request.session.get('otp_verified'):
-            ua = request.META.get('HTTP_USER_AGENT', '')
-            ip = request.META.get('REMOTE_ADDR', '')
-
-            current_ua = hashlib.sha256(ua.encode()).hexdigest()
-            stored_ua = request.session.get('_ua_hash')
-            stored_ip = request.session.get('_ip')
-
             if stored_ua and (stored_ua != current_ua or stored_ip != ip):
                 request.session.flush()
+               
                 return redirect('citizenLoginAccount')
 
         return self.get_response(request)
+
 
 
 # from django.contrib.auth import logout
