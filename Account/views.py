@@ -76,6 +76,11 @@ def Login(request):
             if not user:
                 messages.error(request, 'Invalid credentials')
                 return redirect('Login')
+            
+            # ✅ CRITICAL FIX: Create new session BEFORE login
+            # This ensures fresh session for the authenticated user
+            request.session.flush()  # Clear existing session first
+            request.session.create()  # Create new empty session
 
             # ✅ login user
             login(request, user)
@@ -86,16 +91,12 @@ def Login(request):
             request.session["user_id"] = str(user.id)
             request.session["role_id"] = str(user.role_id)
 
-            # Get UA and IP (using consistent method)
+            # Store browser fingerprint
             ua = request.META.get('HTTP_USER_AGENT', '')
-            ip = get_client_ip(request)  # Use the same function as middleware
-
-            # Store session binding info
             request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
-            request.session['_ip'] = ip
             
-            # Regenerate session ID
-            request.session.cycle_key()  # VERY IMPORTANT
+            # Store IP (optional, for auditing)
+            request.session['_ip'] = get_client_ip(request)
 
             # 🧹 clear flags
             request.session.pop('_session_expired', None)
