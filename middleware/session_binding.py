@@ -36,14 +36,12 @@ class SessionBindingMiddleware:
                 if stored_ua != current_ua or stored_ip != ip:
                     logout(request)
                     request.session.flush()
-                    messages.error(request, 'Session security violation detected')
-                    return redirect('admin:login')  # Redirect to admin login
+                    return redirect('citizenLoginAccount')  # Redirect to admin login
             
             # 🔐 Citizen user (OTP-based)
             elif request.session.get('user_id') and request.session.get('otp_verified'):
                 if stored_ua != current_ua or stored_ip != ip:
                     request.session.flush()
-                    messages.error(request, 'Session security violation detected')
                     return redirect('citizenLoginAccount')
         
         return self.get_response(request)
