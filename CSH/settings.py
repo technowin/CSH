@@ -65,23 +65,29 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
 
-    # 🔥 AUTH FLOW MUST COME EARLY
-    'middleware.auth_flow.OTPBackForwardGuardMiddleware',
-
-    # 🔥 CACHE CONTROL RIGHT AFTER
-    'middleware.auth_flow.DisableBrowserCacheMiddleware',
-
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
+    # 🔐 brute-force protection
     'axes.middleware.AxesMiddleware',
+
+    # 🔐 your custom controls that do NOT use messages
+    'middleware.auth_flow.OTPBackForwardGuardMiddleware',
+    'middleware.auth_flow.DisableBrowserCacheMiddleware',
     'middleware.session_security.SessionExpiryRedirectMiddleware',
+
+    # ✅ Messages middleware must be before any middleware that uses messages
     'django.contrib.messages.middleware.MessageMiddleware',
+
+    # 🔐 SESSION HIJACK PROTECTION (can now use messages safely)
+    'middleware.session_binding.SessionBindingMiddleware',
 
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_auto_logout.middleware.auto_logout',
     'Account.middleware.ServiceDatabaseMiddleware',
 ]
+
 
 
 ROOT_URLCONF = 'CSH.urls'
