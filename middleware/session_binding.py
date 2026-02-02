@@ -25,10 +25,6 @@ class SessionBindingMiddleware:
             if stored_ua and (stored_ua != current_ua or stored_ip != ip):
                 logout(request)
                 request.session.flush()
-                messages.warning(
-                    request,
-                    "We detected a change in your login environment. For your security, you’ve been logged out."
-                )
                 return redirect('citizenLoginAccount')
 
         # Citizen user (OTP/session-based)
@@ -42,10 +38,6 @@ class SessionBindingMiddleware:
 
             if stored_ua and (stored_ua != current_ua or stored_ip != ip):
                 request.session.flush()
-                messages.warning(
-                    request,
-                    "Your session was terminated due to security reasons. Please log in again."
-                )
                 return redirect('citizenLoginAccount')
 
         return self.get_response(request)
