@@ -879,16 +879,17 @@ def OTPScreenPost(request):
                 request.session['otp_verified'] = True
                 # request.session.modified = True
                 
+                ua = request.META.get('HTTP_USER_AGENT', '')
+                ip = get_client_ip(request)
+
+                request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
+                request.session['_ua_raw'] = ua
+                request.session['_ip'] = ip
+                
                 if '_session_expired' in request.session:
                     del request.session['_session_expired']
                 if '_user_logged_out' in request.session:
                     del request.session['_user_logged_out']
-                    
-                ua = request.META.get('HTTP_USER_AGENT', '')
-                ip = request.META.get('REMOTE_ADDR', '')
-
-                request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
-                request.session['_ip'] = ip
                     
                 messages.success(request, "OTP verified successfully!")
                 return redirect(redirect_to)

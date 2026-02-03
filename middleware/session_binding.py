@@ -36,17 +36,18 @@ class SessionBindingMiddleware:
                 
             # 🔐 Admin user
             if hasattr(request, 'user') and request.user.is_authenticated:
-                
-                log_session_activity(
-                    request,
-                    action='mismatch_detected',
-                    remarks='UA or IP mismatch – forced logout',
-                    current_ua=ua,
-                    current_ua_hash=current_ua_hash,
-                    current_ip=ip
-                )
                     
                 if stored_ua_hash != current_ua_hash or stored_ip != ip:
+                    
+                    log_session_activity(
+                        request,
+                        action='mismatch_detected',
+                        remarks='UA or IP mismatch – forced logout',
+                        current_ua=ua,
+                        current_ua_hash=current_ua_hash,
+                        current_ip=ip
+                    )
+                        
                     logout(request)
                     request.session.flush()
                     return redirect('citizenLoginAccount')  # Redirect to admin login
@@ -54,16 +55,17 @@ class SessionBindingMiddleware:
             # 🔐 Citizen user (OTP-based)
             elif request.session.get('user_id') and request.session.get('otp_verified'):
                 
-                log_session_activity(
-                    request,
-                    action='mismatch_detected',
-                    remarks='UA or IP mismatch – forced logout',
-                    current_ua=ua,
-                    current_ua_hash=current_ua_hash,
-                    current_ip=ip
-                )
-                
                 if stored_ua_hash != current_ua_hash or stored_ip != ip:
+                    
+                    log_session_activity(
+                        request,
+                        action='mismatch_detected',
+                        remarks='UA or IP mismatch – forced logout',
+                        current_ua=ua,
+                        current_ua_hash=current_ua_hash,
+                        current_ip=ip
+                    )
+                        
                     logout(request)
                     request.session.flush()
                     return redirect('citizenLoginAccount') 
