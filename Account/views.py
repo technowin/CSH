@@ -48,50 +48,66 @@ TestURL = "https://www.cidcoindia.com/AapleMiddlewareApiTest/api"
 # Set up logging
 logger = logging.getLogger(__name__)
 import hashlib
+logger = logging.getLogger("session_debug") 
+from django.contrib.auth import login
+
+def get_client_ip(request):
+    """
+    Returns the real client IP.
+    Works correctly behind proxies / load balancers.
+    """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
 
 @csrf_exempt
 def Login(request):
     try:
-        if request.method=="GET":
-            return render(request,'Account/login.html')
-        
-        if request.method == "POST":
+        if request.method == "GET":
+            return render(request, 'Account/login.html')
 
+        if request.method == "POST":
             username = request.POST.get('username')
             password = request.POST.get('password')
-            
+
             user = authenticate(request, username=username, password=password)
-            
+
             if not user:
                 messages.error(request, 'Invalid credentials')
                 return redirect('Login')
-           
+            
+            # ✅ CRITICAL FIX: Create new session BEFORE login
+            # This ensures fresh session for the authenticated user
+            request.session.flush()  # Clear existing session first
+            request.session.create()  # Create new empty session
+
             # ✅ login user
-            
             login(request, user)
-            
+
             # ✅ store only what is needed
             request.session["username"] = str(username)
             request.session["full_name"] = str(user.full_name)
             request.session["user_id"] = str(user.id)
             request.session["role_id"] = str(user.role_id)
-            
+
+            # Store browser fingerprint
             ua = request.META.get('HTTP_USER_AGENT', '')
-            ip = request.META.get('REMOTE_ADDR', '')
-            
             request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
-            request.session['_ip'] = ip
-            request.session.cycle_key()  # VERY IMPORTANT
-            
+            request.session['_ua_raw'] = ua
+            request.session['_ip'] = get_client_ip(request)
+
             # 🧹 clear flags
             request.session.pop('_session_expired', None)
             request.session.pop('_user_logged_out', None)
-            
+           
             return redirect('services')
-    
+                
     except Exception as e:
         print(f"Login error: {e}")
-            
+        messages.error(request, 'An error occurred during login')
+        return redirect('Login')
+
 def services(request):
     try:
         if request.method =="GET":
@@ -798,16 +814,17 @@ def OTPScreenPost(request):
                 request.session['citizen_page'] = redirect_to
                 request.session['otp_verified'] = True
                 
+                ua = request.META.get('HTTP_USER_AGENT', '')
+                ip = get_client_ip(request)
+
+                request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
+                request.session['_ua_raw'] = ua
+                request.session['_ip'] = ip
+                
                 if '_session_expired' in request.session:
                     del request.session['_session_expired']
                 if '_user_logged_out' in request.session:
                     del request.session['_user_logged_out']
-                
-                ua = request.META.get('HTTP_USER_AGENT', '')
-                ip = request.META.get('REMOTE_ADDR', '')
-
-                request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
-                request.session['_ip'] = ip
                 
                 messages.success(request, "OTP verified successfully!")
                 return redirect(redirect_to)

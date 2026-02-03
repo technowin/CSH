@@ -174,3 +174,40 @@ class smslog(models.Model):
 
     class Meta:
         db_table = 'smslog'
+        
+class SessionActivityLog(models.Model):
+    """
+    Logs session binding and suspicious activity.
+    No FK intentionally (audit table).
+    """
+
+    user_id = models.CharField(max_length=50, null=True, blank=True)
+    user_type = models.CharField(
+        max_length=20,
+        choices=(('admin', 'Admin'), ('citizen', 'Citizen')),
+        null=True,
+        blank=True
+    )
+
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent_hash = models.CharField(max_length=256, null=True, blank=True)
+    stored_user_agent_hash = models.CharField(max_length=256, null=True, blank=True)
+    stored_ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    user_agent = models.TextField(null=True, blank=True)
+    stored_user_agent = models.TextField(null=True, blank=True)
+
+    action = models.CharField(max_length=100)  
+    # examples:
+    # session_created, session_verified, mismatch_detected, forced_logout
+
+    remarks = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'tbl_session_activity_log'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user_type} | {self.user_id} | {self.action}"

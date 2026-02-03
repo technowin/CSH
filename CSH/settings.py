@@ -88,8 +88,6 @@ MIDDLEWARE = [
     'Account.middleware.ServiceDatabaseMiddleware',
 ]
 
-
-
 ROOT_URLCONF = 'CSH.urls'
 
 TEMPLATES = [
@@ -177,7 +175,7 @@ if DEBUG:
 else:
     ALLOWED_HOSTS = [
         '13.126.65.190',
-        '172.16.20.48', 
+        '172.16.150.48', 
         '3.7.229.137',
         'rtsengser.cidcoindia.com',
         'localhost',
@@ -207,7 +205,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://13.202.157.7',
     'https://push3.aclgateway.com',
     'https://13.126.65.190',
-    'https://172.16.20.48',
+    'https://172.16.150.48',
     'https://3.7.229.137',
     'https://rtsengser.cidcoindia.com',
 ]
