@@ -51,17 +51,69 @@ import hashlib
 logger = logging.getLogger("session_debug") 
 from django.contrib.auth import login
 
-def get_client_ip(request):
-    """
-    Returns real client IP behind nginx/gunicorn.
-    """
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        # XFF can be: client, proxy1, proxy2
-        ip = x_forwarded_for.split(',')[0].strip()
-        return ip
+# def get_client_ip(request):
+#     """
+#     Returns real client IP behind nginx/gunicorn.
+#     """
+#     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+#     if x_forwarded_for:
+#         # XFF can be: client, proxy1, proxy2
+#         ip = x_forwarded_for.split(',')[0].strip()
+#         return ip
 
-    return request.META.get('REMOTE_ADDR')
+#     return request.META.get('REMOTE_ADDR')
+
+@csrf_exempt
+def ip_test(request):
+    """Test IP detection"""
+    xff = request.META.get('HTTP_X_FORWARDED_FOR', 'NOT SET')
+    xri = request.META.get('HTTP_X_REAL_IP', 'NOT SET')
+    remote = request.META.get('REMOTE_ADDR', 'NOT SET')
+    
+    # Parse X-Forwarded-For
+    client_ip_from_xff = None
+    if xff != 'NOT SET':
+        parts = xff.split(',')
+        client_ip_from_xff = parts[0].strip()
+    
+    return HttpResponse(f"""
+    <h1>IP Debug Info</h1>
+    <pre>
+    HTTP_X_FORWARDED_FOR = {xff}
+    Parsed from XFF = {client_ip_from_xff}
+    HTTP_X_REAL_IP = {xri}
+    REMOTE_ADDR = {remote}
+    
+    Your function returns: {get_client_ip(request)}
+    
+    All headers with 'forward' or 'real' or 'client':
+    {chr(10).join([f'{k}: {v}' for k, v in request.META.items() 
+                   if any(x in k.lower() for x in ['forward', 'real', 'client', 'remote'])])}
+    </pre>
+    """)
+
+def get_client_ip(request):
+    """Simplest version - should work with your AWS + nginx setup"""
+    # Get X-Forwarded-For header
+    xff = request.META.get('HTTP_X_FORWARDED_FOR')
+    
+    if xff:
+        # Split and clean
+        parts = xff.split(',')
+        # The FIRST IP is the original client
+        client_ip = parts[0].strip()
+        
+        print(f"DEBUG: X-Forwarded-For = {xff}")
+        print(f"DEBUG: Parsed client IP = {client_ip}")
+        
+        return client_ip
+    
+    # Fallback to X-Real-IP
+    xri = request.META.get('HTTP_X_REAL_IP')
+    if xri:
+        return xri.strip()
+    
+    return request.META.get('REMOTE_ADDR', '')
 
 @csrf_exempt
 def Login(request):
