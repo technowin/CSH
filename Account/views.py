@@ -53,12 +53,14 @@ from django.contrib.auth import login
 
 def get_client_ip(request):
     """
-    Returns the real client IP.
-    Works correctly behind proxies / load balancers.
+    Returns real client IP behind nginx/gunicorn.
     """
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
-        return x_forwarded_for.split(',')[0].strip()
+        # XFF can be: client, proxy1, proxy2
+        ip = x_forwarded_for.split(',')[0].strip()
+        return ip
+
     return request.META.get('REMOTE_ADDR')
 
 @csrf_exempt
