@@ -18,7 +18,7 @@ SECRET_KEY1 = '5pQsZXhU8vKyv7GxThldGn_JLK9UXVYyZD3GwQxsztY='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True  # Set to True for debugging, then change to False for production
-DEBUG = True  # For production
+DEBUG = False  # For production
 
 # ==================== APPLICATION DEFINITION ====================
 INSTALLED_APPS = [
