@@ -92,28 +92,50 @@ def ip_test(request):
     </pre>
     """)
 
+import logging
+
+logger = logging.getLogger("session_debug")
+
 def get_client_ip(request):
-    """Simplest version - should work with your AWS + nginx setup"""
-    # Get X-Forwarded-For header
-    xff = request.META.get('HTTP_X_FORWARDED_FOR')
-    
-    if xff:
-        # Split and clean
-        parts = xff.split(',')
-        # The FIRST IP is the original client
-        client_ip = parts[0].strip()
-        
-        print(f"DEBUG: X-Forwarded-For = {xff}")
-        print(f"DEBUG: Parsed client IP = {client_ip}")
-        
-        return client_ip
-    
-    # Fallback to X-Real-IP
-    xri = request.META.get('HTTP_X_REAL_IP')
-    if xri:
-        return xri.strip()
-    
-    return request.META.get('REMOTE_ADDR', '')
+    """
+    Returns the most likely real client IP.
+    Works with proxies, VPNs, and direct connections.
+    Logs all candidate headers for debugging.
+    """
+
+    # List of headers to check (in order of trust)
+    ip_headers = [
+        'HTTP_X_FORWARDED_FOR',  # Standard proxy header
+        'HTTP_X_REAL_IP',        # Nginx or other reverse proxy
+        'HTTP_CLIENT_IP',        # Less common
+        'HTTP_X_CLUSTER_CLIENT_IP',
+        'REMOTE_ADDR'            # Always last fallback
+    ]
+
+    candidate_ips = []
+
+    for header in ip_headers:
+        value = request.META.get(header)
+        if value:
+            # X-Forwarded-For may contain multiple IPs: client, proxy1, proxy2
+            ips = [ip.strip() for ip in value.split(',')]
+            candidate_ips.extend(ips)
+
+    # Log all candidates for debugging
+    logger.debug("IP candidates from headers: %s", candidate_ips)
+
+    # Pick the first non-private IP if possible
+    for ip in candidate_ips:
+        if ip and not ip.startswith(('10.', '172.', '192.168.')):
+            return ip  # Likely the real public IP
+
+    # Otherwise, return the first candidate (may be private/VPN IP)
+    if candidate_ips:
+        return candidate_ips[0]
+
+    # Last fallback
+    return '0.0.0.0'
+
 
 @csrf_exempt
 def Login(request):
