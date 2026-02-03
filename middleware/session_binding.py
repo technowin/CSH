@@ -45,7 +45,10 @@ class SessionBindingMiddleware:
                         remarks='UA or IP mismatch – forced logout',
                         current_ua=ua,
                         current_ua_hash=current_ua_hash,
-                        current_ip=ip
+                        current_ip=ip,
+                        stored_ua=stored_ua,
+                        stored_ua_hash=stored_ua_hash,
+                        stored_ip=stored_ip,
                     )
                         
                     logout(request)
@@ -61,9 +64,14 @@ class SessionBindingMiddleware:
                         request,
                         action='mismatch_detected',
                         remarks='UA or IP mismatch – forced logout',
+
                         current_ua=ua,
                         current_ua_hash=current_ua_hash,
-                        current_ip=ip
+                        current_ip=ip,
+
+                        stored_ua=stored_ua,
+                        stored_ua_hash=stored_ua_hash,
+                        stored_ip=stored_ip,
                     )
                         
                     logout(request)
@@ -72,7 +80,17 @@ class SessionBindingMiddleware:
         
         return self.get_response(request)
     
-def log_session_activity(request, action, remarks='', current_ua=None, current_ua_hash=None, current_ip=None):
+def log_session_activity(
+    request,
+    action,
+    remarks='',
+    current_ua=None,
+    current_ua_hash=None,
+    current_ip=None,
+    stored_ua=None,
+    stored_ua_hash=None,
+    stored_ip=None
+):
     try:
         user_id = None
         user_type = None
@@ -87,20 +105,20 @@ def log_session_activity(request, action, remarks='', current_ua=None, current_u
         SessionActivityLog.objects.create(
             user_id=user_id,
             user_type=user_type,
+
             ip_address=current_ip,
-            stored_ip_address=request.session.get('_ip'),
+            stored_ip_address=stored_ip,
 
             user_agent=current_ua,
-            stored_user_agent=request.session.get('_ua_raw'),
+            stored_user_agent=stored_ua,
 
             user_agent_hash=current_ua_hash,
-            stored_user_agent_hash=request.session.get('_ua_hash'),
+            stored_user_agent_hash=stored_ua_hash,
 
             action=action,
             remarks=remarks
         )
     except Exception:
-        # logging must NEVER break auth flow
         pass
 
 
