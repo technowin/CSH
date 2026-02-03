@@ -18,7 +18,7 @@ SECRET_KEY1 = '5pQsZXhU8vKyv7GxThldGn_JLK9UXVYyZD3GwQxsztY='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True  # Set to True for debugging, then change to False for production
-DEBUG = False  # For production
+DEBUG = True  # For production
 
 # ==================== APPLICATION DEFINITION ====================
 INSTALLED_APPS = [
@@ -170,18 +170,14 @@ DATABASES = {
 
 # ==================== ALLOWED HOSTS (CRITICAL) ====================
 # For debugging, allow all hosts temporarily
-if DEBUG:
-    ALLOWED_HOSTS = ['*']  # Allow all hosts during development
-    print("DEBUG MODE: ALLOWED_HOSTS = ['*']")
-else:
-    ALLOWED_HOSTS = [
-        '13.126.65.190',
-        '172.16.20.48', 
-        '3.7.229.137',
-        'rtsengser.cidcoindia.com',
-        'localhost',
-        '127.0.0.1'
-    ]
+ALLOWED_HOSTS = [
+    '13.126.65.190',
+    '172.16.20.48',
+    '3.7.229.137',
+    'rtsengser.cidcoindia.com',
+    'localhost',
+    '127.0.0.1'
+]
 
 # ==================== CORS SETTINGS ====================
 CORS_ALLOWED_ORIGINS = [
@@ -193,8 +189,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1',
 ]
 
-CORS_ORIGIN_ALLOW_ALL = DEBUG  # Allow all in debug mode
-CORS_ORIGIN_WHITELIST = CORS_ALLOWED_ORIGINS
+CORS_ORIGIN_ALLOW_ALL = False
 
 # ==================== CSRF SETTINGS ====================
 # For Django 4.0+, CSRF_TRUSTED_ORIGINS must include scheme
@@ -204,11 +199,11 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
     'http://127.0.0.1',
     'http://13.202.157.7',
-    'https://push3.aclgateway.com',
-    'https://13.126.65.190',
-    'https://172.16.20.48',
-    'https://3.7.229.137',
-    'https://rtsengser.cidcoindia.com',
+    'http://push3.aclgateway.com',
+    'http://3.7.229.137',
+    'http://rtsengser.cidcoindia.com',
+    'http://localhost',
+    'http://127.0.0.1',
 ]
 
 # ==================== SECURITY SETTINGS ====================
@@ -220,6 +215,11 @@ if DEBUG:
     SECURE_HSTS_SECONDS = 0
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False
     SECURE_HSTS_PRELOAD = False
+else:
+    # You have NO SSL, so still keep these False
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 
 # ==================== SESSION & AUTHENTICATION ====================
@@ -257,7 +257,7 @@ AUTO_LOGOUT = {
 }
 
 USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
 
 # ==================== SECURITY HEADERS ====================
 X_FRAME_OPTIONS = 'DENY'

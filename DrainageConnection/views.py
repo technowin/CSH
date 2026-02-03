@@ -70,12 +70,15 @@ def matrix_flow(request):
     form_id,context,wf_id,sf,f,sb,rb,rb1  = '','','','','','','',''
     #context ={}
     try:
+        early_response = None
+        
         if not request.user.is_authenticated and not request.session.get('username'):
             # Clear any session flags
             if '_session_expired' in request.session:
                 request.session.pop('_session_expired')
             messages.warning(request, "Your session has expired. Please log in again.")
-            return redirect('citizenLoginAccount')
+            early_response = redirect('citizenLoginAccount')
+            return early_response
         
         if request.user.is_authenticated ==True:                
             global user,role_id
@@ -475,6 +478,10 @@ def matrix_flow(request):
         callproc("stp_error_log",[fun,str(e),user])  
         messages.error(request, 'Oops...! Something went wrong!')
     finally: 
+        
+        if early_response:
+            return early_response
+    
         if request.method == "GET" and sf == '' and f == '' and sb == ''and rb == ''and rb1 == '':
             return render(request,'DrainageConnection/metrix_flow.html', context)
 

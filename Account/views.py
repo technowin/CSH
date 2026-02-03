@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 
 from django.contrib.auth import login
 import hashlib
+logger = logging.getLogger("session_debug") 
 
 def get_client_ip(request):
     """
@@ -94,8 +95,7 @@ def Login(request):
             # Store browser fingerprint
             ua = request.META.get('HTTP_USER_AGENT', '')
             request.session['_ua_hash'] = hashlib.sha256(ua.encode()).hexdigest()
-            
-            # Store IP (optional, for auditing)
+            request.session['_ua_raw'] = ua
             request.session['_ip'] = get_client_ip(request)
 
             # 🧹 clear flags
