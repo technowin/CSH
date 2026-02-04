@@ -574,7 +574,7 @@ def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
         file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
-@no_direct_access
+
 def citizen_index_pa(request):
     try:
         if not request.session.get('user_id') or not request.session.get('phone_number'):
