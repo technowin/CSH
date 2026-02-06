@@ -660,9 +660,7 @@ def sample_doc(columns,file_name,user):
         return response      
 
 # application Form Index
-from django.urls import reverse_lazy
 
-@login_required(login_url=reverse_lazy('citizenLogin'))
 def applicationFormIndex(request):
     try:
         if not request.session.get('user_id') or not request.session.get('phone_number'):
