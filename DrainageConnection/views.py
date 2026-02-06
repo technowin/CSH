@@ -660,6 +660,7 @@ def sample_doc(columns,file_name,user):
         return response      
 
 # application Form Index
+@no_direct_access
 def applicationFormIndex(request):
     try:
         if not request.session.get('user_id') or not request.session.get('phone_number'):
@@ -1023,9 +1024,6 @@ def download_doc(request, filepath):
         callproc("stp_error_log", [fun, str(e), ''])  
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
-
-
-
 
 from django.http import FileResponse, Http404
    
