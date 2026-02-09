@@ -443,7 +443,7 @@ def matrix_flow(request):
 
 
                     
-                    if status == 6 or status == 8: #Approved
+                if status == 6 or status == 8: #Approved
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -475,7 +475,7 @@ def matrix_flow(request):
                         message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
                         Log.objects.create(log_text=message)
                             
-                    if status == 7 or status == 9:
+                if status == 7 or status == 9:
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
