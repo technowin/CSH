@@ -74,11 +74,11 @@
         </div>
         <div class="col-md-2">
             {% if workflow.level != 1 and workflow.pre_user == user_id|to_str and workflow.rollback is None %}
-                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow_tt?wf={{wf_id}}&af={{form_id}}&rb=1&ac={{ac}}">Roll Back</a>
             {% elif act_comp and workflow.level == 1 and workflow.status_id|in_list:"1,2" and role_id == 3 %}
-                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb1=1&ac={{ac}}">Roll Back</a>
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow_tt?wf={{wf_id}}&af={{form_id}}&rb1=1&ac={{ac}}">Roll Back</a>
             {% elif act_comp and workflow.send_forward == user_id|to_str and workflow.rollback is None  %}
-                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow?wf={{wf_id}}&af={{form_id}}&rb1=1&ac={{ac}}">Roll Back</a>
+                <a type="button" id="Btn2" class="btn btn-primary" href="/matrix_flow_tt?wf={{wf_id}}&af={{form_id}}&rb1=1&ac={{ac}}">Roll Back</a>
             {% else %}
                 <button type="button" id="Btn2" class="btn btn-primary" disabled>Roll Back</button>
             {% endif %}

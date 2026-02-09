@@ -291,6 +291,19 @@ def matrix_flow_tc(request):
                             
                             from Account.views import upd_citizen
                             upd_citizen(request)
+                             # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
                             
                 elif status == 5 and ref == 'inspection':
                     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
@@ -363,7 +376,7 @@ def matrix_flow_tc(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                     
-                    if status == 11:
+                    if status == 11 or status == 8:
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -382,8 +395,22 @@ def matrix_flow_tc(request):
                             
                             from Account.views import upd_citizen
                             upd_citizen(request)
+                            # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        # designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]= f_remark
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+                        
                             
-                    if status == 12 or status == 9:
+                    if status == 12 or status == 9:  #Rejected
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -402,6 +429,20 @@ def matrix_flow_tc(request):
                             
                             from Account.views import upd_citizen
                             upd_citizen(request)
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id 
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=f_remark
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+                    
                             
                     
                     
