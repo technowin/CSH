@@ -323,7 +323,7 @@ def matrix_flow_tt(request):
                     
                     # if status is approve then update API data table here
                     
-                    if status == 6:
+                if status == 6:
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -356,7 +356,7 @@ def matrix_flow_tt(request):
                         message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
                         Log.objects.create(log_text=message)
                             
-                    if status == 7:
+                if status == 7:
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         

@@ -376,7 +376,7 @@ def matrix_flow_tc(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                     
-                    if status == 11 or status == 8:
+                if status == 11 or status == 8:
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -409,7 +409,7 @@ def matrix_flow_tc(request):
                         message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
                         Log.objects.create(log_text=message)
                             
-                    if status == 12 or status == 9:  #Rejected
+                if status == 12 or status == 9:  #Rejected
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
