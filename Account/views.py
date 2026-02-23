@@ -43,7 +43,8 @@ from django.http import HttpResponseBadRequest
 import logging
 import requests
 from django.db import models
-LiveURL = "https://www.cidcoindia.com/AapleMiddlewareAPI/api"
+# LiveURL = "https://www.cidcoindia.com/AapleMiddlewareAPI/api"
+LiveURL = "https://www.cidcoindia.com/AapleMiddlewareApiTest/api"
 TestURL = "https://www.cidcoindia.com/AapleMiddlewareApiTest/api"
 # Set up logging
 logger = logging.getLogger(__name__)
