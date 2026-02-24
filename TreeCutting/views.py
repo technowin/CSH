@@ -20,12 +20,12 @@ import calendar
 from django.utils import timezone
 from datetime import timedelta
 from django.http import Http404
+from CSH.access_control import no_direct_access
 # from DrainageConnection.models import *
 
 # Create your views here.
 import logging
 logger = logging.getLogger(__name__)
-from CSH.access_control import no_direct_access
 
 @login_required 
 @no_direct_access
@@ -64,7 +64,7 @@ def index_tc(request):
          return render(request,'TreeCutting/index.html', context)
 
 @login_required 
-@no_direct_access   
+@no_direct_access      
 def matrix_flow_tc(request):
     docs,label,input,data = [],[],[],[]
     form_id,context,wf_id,sf,f,sb,rb,rb1  = '','','','','','','',''
@@ -249,6 +249,20 @@ def matrix_flow_tc(request):
             status =  request.POST.get('btnclk', '')
             if status.isdigit():
                 status = int(status)
+
+                # if status == 2:
+                #     role_id = request.session.get('role_id')
+                #     role = roles.objects.only('role_name').get(id=role_id)
+                #     designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                #     from Account.desk_detail_api import upd_desk_detail
+                #     request.session["ApplicationId1"]=wf.request_no
+                #     request.session["DeskNumber"] = 'Desk ' + role_id 
+                #     request.session["ReviewActionBy"] = role.role_name
+                #     request.session["ReviewActionDetails"]="Approved"
+                #     request.session["DeskRemark"]=""
+                #     desk_api_res = upd_desk_detail(request)
+                #     message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                #     Log.objects.create(log_text=message)
                 
                 if (status == 3 or status == 4) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
@@ -269,6 +283,18 @@ def matrix_flow_tc(request):
                     if r1[0][0] not in (""):
                         messages.success(request, str(r1[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Approved"
+                    request.session["DeskRemark"]=""
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
                     
                     # code to update api_data
                     
@@ -315,6 +341,19 @@ def matrix_flow_tc(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Approved"
+                    request.session["DeskRemark"]=""
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
+
                 elif status == 6 and ref == 'public_notice':
                     notice_upl_file = request.FILES.get('notice_upl_file')
                     objection_upl_file = request.FILES.get('objection_upl_file')
@@ -325,6 +364,19 @@ def matrix_flow_tc(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Approved"
+                    request.session["DeskRemark"]=""
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
+
                 elif status == 7 and ref == 'department_proposal':
                     DepProposal_upl_file = request.FILES.get('DepProposal_upl_file')
                     if DepProposal_upl_file:
@@ -333,6 +385,19 @@ def matrix_flow_tc(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Approved"
+                    request.session["DeskRemark"]=""
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
+
                 elif status == 10 and ref == 'letter_of_payment':
                     letOfPay_upl_file = request.FILES.get('letOfPay_upl_file')
                     plantOfLetter_upl_file = request.FILES.get('plantOfLetter_upl_file')
@@ -347,6 +412,19 @@ def matrix_flow_tc(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Approved"
+                    request.session["DeskRemark"]= ""
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
+
                 elif status == 13 and ref == 'certificate':
                     iss_remark = request.POST.get('iss_remark')
                     if iss_remark!='':
@@ -364,6 +442,18 @@ def matrix_flow_tc(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Approved"
+                    request.session["DeskRemark"]= ""
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
                 else:
                     f_remark = request.POST.get('f_remark')
                     if f_remark!='' and status in [8, 9, 11, 12]:
@@ -375,8 +465,9 @@ def matrix_flow_tc(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+
                     
-                    if status == 11 or status == 8:
+                if status == 11 or status == 8:
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -408,9 +499,8 @@ def matrix_flow_tc(request):
                         desk_api_res = upd_desk_detail(request)
                         message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
                         Log.objects.create(log_text=message)
-                        
                             
-                    if status == 12 or status == 9:  #Rejected
+                if status == 12 or status == 9:  #Rejected
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -442,7 +532,6 @@ def matrix_flow_tc(request):
                         desk_api_res = upd_desk_detail(request)
                         message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
                         Log.objects.create(log_text=message)
-                    
                             
                     
                     
@@ -537,7 +626,7 @@ def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
         file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
-@no_direct_access
+
 def applicationFormIndexTC(request):
     try:
         if not request.session.get('user_id') or not request.session.get('phone_number'):
@@ -591,25 +680,18 @@ def applicationFormIndexTC(request):
             
             countRefusedDocumentId = callproc("stp_getRefusedDocumentDetails", [refused_id])
             countRefusedDocument = countRefusedDocumentId[0][0] if countRefusedDocumentId else 0
-            
+
             return render(
                 request,
                 "TreeCutting/TreeCuttingIndex.html",
                 {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "countRefusedDocument": countRefusedDocument},
             )
-
+                
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), ""])
         logger.error(f"Error in applicationFormIndexTC: {str(e)}")
-
-    # finally:
-    #     return render(
-    #         request,
-    #         "TreeCutting/TreeCuttingIndex.html",
-    #         {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "countRefusedDocument": countRefusedDocument},
-    #     )
 
 @no_direct_access
 def application_Master_Crate_TC(request):
