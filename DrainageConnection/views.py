@@ -568,69 +568,6 @@ def matrix_flow(request):
                         message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
                         Log.objects.create(log_text=message)
                 
-                if status == 16: #Challan Uploaded
-                        
-                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
-                        
-                        if dataAPI:
-                            
-                            request.session['userId'] = dataAPI.user_id
-                            request.session['trackId'] = dataAPI.track_id
-                            request.session['serviceId'] = dataAPI.service_id
-                            request.session['applicationId'] = dataAPI.application_no
-                            request.session['application_status'] = '1'
-                            request.session['remarks'] = f_remark
-                            request.session['form_id'] = dataAPI.form_id
-                            request.session['form_user_id'] = dataAPI.form_user_id
-                            request.session['workflow_id'] = dataAPI.workflow_id
-                            request.session['phone_number'] = dataAPI.mobile_no
-                            
-                            from Account.views import upd_citizen
-                            upd_citizen(request)
-                        role_id = request.session.get('role_id')
-                        role = roles.objects.only('role_name').get(id=role_id)
-                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
-                        from Account.desk_detail_api import upd_desk_detail
-                        request.session["ApplicationId1"]=wf.request_no
-                        request.session["DeskNumber"] = 'Desk ' + role_id 
-                        request.session["ReviewActionBy"] = role.role_name
-                        request.session["ReviewActionDetails"]="Sent back to citizen"
-                        request.session["DeskRemark"]="Upload Payment Receipt"
-                        desk_api_res = upd_desk_detail(request)
-                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
-                        Log.objects.create(log_text=message)
-                
-                if status == 17: #Challan Receipt Uploaded
-                        
-                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
-                        
-                        if dataAPI:
-                            
-                            request.session['userId'] = dataAPI.user_id
-                            request.session['trackId'] = dataAPI.track_id
-                            request.session['serviceId'] = dataAPI.service_id
-                            request.session['applicationId'] = dataAPI.application_no
-                            request.session['application_status'] = '3'
-                            request.session['remarks'] = ""
-                            request.session['form_id'] = dataAPI.form_id
-                            request.session['form_user_id'] = dataAPI.form_user_id
-                            request.session['workflow_id'] = dataAPI.workflow_id
-                            request.session['phone_number'] = dataAPI.mobile_no
-                            
-                            from Account.views import upd_citizen
-                            upd_citizen(request)
-                        role_id = request.session.get('role_id')
-                        role = roles.objects.only('role_name').get(id=role_id)
-                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
-                        from Account.desk_detail_api import upd_desk_detail
-                        request.session["ApplicationId1"]=wf.request_no
-                        request.session["DeskNumber"] = 'Desk ' + role_id 
-                        request.session["ReviewActionBy"] = role.role_name
-                        request.session["ReviewActionDetails"]="Approved"
-                        request.session["DeskRemark"]=""
-                        desk_api_res = upd_desk_detail(request)
-                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
-                        Log.objects.create(log_text=message)
                             
                 return redirect(f'/matrix_flow?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 
@@ -1797,6 +1734,60 @@ def viewUploadedChallan(request, form_id):
 
 
 
+# def upload_challan_receipt(request, form_id):
+#     if request.method != "POST":
+#         return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
+
+#     try:
+#         app_id = decrypt_parameter(form_id)
+#         application = application_form.objects.get(id=app_id)
+
+#         # Prevent duplicate upload
+#         if application.status_id == 17:
+#             return JsonResponse({
+#                 "success": False,
+#                 "message": "Receipt has already been uploaded. You cannot upload again."
+#             })
+
+#         challan_file = request.FILES.get("challan_file")
+#         if not challan_file:
+#             return JsonResponse({"success": False, "message": "No file selected."})
+
+#         # Use logged-in user safely
+#         phone_number = request.session['phone_number']
+        
+#         if phone_number:
+#             user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+#             user_id = user.id
+#             full_name = request.session.get("full_name", user.full_name or user.username)
+#         else:
+#             user_id = None 
+        
+    
+       
+
+#         # Save document (doc_id hardcoded as 24 for Challan Receipt)
+#         upload_challan_wrapper(
+#             challan_file,
+#             user_id,
+#             app_id,
+#             created_by=full_name,
+#             ser='1',
+#             doc_id1=24
+#         )
+
+#         # Update status to 17
+#         callproc("sp_update_status", [app_id, application.id, 17, user_id])
+
+#         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
+
+#     except application_form.DoesNotExist:
+#         return JsonResponse({"success": False, "message": "Application not found."}, status=404)
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()
+#         return JsonResponse({"success": False, "message": f"Upload failed: {str(e)}"}, status=500)
+
 def upload_challan_receipt(request, form_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
@@ -1826,9 +1817,6 @@ def upload_challan_receipt(request, form_id):
         else:
             user_id = None 
         
-    
-       
-
         # Save document (doc_id hardcoded as 24 for Challan Receipt)
         upload_challan_wrapper(
             challan_file,
@@ -1841,6 +1829,54 @@ def upload_challan_receipt(request, form_id):
 
         # Update status to 17
         callproc("sp_update_status", [app_id, application.id, 17, user_id])
+        application.refresh_from_db()
+        # Get latest workflow row for this application
+        wf = workflow_details.objects.filter(form_id=app_id).last()
+
+        if wf:
+            wf_id = wf.id
+            form_user_id = wf.form_user_id
+
+            # -------- UPDATE CITIZEN API ----------
+            dataAPI = api_data.objects.filter(
+                form_id=app_id,
+                form_user_id=form_user_id,
+                workflow_id=wf_id
+            ).first()
+
+            if dataAPI:
+                request.session['userId'] = dataAPI.user_id
+                request.session['trackId'] = dataAPI.track_id
+                request.session['serviceId'] = dataAPI.service_id
+                request.session['applicationId'] = dataAPI.application_no
+                request.session['application_status'] = '3'
+                request.session['remarks'] = ""
+                request.session['form_id'] = dataAPI.form_id
+                request.session['form_user_id'] = dataAPI.form_user_id
+                request.session['workflow_id'] = dataAPI.workflow_id
+                request.session['phone_number'] = dataAPI.mobile_no
+                            
+                from Account.views import upd_citizen
+                upd_citizen(request)
+
+            # -------- UPDATE DESK API ----------
+            role_id = request.session.get('role_id')
+            role = roles.objects.only('role_name').get(id=role_id)
+
+            from Account.desk_detail_api import upd_desk_detail
+
+            request.session["ApplicationId1"] = wf.request_no
+            request.session["DeskNumber"] = 'Desk ' + str(role_id)
+            request.session["ReviewActionBy"] = role.role_name
+            request.session["ReviewActionDetails"] = "Challan Receipt Uploaded"
+            request.session["DeskRemark"] = ""
+
+            desk_api_res = upd_desk_detail(request)
+
+            Log.objects.create(
+                log_text=f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+            )
+        
 
         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
 
