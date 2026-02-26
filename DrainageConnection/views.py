@@ -512,7 +512,7 @@ def matrix_flow(request):
                             request.session['serviceId'] = dataAPI.service_id
                             request.session['applicationId'] = dataAPI.application_no
                             request.session['application_status'] = '4'
-                            request.session['remarks'] = f_remark
+                            request.session['remarks'] = ""
                             request.session['form_id'] = dataAPI.form_id
                             request.session['form_user_id'] = dataAPI.form_user_id
                             request.session['workflow_id'] = dataAPI.workflow_id
@@ -529,7 +529,7 @@ def matrix_flow(request):
                         request.session["DeskNumber"] = 'Desk ' + role_id 
                         request.session["ReviewActionBy"] = role.role_name
                         request.session["ReviewActionDetails"]="Approved"
-                        request.session["DeskRemark"]=rej_res
+                        request.session["DeskRemark"]= ""
                         desk_api_res = upd_desk_detail(request)
                         message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
                         Log.objects.create(log_text=message)
@@ -545,7 +545,7 @@ def matrix_flow(request):
                             request.session['serviceId'] = dataAPI.service_id
                             request.session['applicationId'] = dataAPI.application_no
                             request.session['application_status'] = '5'
-                            request.session['remarks'] = f_remark
+                            request.session['remarks'] = rej_res
                             request.session['form_id'] = dataAPI.form_id
                             request.session['form_user_id'] = dataAPI.form_user_id
                             request.session['workflow_id'] = dataAPI.workflow_id
