@@ -175,9 +175,9 @@
         <div class="col-md-3">
             {% if ac != "view" and matrix.action and matrix.action != "View"  %}
                 {% if workflow.send_forward|to_int == user_id %}
-                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"7,9,11,16,18"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"7,9,11,16,17,18"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
                 {% elif workflow.status_id|in_list:"1,2" and role_id == 3 %}
-                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"7,9,11,16,18"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"7,9,11,16,17,18"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
                 {% endif %}
             {% endif %}
         </div>
