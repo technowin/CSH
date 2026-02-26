@@ -289,7 +289,7 @@ def matrix_flow(request):
                             request.session['serviceId'] = dataAPI.service_id
                             request.session['applicationId'] = dataAPI.application_no
                             request.session['application_status'] = '1'
-                            request.session['remarks'] = f_remark
+                            request.session['remarks'] = ""
                             request.session['form_id'] = dataAPI.form_id
                             request.session['form_user_id'] = dataAPI.form_user_id
                             request.session['workflow_id'] = dataAPI.workflow_id
