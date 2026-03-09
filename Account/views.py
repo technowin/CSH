@@ -947,52 +947,55 @@ def checkmobilenumber(request):
 # OTP For Registration
 @csrf_exempt
 def OTPScreenRegistration(request):
-    if request.method == "GET":
-        service_db = request.GET.get('service_db')
-        request.session['service_db'] = service_db
-        phone_number = request.session.get('mobile_number')
-        sms_templates = smstext.objects.all()
-        
-        if not phone_number:
-            messages.error(request, "Phone number is required.")
-            return redirect(f'/citizenRegisterAccount?service_db={service_db}')
-
-        try:
-            servicefetch = service_master.objects.using('default').get(ser_id=service_db)
-            ser_name = servicefetch.ser_name
+    try:
+        if request.method == "GET":
+            service_db = request.GET.get('service_db')
+            request.session['service_db'] = service_db
+            phone_number = request.session.get('mobile_number')
+            sms_templates = smstext.objects.all()
             
-            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-            # otp = '123456'
+            if not phone_number:
+                messages.error(request, "Phone number is required.")
+                return redirect(f'/citizenRegisterAccount?service_db={service_db}')
 
-            OTPVerification.objects.create(
-                mobile=phone_number,
-                otp_text=otp,
-                created_at=timezone.now()
-            )
-            
-            if sms_templates:
-                template_id = sms_templates[0].template_id
-                message = sms_templates[0].template_name
+            try:
+                servicefetch = service_master.objects.using('default').get(ser_id=service_db)
+                ser_name = servicefetch.ser_name
                 
-                action = "Registration"
-                service = ser_name
+                otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+                # otp = '123456'
+
+                OTPVerification.objects.create(
+                    mobile=phone_number,
+                    otp_text=otp,
+                    created_at=timezone.now()
+                )
                 
-                message = format_message(message, otp, action, service)
-                
-                send_sms(phone_number, message, template_id)
+                if sms_templates:
+                    template_id = sms_templates[0].template_id
+                    message = sms_templates[0].template_name
+                    
+                    action = "Registration"
+                    service = ser_name
+                    
+                    message = format_message(message, otp, action, service)
+                    
+                    send_sms(phone_number, message, template_id)
 
-            messages.success(request, "OTP sent successfully!")
+                messages.success(request, "OTP sent successfully!")
 
-        except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            fun = tb[0].name
-            callproc("stp_error_log", [fun, str(e),request.user.id])
-            
-
-            # Show custom error page if OTP service fails
-            return render(request, "OTPScreen/otp_service_down.html")
+            except Exception as e:
+                # tb = traceback.extract_tb(e.__traceback__)
+                # fun = tb[0].name
+                # callproc("stp_error_log", [fun, str(e),request.user.id])
+                # Show custom error page if OTP service fails
+                return render(request, "OTPScreen/otp_service_down.html")
 
         return render(request, 'OTPScreen/OTPScreenRegistration.html', {'service_db':service_db})
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        return render(request, "OTPScreen/otp_service_down.html")
 
 @csrf_exempt
 def verify_otp(request):
