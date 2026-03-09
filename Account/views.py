@@ -787,12 +787,15 @@ def OTPScreen(request):
 
             otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
 
+            # Save OTP to database
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
                 created_at=timezone.now()
             )
             
+            # Try to send SMS
+            sms_sent = False
             if sms_templates.exists():
                 template_id = sms_templates[0].template_id 
                 message = sms_templates[0].template_name 
@@ -801,50 +804,48 @@ def OTPScreen(request):
                 service = ser_name  
 
                 message = format_message(message, otp, action, service)
-                send_sms(phone_number, message, template_id)
+                
+                # Send SMS and capture result
+                sms_sent = send_sms(phone_number, message, template_id)
+                
+                if sms_sent:
+                    messages.success(request, "OTP sent successfully!")
+                    return render(request, 'OTPScreen/OTPScreen.html', {'service_db': service_db})
+                else:
+                    # SMS failed - show error page
+                    messages.error(request, "Failed to send OTP. Please try again.")
+                    context = {
+                        'service_db': service_db,
+                        'error_message': "Unable to send SMS at this moment. Please try again later."
+                    }
+                    return render(request, "OTPScreen/otp_service_down.html", context)
             else:
-                print("Warning: No SMS templates found")
-
-            messages.success(request, "OTP sent successfully!")
-            return render(request, 'OTPScreen/OTPScreen.html', {'service_db': service_db})
+                # No SMS templates found
+                messages.error(request, "SMS service not configured.")
+                return render(request, "OTPScreen/otp_service_down.html", {'service_db': service_db})
 
         except service_master.DoesNotExist:
             messages.error(request, "Service not found.")
             return redirect(f'/login?service_db={service_db}')
             
         except Exception as e:
-            # Log the error but handle it safely
+            # Log the error
             try:
                 tb = traceback.extract_tb(e.__traceback__)
                 fun = tb[0].name if tb else "Unknown"
-                
-                # FIX: Use None or 0 instead of empty string for user_id
-                # Check if user is authenticated
                 user_id = request.user.id if request.user.is_authenticated else None
                 
-                # Try to log the error, but don't let it break the page
                 try:
                     callproc("stp_error_log", [fun, str(e), user_id])
-                except Exception as log_error:
-                    # If stored procedure fails, print to console and continue
-                    print(f"Error logging failed: {log_error}")
-                    # Also write to file for debugging
-                    with open('/tmp/otp_error.log', 'a') as f:
-                        f.write(f"OTP Error: {str(e)}\n")
-                        f.write(f"Logging Error: {log_error}\n")
-                    
-            except Exception as inner_e:
-                print(f"Error in error handling: {inner_e}")
+                except:
+                    print(f"Error logging failed: {e}")
+            except:
+                pass
             
-            # Log to Django's error log
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"OTP Generation Error: {str(e)}", exc_info=True)
-            
-            # Show custom error page with context
+            # Show error page
             context = {
                 'service_db': service_db,
-                'error_message': "OTP service is temporarily unavailable. Please try again later."
+                'error_message': "Service temporarily unavailable. Please try again later."
             }
             return render(request, "OTPScreen/otp_service_down.html", context)
 
@@ -871,26 +872,32 @@ def send_sms(mobile, message, template_id):
             f"&intflag=false&dtm={template_id}"
         )
         
-        # Add timeout to prevent hanging
+        # Send request with timeout
         response = requests.get(url, timeout=10)
-        print(f"SMS Response: {response.text}")
         
-        # Don't use messages.error here as it's not in request context
-        # Just log it
-        with open('/tmp/sms_log.txt', 'a') as f:
-            f.write(f"SMS sent to {mobile}: {response.status_code}\n")
+        # Check if SMS was actually sent (you may need to adjust based on response)
+        if response.status_code == 200:
+            print(f"SMS sent successfully: {response.text[:100]}")
+            
+            # Log success
+            try:
+                sms_log(response, mobile, message, template_id)
+            except:
+                pass
+                
+            return True  # Return True for success
+        else:
+            print(f"SMS failed with status {response.status_code}")
+            return False  # Return False for failure
         
-        # Call your logging function
-        try:
-            sms_log(response, mobile, message, template_id)
-        except Exception as log_error:
-            print(f"SMS logging failed: {log_error}")
-        
-        return True
-        
+    except requests.exceptions.Timeout:
+        print("SMS gateway timeout")
+        return False
+    except requests.exceptions.ConnectionError:
+        print("SMS gateway connection error")
+        return False
     except Exception as e:
-        print(f"SMS sending failed: {e}")
-        # Don't raise the exception - just return False
+        print(f"SMS error: {e}")
         return False
 
 # Optimized SMS log function
