@@ -1034,13 +1034,16 @@ def OTPScreenRegistration(request):
             otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
             # otp = '123456'
 
+            # Save OTP to database
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
                 created_at=timezone.now()
             )
             
-            if sms_templates:
+            # Try to send SMS
+            sms_sent = False
+            if sms_templates.exists():  # Better check
                 template_id = sms_templates[0].template_id
                 message = sms_templates[0].template_name
                 
@@ -1049,13 +1052,26 @@ def OTPScreenRegistration(request):
                 
                 message = format_message(message, otp, action, service)
                 
-                send_sms(phone_number, message, template_id)
-
-            messages.success(request, "OTP sent successfully!")
-            return render(request, 'OTPScreen/OTPScreenRegistration.html', {'service_db': service_db})
+                # Send SMS and capture result
+                sms_sent = send_sms(phone_number, message, template_id)
+                
+                if sms_sent:
+                    messages.success(request, "OTP sent successfully!")
+                    return render(request, 'OTPScreen/OTPScreenRegistration.html', {'service_db': service_db})
+                else:
+                    # SMS failed - show error page
+                    messages.error(request, "Failed to send OTP. Please try again.")
+                    context = {
+                        'service_db': service_db,
+                        'error_message': "Unable to send SMS at this moment. Please try again later."
+                    }
+                    return render(request, "OTPScreen/otp_service_down.html", context)
+            else:
+                # No SMS templates found
+                messages.error(request, "SMS service not configured.")
+                return render(request, "OTPScreen/otp_service_down.html", {'service_db': service_db})
 
         except service_master.DoesNotExist:
-            # Handle service not found error
             messages.error(request, "Service not found.")
             return redirect(f'/citizenRegisterAccount?service_db={service_db}')
             
@@ -1064,17 +1080,28 @@ def OTPScreenRegistration(request):
             tb = traceback.extract_tb(e.__traceback__)
             fun = tb[0].name if tb else "Unknown"
             
+            # FIX: Use None instead of empty string for user_id
+            user_id = request.user.id if request.user.is_authenticated else None
+            
             # Try to log the error, but don't let it break the page
             try:
-                callproc("stp_error_log", [fun, str(e), request.user.id if request.user.id else ''])
-            except:
-                # If logging fails, at least print to console
-                print(f"Error logging failed: {str(e)}")
+                # Only call if user_id is valid (exists in users table)
+                if user_id:
+                    callproc("stp_error_log", [fun, str(e), user_id])
+                else:
+                    # Log to file instead
+                    with open('/tmp/otp_error.log', 'a') as f:
+                        f.write(f"{timezone.now()}: {fun} - {str(e)}\n")
+            except Exception as log_error:
+                print(f"Error logging failed: {log_error}")
+                # Also write to file
+                with open('/tmp/otp_error.log', 'a') as f:
+                    f.write(f"{timezone.now()}: {str(e)}\n")
             
-            # Log to Django error log as well
+            # Log to Django error log
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"OTP Generation Error: {str(e)}")
+            logger.error(f"OTP Generation Error: {str(e)}", exc_info=True)
             
             # Show custom error page with context
             context = {
@@ -1082,7 +1109,6 @@ def OTPScreenRegistration(request):
                 'error_message': "OTP service is temporarily unavailable. Please try again later."
             }
             return render(request, "OTPScreen/otp_service_down.html", context)
-
       
 
 @csrf_exempt
