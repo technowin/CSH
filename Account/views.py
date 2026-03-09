@@ -1034,7 +1034,7 @@ def OTPScreenRegistration(request):
             
             # Try to log the error, but don't let it break the page
             try:
-                callproc("stp_error_log", [fun, str(e), request.user.id if request.user.id else 0])
+                callproc("stp_error_log", [fun, str(e), request.user.id if request.user.id else ''])
             except:
                 # If logging fails, at least print to console
                 print(f"Error logging failed: {str(e)}")
@@ -1051,7 +1051,7 @@ def OTPScreenRegistration(request):
             }
             return render(request, "OTPScreen/otp_service_down.html", context)
 
-        # Remove the extra return statement here - it's unreachable
+      
 
 
 @csrf_exempt
