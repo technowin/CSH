@@ -6,11 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-{% comment %} <script>
+<script>
     setTimeout(function(){
-        window.location.href = "/Login/";
+        window.location.href = "{% url 'Login' %}";
     }, 6000);
-</script> {% endcomment %}
+</script>
 
 <style>
 
@@ -100,13 +100,13 @@ The OTP sending service is currently not available due to a technical issue.
 Please try again after some time.
 </div>
 
-{% comment %} <div class="redirect">
+<div class="redirect">
 You will be redirected to the login page in a few seconds.
 </div>
 
-<a href="/Login/" class="btn">
+<a href="{% url 'Login' %}" class="btn">
 Go to Login Page
-</a> {% endcomment %}
+</a>
 
 <div class="footer">
 If the problem persists, please contact system support.
