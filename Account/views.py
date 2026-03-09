@@ -715,7 +715,7 @@ def citizenLoginAccount(request):
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
-        callproc("stp_error_log",[fun,str(e),''])  
+        callproc("stp_error_log",[fun,str(e),request.user.id])  
         messages.error(request, 'Oops...! Something went wrong!')
         return redirect(f'/citizenRegisterAccount?service_db={service_db}')
         
@@ -775,12 +775,11 @@ def OTPScreen(request):
         sms_templates = smstext.objects.all()
         
         try:
-
             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
             ser_name = servicefetch.ser_name
 
             otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-            # otp ='123456'
+
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
@@ -796,13 +795,17 @@ def OTPScreen(request):
 
                 message = format_message(message, otp, action, service)
                 send_sms(phone_number, message, template_id)
-            
+
             messages.success(request, "OTP sent successfully!")
+
         except Exception as e:
-            messages.error(request, "Failed to send OTP. Please try again.")
             tb = traceback.extract_tb(e.__traceback__)
             fun = tb[0].name
             callproc("stp_error_log",[fun,str(e),''])  
+
+            # Show custom error page
+            return render(request, "OTPScreen/otp_service_down.html")
+
         return render(request, 'OTPScreen/OTPScreen.html',{'service_db':service_db})
 
 def format_message(template, otp_value, action, service):
@@ -954,12 +957,13 @@ def OTPScreenRegistration(request):
             messages.error(request, "Phone number is required.")
             return redirect(f'/citizenRegisterAccount?service_db={service_db}')
 
-        servicefetch = service_master.objects.using('default').get(ser_id=service_db)
-        ser_name = servicefetch.ser_name
-        
-        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        # otp ='123456'
         try:
+            servicefetch = service_master.objects.using('default').get(ser_id=service_db)
+            ser_name = servicefetch.ser_name
+            
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            # otp = '123456'
+
             OTPVerification.objects.create(
                 mobile=phone_number,
                 otp_text=otp,
@@ -976,15 +980,19 @@ def OTPScreenRegistration(request):
                 message = format_message(message, otp, action, service)
                 
                 send_sms(phone_number, message, template_id)
-            
+
             messages.success(request, "OTP sent successfully!")
+
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             fun = tb[0].name
-            callproc("stp_error_log", [fun, str(e), 'user'])  
-            messages.error(request, f"Failed to send OTP. Error: {str(e)}")
-        
-        return render(request, 'OTPScreen/OTPScreenRegistration.html',{'service_db':service_db})
+            callproc("stp_error_log", [fun, str(e),request.user.id])
+            
+
+            # Show custom error page if OTP service fails
+            return render(request, "OTPScreen/otp_service_down.html")
+
+        return render(request, 'OTPScreen/OTPScreenRegistration.html', {'service_db':service_db})
 
 @csrf_exempt
 def verify_otp(request):

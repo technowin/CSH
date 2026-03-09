@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OTP Service Unavailable</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script>
+    setTimeout(function(){
+        window.location.href = "{% url 'Login' %}";
+    }, 6000);
+</script>
+
+<style>
+
+body{
+    margin:0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background:#f2f4f7;
+}
+
+.container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.card{
+    background:white;
+    width:520px;
+    text-align:center;
+    padding:45px;
+    border-radius:10px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.15);
+}
+
+.icon{
+    font-size:55px;
+    color:#d9534f;
+    margin-bottom:15px;
+}
+
+.title{
+    font-size:24px;
+    font-weight:600;
+    margin-bottom:10px;
+}
+
+.message{
+    font-size:16px;
+    color:#555;
+    margin-bottom:20px;
+}
+
+.redirect{
+    font-size:14px;
+    color:#777;
+    margin-bottom:25px;
+}
+
+.btn{
+    background:#0d6efd;
+    color:white;
+    padding:12px 28px;
+    border-radius:5px;
+    text-decoration:none;
+    font-weight:500;
+}
+
+.btn:hover{
+    background:#084298;
+}
+
+.footer{
+    margin-top:30px;
+    font-size:12px;
+    color:#999;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<div class="icon">⚠</div>
+
+<div class="title">
+OTP Service Temporarily Unavailable
+</div>
+
+<div class="message">
+The OTP sending service is currently not available due to a technical issue.
+<br>
+Please try again after some time.
+</div>
+
+<div class="redirect">
+You will be redirected to the login page in a few seconds.
+</div>
+
+<a href="{% url 'Login' %}" class="btn">
+Go to Login Page
+</a>
+
+<div class="footer">
+If the problem persists, please contact system support.
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
