@@ -801,7 +801,7 @@ def OTPScreen(request):
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             fun = tb[0].name
-            callproc("stp_error_log",[fun,str(e),''])  
+            callproc("stp_error_log",[fun,str(e),request.user.id])  
 
             # Show custom error page
             return render(request, "OTPScreen/otp_service_down.html")
