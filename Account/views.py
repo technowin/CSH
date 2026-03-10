@@ -875,7 +875,7 @@ def send_sms(mobile, message, template_id):
         print(f"Full URL being sent: {url}")  # Debug: see exact URL
         
         # Send request with timeout
-        response = requests.get(url, timeout=60)
+        response = requests.get(url, timeout=30)
         
         print(f"Response Status Code: {response.status_code}")
         print(f"Response Text: {response.text}")
