@@ -56,6 +56,7 @@ class status_master(models.Model):
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     updated_by = models.TextField(null=True, blank=True)
+    service_type = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'status_master'
@@ -96,6 +97,7 @@ class service_matrix(models.Model):
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.TextField(null=True, blank=True)
+    service_type = models.TextField(null=True, blank=True)
     objects = ServiceManager()
     class Meta:
         db_table = 'service_matrix'

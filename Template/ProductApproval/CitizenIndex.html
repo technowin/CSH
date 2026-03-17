@@ -134,7 +134,7 @@
                                 <span class="edit-text">View</span>
                             </a>
                             
-                            {% if row.status == 'Application Pending' or row.status == 'Rejected' %}
+                            {% if row.status == 'Application Pending' or row.status == 'Rejected' or row.status == 'Fail' %}
 
                                 <a class="edit-link" href="{% url 'citizen_edit_pa' row.id encrypted_new_id %}">
                                     <i class="fa-solid fa-pencil-alt" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
@@ -158,6 +158,24 @@
                                 </button>
                             {% endif %}
 
+                            {% if row.status == 'Factory Visit Document Uploaded'%}
+                                <a class="download-link" href="{% url 'FactoryVisit' row.id %}">
+                                    <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
+                                    <span class="download-text">Download Factory Visit Inspection Documents</span>
+                                </a> 
+                                <!-- Upload Receipt Button -->
+                                <button type="button"
+                                        class="btn btn-info uploadReceiptBtn"
+                                        data-toggle="modal"
+                                        data-target="#uploadModal"
+                                        data-form-id="{{ row.id }}"
+                                        data-ser-id="{{ row.ser_id }}"
+                                        data-type="factory">
+                                    <i class="fa fa-upload"></i> Upload Documents
+                                </button>
+                                
+                            {% endif %}
+
                             {% if row.status == 'Registration Fee Uploaded'  %}
                                 <a class="download-link" href="{% url 'RegistrationChalan' row.id %}">
                                     <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
@@ -167,9 +185,10 @@
                                 <button type="button"
                                         class="btn btn-info uploadReceiptBtn"
                                         data-toggle="modal"
-                                        data-target="#uploadRegistrationReceiptModal"
+                                        data-target="#uploadModal"
                                         data-form-id="{{ row.id }}"
-                                        data-ser-id="{{ row.ser_id }}">
+                                        data-ser-id="{{ row.ser_id }}"
+                                        data-type="registration">
                                     <i class="fa fa-upload"></i> Upload Receipt
                                 </button>
                                 
@@ -243,12 +262,12 @@
 </div>
 
     <!-- Modal -->
-<div class="modal fade" id="uploadRegistrationReceiptModal" tabindex="-1" role="dialog" aria-labelledby="receiptModalLabel" aria-hidden="true">
+<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="receiptModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title" id="receiptModalLabel">Upload Receipt</h5>
+                <h5 class="modal-title" id="receiptModalLabel">Upload Document</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -261,7 +280,7 @@
                     <input type="hidden" name="ser_id" id="ser_id">
 
                     <div class="form-group">
-                        <label for="receipt_file1">Upload Registration Fee Receipt</label>
+                        <label for="receipt_file1">Upload Here</label>
                         <input type="file" class="form-control-file" id="receipt_file1" name="receipt_file1" required>
                     </div>
                 </div>
@@ -420,68 +439,95 @@
 
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // When modal opens, set form action & hidden values
-        $('#uploadRegistrationReceiptModal').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);
-            var formId = button.data('form-id');
-            var serId = button.data('ser-id');
+document.addEventListener("DOMContentLoaded", function () {
 
-            $('#form_id').val(formId);
-            $('#ser_id').val(serId);
-            $('#uploadReceiptForm1').attr('action', '/upload_registration_receipt/' + formId + '/');
-        });
+    let uploadType = "";
 
-        // Confirm upload button
-        document.getElementById("confirmUploadBtn").addEventListener("click", function (e) {
-            e.preventDefault();
-            const form = document.getElementById("uploadReceiptForm1");
+    $('#uploadModal').on('show.bs.modal', function (event) {
 
-            //if (!document.getElementById("receipt_file1").value) {
-            //    Swal.fire("Warning", "Please select a file to upload.", "warning");
-            //    return;
-            //}
+        var button = $(event.relatedTarget);
+        var formId = button.data('form-id');
+        var serId = button.data('ser-id');
+        uploadType = button.data('type');
 
-            Swal.fire({
-                title: "Are you sure?",
-                text: "Do you want to upload the receipt?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Yes, upload it!",
-                cancelButtonText: "Cancel"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    let formData = new FormData(form);
+        $('#form_id').val(formId);
+        $('#ser_id').val(serId);
 
-                    fetch(form.action, {
-                        method: "POST",
-                        body: formData,
-                        headers: { 
-                            "X-Requested-With": "XMLHttpRequest",
-                            "X-CSRFToken": "{{ csrf_token }}"
-                        }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire("Success", data.message, "success").then(() => {
-                                $("#uploadRegistrationReceiptModal").modal("hide");
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire("Error", data.message || "Upload failed.", "error");
-                        }
-                    })
-                    .catch(err => {
-                        Swal.fire("Error", err.message, "error");
-                        console.error("Fetch error:", err);
-                    });
-                }
-            });
+        if(uploadType === "registration"){
+            $('#uploadReceiptForm1').attr('action','/upload_registration_receipt/' + formId + '/');
+            $('#receiptModalLabel').text("Upload Registration Fee Receipt");
+        }
 
-        });
+        if(uploadType === "factory"){
+            $('#uploadReceiptForm1').attr('action','/upload_factory_visit_doc/' + formId + '/');
+            $('#receiptModalLabel').text("Upload Factory Visit Document");
+        }
+
     });
+
+
+    document.getElementById("confirmUploadBtn").addEventListener("click", function (e) {
+
+        e.preventDefault();
+        const form = document.getElementById("uploadReceiptForm1");
+
+        let confirmText = "Do you want to upload the document?";
+
+        if(uploadType === "registration"){
+            confirmText = "Do you want to upload the registration receipt?";
+        }
+
+        if(uploadType === "factory"){
+            confirmText = "Do you want to upload the factory visit document?";
+        }
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: confirmText,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Yes, upload it!",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+
+                let formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: { 
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+
+                    if (data.success) {
+                        Swal.fire("Success", data.message, "success").then(() => {
+                            $("#uploadModal").modal("hide");
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire("Error", data.message || "Upload failed.", "error");
+                    }
+
+                })
+                .catch(err => {
+                    Swal.fire("Error", err.message, "error");
+                    console.error("Fetch error:", err);
+                });
+
+            }
+        });
+
+    });
+
+});
 </script>
+
 
 
 <script>

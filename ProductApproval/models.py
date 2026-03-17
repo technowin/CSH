@@ -27,6 +27,7 @@ class application_form(models.Model):
     created_by = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.TextField(null=True, blank=True)
+    declaration = models.BooleanField(default=False)
     objects = ServiceManager()
 
     class Meta:

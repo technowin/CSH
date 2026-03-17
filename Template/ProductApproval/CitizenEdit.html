@@ -130,7 +130,15 @@
                                     
                                 </td>
                                 <td>
-                                    <input type="file" name="upload_{{ document.document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.document.doc_id }})">
+                                    {% if document.correct_mark == '0' %}
+                                        <input type="file"
+                                            name="upload_{{ document.document.doc_id }}"
+                                            class="form-control"
+                                            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+                                            onchange="previewFile(this, {{ document.document.doc_id }})">
+                                    {% else %}
+                                        <span style="color:gray;">Not allowed</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if document.filepath %}
