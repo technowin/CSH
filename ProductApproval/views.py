@@ -245,7 +245,7 @@ def matrix_flow_pa(request):
             if status.isdigit():
                 status = int(status)
                 
-                if (status == 6 or status == 7) and (ref == 'scrutiny'):
+                if (status == 6 or status == 5) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
                     docs_marks_file = request.FILES.get('docs_marks_file')
                     if docs_marks_file:
