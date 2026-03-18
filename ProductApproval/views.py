@@ -144,7 +144,7 @@ def matrix_flow_pa(request):
                     return redirect(f'/matrix_flow_pa?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
                 return redirect(f'/index_pa')
-            subordinates = callproc("stp_get_subordinates",[form_id,user])
+            subordinates = callproc("stp_get_subordinates",[form_id,user,consumer_type])
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
@@ -482,6 +482,32 @@ def matrix_flow_pa(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+
+                elif (status == 26 or status == 27) and (ref == 'scrutinyy'):
+                    doc_ids = request.POST.getlist('doc_ids')
+                    docs_marks_file = request.FILES.get('docs_marks_file')
+                    if docs_marks_file:
+                        internal_resp = internal_docs_upload(docs_marks_file,role_id,user,wf,ser,'Documents Marksheet')
+                    rej_res = request.POST.get('rej_res')
+                    if rej_res!='' and status in [27]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=rej_res,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
+                    for doc_id in doc_ids:
+                        if doc_id !='':
+                            doc_id = decrypt_parameter(doc_id)
+                            correct = request.POST.get(f"correct_{doc_id}")
+                            incorrect = request.POST.get(f"incorrect_{doc_id}")
+                            rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                            r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+                    r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        return redirect(request.META.get("HTTP_REFERER", "/"))
+                        # return JsonResponse({"success": True, "message": str(r1[0][0])})
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                   
                 else:
                     f_remark = request.POST.get('f_remark')
                     if f_remark!='' and status in [2,6,9,13, 16]:
