@@ -958,7 +958,6 @@ def citizen_crate_pa(request):
                 and factory_name
                 and gstin
                 and pan_no
-                and cin
                 and contact_person_name
                 and mobile_no
                 and email
