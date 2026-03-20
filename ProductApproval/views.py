@@ -466,7 +466,7 @@ def matrix_flow_pa(request):
                
             
                 elif status == 19 and ref == 'certificate':
-                    iss_remark = request.POST.get('iss_remark')
+                    iss_remark = request.POST.get('f_remark')
                     if iss_remark!='':
                         internal_user_comments.objects.create(
                                 workflow=wf, comments=iss_remark,
@@ -507,10 +507,111 @@ def matrix_flow_pa(request):
                         return redirect(request.META.get("HTTP_REFERER", "/"))
                         # return JsonResponse({"success": True, "message": str(r1[0][0])})
                     else: messages.error(request, 'Oops...! Something went wrong!')
+
+                elif status == 32 and ref == 'report':
+                    factory_visit_doc1 = request.FILES.get('factory_visit_doc1')
+                    factory_visit_doc2 = request.FILES.get('factory_visit_doc2')
+                    if factory_visit_doc1 and factory_visit_doc2:
+                        file_resp = internal_docs_upload(factory_visit_doc1,role_id,user,wf,ser,'Factory Visit Document 1')
+                        file_resp = internal_docs_upload(factory_visit_doc2,role_id,user,wf,ser,'Factory Visit Document 2')
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                
+                elif (status == 34 or status == 35) and ref == 'markss':
+
+                    doc_id = 14
+
+                    # Check if document exists
+                    existing_doc = citizen_document.objects.filter(
+                        document_id=doc_id,
+                        application_id=form_id
+                    ).first()
+
+                    if existing_doc:
+
+                        # officer marksheet upload
+                        docs_marks_file = request.FILES.get('docs_marks_file')
+
+                        if docs_marks_file:
+                            internal_resp = internal_docs_upload(
+                                docs_marks_file,
+                                role_id,
+                                user,
+                                wf,
+                                ser,
+                                'Factory Visit Marksheet'
+                            )
+
+                        # accept / reject values
+                        correct = request.POST.get(f"correct_{doc_id}")
+                        incorrect = request.POST.get(f"incorrect_{doc_id}")
+                        rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                        r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+
+                        # rejection reason
+                        rej_res = request.POST.get('rej_res')
+
+                        if rej_res != '' and status in [35]:
+                            internal_user_comments.objects.create(
+                                workflow=wf,
+                                comments=rej_res,
+                                created_at=datetime.now(),
+                                created_by=str(user),
+                                updated_at=datetime.now(),
+                                updated_by=str(user)
+                            )
+
+                        # update workflow
+                        r1 = callproc(
+                            "stp_post_visit_marks",
+                            [wf_id, form_id, status, ref, ser, rej_res, user]
+                        )
+
+                        if r1[0][0] not in (""):
+                            messages.success(request, str(r1[0][0]))
+                            return redirect(request.META.get("HTTP_REFERER", "/"))
+                        else:
+                            messages.error(request, 'Oops...! Something went wrong!')
+
+                elif (status == 36 or status==37) and (ref == 'decisionn'):
+                    rej_res = request.POST.get('rej_res', '').strip()
+                    refusal_file = request.FILES.get('file')
+
+                    if rej_res!='' and status in [37]:
+                        internal_user_comments.objects.create(
+                            workflow=wf,
+                            comments=rej_res,
+                            created_at=datetime.now(),
+                            created_by=str(user),
+                            updated_at=datetime.now(),
+                            updated_by=str(user)
+                        )
+
+                    # Save refusal file if provided
+                    if refusal_file:
+                        response3 = internal_docs_upload(refusal_file, role_id, user, wf, ser, 'Refusal Document')
+                        refusal_file_resp = citizen_docs_upload(refusal_file, form_user_id, form_id, user, ser, 13)
+                        # if response3:
+                        #     return JsonResponse(response3, safe=False)
+                        # else:
+                        #     #  fallback if upload fails
+                        #     messages.error(request, "File upload failed.")
+                        #     return redirect(request.META.get("HTTP_REFERER", "/"))
+
+                    # Call approval SP after reason/file save
+                    r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
+
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        
+                    else:
+                        messages.error(request, "Oops...! Something went wrong!")
                    
                 else:
                     f_remark = request.POST.get('f_remark')
-                    if f_remark!='' and status in [2,6,9,13, 16]:
+                    if f_remark!='' and status in [19]:
                         internal_user_comments.objects.create(
                                 workflow=wf, comments=f_remark,
                                 created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
@@ -1454,7 +1555,7 @@ def upload_chalan_receipt(request, form_id):
         application = application_form.objects.get(id=app_id)
 
         # Prevent duplicate upload
-        if application.status_id == 4:
+        if application.status_id in [4,25]:
             return JsonResponse({
                 "success": False,
                 "message": "Receipt has already been uploaded. You cannot upload again."
@@ -1578,7 +1679,7 @@ def upload_registration_receipt(request, form_id):
         application = application_form.objects.get(id=app_id)
 
         # Prevent duplicate upload
-        if application.status_id == 18:
+        if application.status_id in [18,39]:
                 return JsonResponse({
                 "success": False,
                 "message": "Receipt has already been uploaded. You cannot upload again."
@@ -1609,7 +1710,7 @@ def upload_registration_receipt(request, form_id):
         )
 
         
-        callproc("sp_update_status", [18, user_id,app_id, application.id])
+        callproc("sp_update_status1", [18, user_id,app_id, application.id])
 
         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
 
@@ -1747,7 +1848,7 @@ def upload_factory_visit_doc(request, form_id):
         application = application_form.objects.get(id=app_id)
 
         # Prevent duplicate upload
-        if application.status_id == 11:
+        if application.status_id in [11,33]:
             return JsonResponse({
                 "success": False,
                 "message": "Factory Visit Document already uploaded."
@@ -1790,7 +1891,7 @@ def upload_factory_visit_doc(request, form_id):
         )
 
         # Update status
-        callproc("sp_update_status", [11, user_id, app_id, application.id])
+        callproc("sp_update_status2", [11, user_id, app_id, application.id])
 
         return JsonResponse({
             "success": True,
