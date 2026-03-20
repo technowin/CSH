@@ -73,6 +73,7 @@ def matrix_flow_pa(request):
             # matrix = service_matrix.objects.get(level=workflow.level)
             application = application_form.objects.get(id=form_id)
             consumer_type = application.product_type_service
+            product_type = application.product_type
             # act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id).exists()
             act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id,service_type=consumer_type).exists()
             # matrix = service_matrix.objects.get(level=workflow.level,service_type=consumer_type)
@@ -148,7 +149,7 @@ def matrix_flow_pa(request):
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.all().exclude(doc_id=18):
+            for doc_master in document_master.objects.filter(doc_type=product_type).exclude(doc_id=18):
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
