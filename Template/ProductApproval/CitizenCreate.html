@@ -71,8 +71,8 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="cin" class="form-label">CIN<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="cin" class="form-control" id="cin" placeholder="Enter CIN" value="{{ form_data.cin }}" required>
+                            <label for="cin" class="form-label">CIN :</label>
+                            <input type="text" name="cin" class="form-control" id="cin" placeholder="Enter CIN" value="{{ form_data.cin }}">
                         </div>
                         <div class="col-md-4">
                             <label for="contact_person_name" class="form-label">Contact Person Name<span style="color:red;"> *</span> :</label>
@@ -99,8 +99,12 @@
                         </div>
                     </div>
                     
-                    <p style="color: red; margin-top:2%;"><strong>Note:</strong> If the citizen does not have the mandatory document,
-                        they can upload a self-declaration in that field stating that they do not have the document.
+                    <p style="color: red; margin-top:2%;">
+                        <strong>Note:</strong><br>
+                        1. If the citizen does not have the mandatory document,
+                        they can upload a self-declaration in that field stating that they do not have the document.<br><br>
+                        2. Scrutiny fee challan will be uploaded by CIDCO only after submission of application form by Citizen.
+                        The citizen shall pay the scrutiny fees & further upload the receipt again on portal.
                     </p>
 
                     {% comment %} Table For Document {% endcomment %}
@@ -117,6 +121,7 @@
                             <!-- Table content will be dynamically inserted here -->
                         </tbody>
                     </table>
+
                     
                     <!-- submit -->
 

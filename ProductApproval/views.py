@@ -28,7 +28,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 @login_required 
-@no_direct_access 
+@no_direct_access
 def index_pa(request):
     pre_url = request.META.get('HTTP_REFERER')
     header, data = [], []
@@ -70,8 +70,18 @@ def matrix_flow_pa(request):
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.GET.get('wf', '')) else ''
             form_id = decrypt_parameter(form_id) if (form_id := request.GET.get('af', '')) else ''
             workflow = workflow_details.objects.get(id=wf_id) 
-            matrix = service_matrix.objects.get(level=workflow.level)
-            act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id).exists()
+            # matrix = service_matrix.objects.get(level=workflow.level)
+            application = application_form.objects.get(id=form_id)
+            consumer_type = application.product_type_service
+            product_type = application.product_type
+            # act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id).exists()
+            act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id,service_type=consumer_type).exists()
+            # matrix = service_matrix.objects.get(level=workflow.level,service_type=consumer_type)
+            matrix = service_matrix.objects.filter(level=workflow.level,service_type=consumer_type).first()
+
+            # fallback if service_type specific matrix not found
+            if not matrix:
+                matrix = service_matrix.objects.filter(level=workflow.level).first()
             
             doc_ids = [16, 17]
             existing_docs = citizen_document.objects.filter( document_id__in=doc_ids, application_id=form_id).values_list('document_id', flat=True)
@@ -88,7 +98,7 @@ def matrix_flow_pa(request):
             rb = request.GET.get('rb', '')
             rb1 = request.GET.get('rb1', '')
             if sf and sf !='':
-                r = callproc("stp_update_sendforward",[wf_id,form_id,sf,user])
+                r = callproc("stp_update_sendforward",[wf_id,form_id,sf,user,consumer_type])
                 if r[0][0] == 'success':
                     messages.success(request, "Send Forward successfully !!")
                 elif r[0][0] == 'incomplete':
@@ -135,11 +145,11 @@ def matrix_flow_pa(request):
                     return redirect(f'/matrix_flow_pa?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
                 return redirect(f'/index_pa')
-            subordinates = callproc("stp_get_subordinates",[form_id,user])
+            subordinates = callproc("stp_get_subordinates",[form_id,user,consumer_type])
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.all().exclude(doc_id=18):
+            for doc_master in document_master.objects.filter(doc_type=product_type).exclude(doc_id=18):
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
@@ -236,10 +246,13 @@ def matrix_flow_pa(request):
             if status.isdigit():
                 status = int(status)
                 
-                if (status == 5) and (ref == 'scrutiny'):
+                if (status == 6 or status == 5) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
+                    docs_marks_file = request.FILES.get('docs_marks_file')
+                    if docs_marks_file:
+                        internal_resp = internal_docs_upload(docs_marks_file,role_id,user,wf,ser,'Documents Marksheet')
                     rej_res = request.POST.get('rej_res')
-                    if rej_res!='' and status in [4]:
+                    if rej_res!='' and status in [6]:
                         internal_user_comments.objects.create(
                                 workflow=wf, comments=rej_res,
                                 created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
@@ -261,7 +274,7 @@ def matrix_flow_pa(request):
                     
                     # code to update api_data
                     
-                    if status == 4:
+                    if status == 6: #Rejected
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -280,55 +293,309 @@ def matrix_flow_pa(request):
                             
                             from Account.views import upd_citizen
                             upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
                 elif status == 3 and ref == 'chalan':
                     
                     scru_chalan_file = request.FILES.get('scru_chalan_file')
                     if scru_chalan_file:
                         internal_resp = internal_docs_upload(scru_chalan_file,role_id,user,wf,ser,'Chalan')
                         #citizen_resp = citizen_docs_upload(issue_permission_file, form_user_id, form_id, user, ser, id1)
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '1'
+                            request.session['remarks'] = f_remark
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id 
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Sent back to citizen"
+                        request.session["DeskRemark"]="Upload Payment Receipt"
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
                         
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
 
-                elif (status == 4) and (ref == 'scrutinyy'):
-                    doc_ids = request.POST.getlist('doc_ids')
-                    rej_res = request.POST.get('rej_res')
-                    if rej_res!='' and status in [4]:
-                        internal_user_comments.objects.create(
-                                workflow=wf, comments=rej_res,
-                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
-                        )  
-                    for doc_id in doc_ids:
-                        if doc_id !='':
-                            doc_id = decrypt_parameter(doc_id)
-                            correct = request.POST.get(f"correct_{doc_id}")
-                            incorrect = request.POST.get(f"incorrect_{doc_id}")
-                            rej_com = request.POST.get(f"reject_comment_{doc_id}")
-                            r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
-                    r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
-                    if r1[0][0] not in (""):
-                        messages.success(request, str(r1[0][0]))
-                        return JsonResponse({"success": True, "message": str(r1[0][0])})
 
-                    else: messages.error(request, 'Oops...! Something went wrong!')
                 
-
-                # elif (status == 7 or status==8) and (ref == 'approval'):
-                #     rej_res = request.POST.get('rej_res', '').strip()
-                #     # Call approval SP after reason/file save 
-                #     r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
-                #     if r1[0][0] not in (""):
-                #         messages.success(request, str(r1[0][0]))
-                #     else:
-                #         messages.error(request, "Oops...! Something went wrong!")
-
-                elif (status == 7 or status==8) and (ref == 'approval'):
+                elif (status == 8 or status==9) and (ref == 'approval'):
                     rej_res = request.POST.get('rej_res', '').strip()
                     refusal_file = request.FILES.get('file')
 
-                    if rej_res!='' and status in [8]:
+                    if rej_res!='' and status in [9]:
+                        internal_user_comments.objects.create(
+                            workflow=wf,
+                            comments=rej_res,
+                            created_at=datetime.now(),
+                            created_by=str(user),
+                            updated_at=datetime.now(),
+                            updated_by=str(user)
+                        )
+
+                    # Save refusal file if provided
+                    if refusal_file:
+                        response3 = internal_docs_upload(refusal_file, role_id, user, wf, ser, 'Refusal Document')
+                        refusal_file_resp = citizen_docs_upload(refusal_file, form_user_id, form_id, user, ser, 13)
+                        
+
+                    # Call approval SP after reason/file save
+                    r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
+
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        
+                    else:
+                        messages.error(request, "Oops...! Something went wrong!")
+                    if status == 9: #Rejected
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    return redirect(request.META.get("HTTP_REFERER", "/"))
+                
+                
+                elif status == 10 and ref == 'inspection':
+                    factory_visit_doc1 = request.FILES.get('factory_visit_doc1')
+                    factory_visit_doc2 = request.FILES.get('factory_visit_doc2')
+                    if factory_visit_doc1 and factory_visit_doc2:
+                        file_resp = internal_docs_upload(factory_visit_doc1,role_id,user,wf,ser,'Factory Visit Document 1')
+                        file_resp = internal_docs_upload(factory_visit_doc2,role_id,user,wf,ser,'Factory Visit Document 2')
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                    dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                    if dataAPI:
+                            
+                        request.session['userId'] = dataAPI.user_id
+                        request.session['trackId'] = dataAPI.track_id
+                        request.session['serviceId'] = dataAPI.service_id
+                        request.session['applicationId'] = dataAPI.application_no
+                        request.session['application_status'] = '1'
+                        request.session['remarks'] = f_remark
+                        request.session['form_id'] = dataAPI.form_id
+                        request.session['form_user_id'] = dataAPI.form_user_id
+                        request.session['workflow_id'] = dataAPI.workflow_id
+                        request.session['phone_number'] = dataAPI.mobile_no
+                            
+                        from Account.views import upd_citizen
+                        upd_citizen(request)
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Sent back to citizen"
+                    request.session["DeskRemark"]="Upload Payment Receipt"
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
+                    
+                
+                elif (status == 12 or status == 13) and ref == 'marks':
+
+                    doc_id = 14
+
+                    # Check if document exists
+                    existing_doc = citizen_document.objects.filter(
+                        document_id=doc_id,
+                        application_id=form_id
+                    ).first()
+
+                    if existing_doc:
+
+                        # officer marksheet upload
+                        docs_marks_file = request.FILES.get('docs_marks_file')
+
+                        if docs_marks_file:
+                            internal_resp = internal_docs_upload(
+                                docs_marks_file,
+                                role_id,
+                                user,
+                                wf,
+                                ser,
+                                'Factory Visit Marksheet'
+                            )
+
+                        # accept / reject values
+                        correct = request.POST.get(f"correct_{doc_id}")
+                        incorrect = request.POST.get(f"incorrect_{doc_id}")
+                        rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                        r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+
+                        # rejection reason
+                        rej_res = request.POST.get('rej_res')
+
+                        if rej_res != '' and status in [13]:
+                            internal_user_comments.objects.create(
+                                workflow=wf,
+                                comments=rej_res,
+                                created_at=datetime.now(),
+                                created_by=str(user),
+                                updated_at=datetime.now(),
+                                updated_by=str(user)
+                            )
+
+                        # update workflow
+                        r1 = callproc(
+                            "stp_post_visit_marks",
+                            [wf_id, form_id, status, ref, ser, rej_res, user]
+                        )
+
+                        if r1[0][0] not in (""):
+                            messages.success(request, str(r1[0][0]))
+                            return redirect(request.META.get("HTTP_REFERER", "/"))
+                        else:
+                            messages.error(request, 'Oops...! Something went wrong!')
+                        if status == 13: #Rejected
+                        
+                            dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                            
+                            if dataAPI:
+                                
+                                request.session['userId'] = dataAPI.user_id
+                                request.session['trackId'] = dataAPI.track_id
+                                request.session['serviceId'] = dataAPI.service_id
+                                request.session['applicationId'] = dataAPI.application_no
+                                request.session['application_status'] = '5'
+                                request.session['remarks'] = rej_res
+                                request.session['form_id'] = dataAPI.form_id
+                                request.session['form_user_id'] = dataAPI.form_user_id
+                                request.session['workflow_id'] = dataAPI.workflow_id
+                                request.session['phone_number'] = dataAPI.mobile_no
+                                
+                                from Account.views import upd_citizen
+                                upd_citizen(request)
+                                
+                            # DESK DETAIL API 
+                            role_id = request.session.get('role_id')
+                            role = roles.objects.only('role_name').get(id=role_id)
+                            designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                            from Account.desk_detail_api import upd_desk_detail
+                            request.session["ApplicationId1"]=wf.request_no
+                            request.session["DeskNumber"] = 'Desk ' + role_id  
+                            request.session["ReviewActionBy"] = role.role_name
+                            request.session["ReviewActionDetails"]="Rejected"
+                            request.session["DeskRemark"]=rej_res
+                            desk_api_res = upd_desk_detail(request)
+                            message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                            Log.objects.create(log_text=message)
+
+                        else:
+                            # DESK DETAIL API 
+                            role_id = request.session.get('role_id')
+                            role = roles.objects.only('role_name').get(id=role_id)
+                            designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                            from Account.desk_detail_api import upd_desk_detail
+                            request.session["ApplicationId1"]=wf.request_no
+                            request.session["DeskNumber"] = 'Desk ' + role_id  
+                            request.session["ReviewActionBy"] = role.role_name
+                            request.session["ReviewActionDetails"]="Approved"
+                            request.session["DeskRemark"]=""
+                            desk_api_res = upd_desk_detail(request)
+                            message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                            Log.objects.create(log_text=message)
+                
+                elif (status == 15 or status==16) and (ref == 'decision'):
+                    rej_res = request.POST.get('rej_res', '').strip()
+                    refusal_file = request.FILES.get('file')
+
+                    if rej_res!='' and status in [16]:
                         internal_user_comments.objects.create(
                             workflow=wf,
                             comments=rej_res,
@@ -357,12 +624,58 @@ def matrix_flow_pa(request):
                         
                     else:
                         messages.error(request, "Oops...! Something went wrong!")
+                    if status == 16: #Rejected
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
 
-                    return redirect(request.META.get("HTTP_REFERER", "/"))
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
 
 
 
-                elif status == 9 and ref == 'registration':
+                elif status == 17 and ref == 'registration':
                     
                     registration_chalan_file = request.FILES.get('registration_chalan_file')
                     if registration_chalan_file:
@@ -374,50 +687,21 @@ def matrix_flow_pa(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                             
-                elif status == 5 and ref == 'inspection':
-                    cheklist_upl_file = request.FILES.get('cheklist_upl_file')
-                    inspection_upl_file = request.FILES.get('inspection_upl_file')
-                    if cheklist_upl_file and inspection_upl_file:
-                        file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser,'Checklist')
-                        file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser,'Inspection')
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
-                    if r[0][0] not in (""):
-                        messages.success(request, str(r[0][0]))
-                    else: messages.error(request, 'Oops...! Something went wrong!')
-                # elif status == 6 and ref == 'public_notice':
-                #     notice_upl_file = request.FILES.get('notice_upl_file')
-                #     objection_upl_file = request.FILES.get('objection_upl_file')
-                #     if notice_upl_file and objection_upl_file:
-                #         file_resp = internal_docs_upload(notice_upl_file,role_id,user,wf,ser,'Public Notice')
-                #         file_resp = internal_docs_upload(objection_upl_file,role_id,user,wf,ser,'Objection')
+                # elif status == 8 and ref == 'inspection':
+                #     cheklist_upl_file = request.FILES.get('cheklist_upl_file')
+                #     inspection_upl_file = request.FILES.get('inspection_upl_file')
+                #     if cheklist_upl_file and inspection_upl_file:
+                #         file_resp = internal_docs_upload(cheklist_upl_file,role_id,user,wf,ser,'Checklist')
+                #         file_resp = internal_docs_upload(inspection_upl_file,role_id,user,wf,ser,'Inspection')
                 #     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                 #     if r[0][0] not in (""):
                 #         messages.success(request, str(r[0][0]))
                 #     else: messages.error(request, 'Oops...! Something went wrong!')
-                # elif status == 7 and ref == 'department_proposal':
-                #     DepProposal_upl_file = request.FILES.get('DepProposal_upl_file')
-                #     if DepProposal_upl_file:
-                #         file_resp = internal_docs_upload(DepProposal_upl_file,role_id,user,wf,ser,'Department Proposal')
-                #     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
-                #     if r[0][0] not in (""):
-                #         messages.success(request, str(r[0][0]))
-                #     else: messages.error(request, 'Oops...! Something went wrong!')
-                # elif status == 10 and ref == 'letter_of_payment':
-                #     letOfPay_upl_file = request.FILES.get('letOfPay_upl_file')
-                #     plantOfLetter_upl_file = request.FILES.get('plantOfLetter_upl_file')
-                #     if letOfPay_upl_file and plantOfLetter_upl_file:
-                #         file_resp = internal_docs_upload(letOfPay_upl_file,role_id,user,wf,ser,'Letter of Payment')
-                #         file_resp = internal_docs_upload(plantOfLetter_upl_file,role_id,user,wf,ser,'Plantation Letter')
-                #     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
-                #     fui = workflow_details.objects.filter(id=wf_id).first()
-                #     form_user_id = fui.form_user_id
-                #     file_resp_1 = citizen_docs_upload(letOfPay_upl_file,form_user_id,form_id,user, ser, 13)
-                #     file_resp_2 = citizen_docs_upload(plantOfLetter_upl_file, form_user_id, form_id, user, ser, 15)
-                #     if r[0][0] not in (""):
-                #         messages.success(request, str(r[0][0]))
-                #     else: messages.error(request, 'Oops...! Something went wrong!')
-                elif status == 11 and ref == 'certificate':
-                    iss_remark = request.POST.get('iss_remark')
+
+               
+            
+                elif status == 19 and ref == 'certificate':
+                    iss_remark = request.POST.get('f_remark')
                     if iss_remark!='':
                         internal_user_comments.objects.create(
                                 workflow=wf, comments=iss_remark,
@@ -433,39 +717,33 @@ def matrix_flow_pa(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                else:
-                    f_remark = request.POST.get('f_remark')
-                    if f_remark!='' and status in [2,7,8,11, 12]:
+
+                elif (status == 26 or status == 27) and (ref == 'scrutinyy'):
+                    doc_ids = request.POST.getlist('doc_ids')
+                    docs_marks_file = request.FILES.get('docs_marks_file')
+                    if docs_marks_file:
+                        internal_resp = internal_docs_upload(docs_marks_file,role_id,user,wf,ser,'Documents Marksheet')
+                    rej_res = request.POST.get('rej_res')
+                    if rej_res!='' and status in [27]:
                         internal_user_comments.objects.create(
-                                workflow=wf, comments=f_remark,
+                                workflow=wf, comments=rej_res,
                                 created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
-                        ) 
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,f_remark])
-                    if r[0][0] not in (""):
-                        messages.success(request, str(r[0][0]))
+                        )  
+                    for doc_id in doc_ids:
+                        if doc_id !='':
+                            doc_id = decrypt_parameter(doc_id)
+                            correct = request.POST.get(f"correct_{doc_id}")
+                            incorrect = request.POST.get(f"incorrect_{doc_id}")
+                            rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                            r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+                    r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        return redirect(request.META.get("HTTP_REFERER", "/"))
+                        # return JsonResponse({"success": True, "message": str(r1[0][0])})
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                    
-                    if status == 11:
-                        
-                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
-                        
-                        if dataAPI:
-                            
-                            request.session['userId'] = dataAPI.user_id
-                            request.session['trackId'] = dataAPI.track_id
-                            request.session['serviceId'] = dataAPI.service_id
-                            request.session['applicationId'] = dataAPI.application_no
-                            request.session['application_status'] = '4'
-                            request.session['remarks'] = f_remark
-                            request.session['form_id'] = dataAPI.form_id
-                            request.session['form_user_id'] = dataAPI.form_user_id
-                            request.session['workflow_id'] = dataAPI.workflow_id
-                            request.session['phone_number'] = dataAPI.mobile_no
-                            
-                            from Account.views import upd_citizen
-                            upd_citizen(request)
-                            
-                    if status == 12 or status == 9:
+
+                    if status == 27: #Rejected
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -476,7 +754,7 @@ def matrix_flow_pa(request):
                             request.session['serviceId'] = dataAPI.service_id
                             request.session['applicationId'] = dataAPI.application_no
                             request.session['application_status'] = '5'
-                            request.session['remarks'] = f_remark
+                            request.session['remarks'] = rej_res
                             request.session['form_id'] = dataAPI.form_id
                             request.session['form_user_id'] = dataAPI.form_user_id
                             request.session['workflow_id'] = dataAPI.workflow_id
@@ -484,6 +762,226 @@ def matrix_flow_pa(request):
                             
                             from Account.views import upd_citizen
                             upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                elif status == 32 and ref == 'report':
+                    factory_visit_doc1 = request.FILES.get('factory_visit_doc1')
+                    factory_visit_doc2 = request.FILES.get('factory_visit_doc2')
+                    if factory_visit_doc1 and factory_visit_doc2:
+                        file_resp = internal_docs_upload(factory_visit_doc1,role_id,user,wf,ser,'Factory Visit Document 1')
+                        file_resp = internal_docs_upload(factory_visit_doc2,role_id,user,wf,ser,'Factory Visit Document 2')
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                    dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                    if dataAPI:
+                            
+                        request.session['userId'] = dataAPI.user_id
+                        request.session['trackId'] = dataAPI.track_id
+                        request.session['serviceId'] = dataAPI.service_id
+                        request.session['applicationId'] = dataAPI.application_no
+                        request.session['application_status'] = '1'
+                        request.session['remarks'] = f_remark
+                        request.session['form_id'] = dataAPI.form_id
+                        request.session['form_user_id'] = dataAPI.form_user_id
+                        request.session['workflow_id'] = dataAPI.workflow_id
+                        request.session['phone_number'] = dataAPI.mobile_no
+                            
+                        from Account.views import upd_citizen
+                        upd_citizen(request)
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Sent back to citizen"
+                    request.session["DeskRemark"]="Upload Payment Receipt"
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
+                
+                elif (status == 34 or status == 35) and ref == 'markss':
+
+                    doc_id = 14
+
+                    # Check if document exists
+                    existing_doc = citizen_document.objects.filter(
+                        document_id=doc_id,
+                        application_id=form_id
+                    ).first()
+
+                    if existing_doc:
+
+                        # officer marksheet upload
+                        docs_marks_file = request.FILES.get('docs_marks_file')
+
+                        if docs_marks_file:
+                            internal_resp = internal_docs_upload(
+                                docs_marks_file,
+                                role_id,
+                                user,
+                                wf,
+                                ser,
+                                'Factory Visit Marksheet'
+                            )
+
+                        # accept / reject values
+                        correct = request.POST.get(f"correct_{doc_id}")
+                        incorrect = request.POST.get(f"incorrect_{doc_id}")
+                        rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                        r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+
+                        # rejection reason
+                        rej_res = request.POST.get('rej_res')
+
+                        if rej_res != '' and status in [35]:
+                            internal_user_comments.objects.create(
+                                workflow=wf,
+                                comments=rej_res,
+                                created_at=datetime.now(),
+                                created_by=str(user),
+                                updated_at=datetime.now(),
+                                updated_by=str(user)
+                            )
+
+                        # update workflow
+                        r1 = callproc(
+                            "stp_post_visit_marks",
+                            [wf_id, form_id, status, ref, ser, rej_res, user]
+                        )
+
+                        if r1[0][0] not in (""):
+                            messages.success(request, str(r1[0][0]))
+                            return redirect(request.META.get("HTTP_REFERER", "/"))
+                        else:
+                            messages.error(request, 'Oops...! Something went wrong!')
+
+                elif (status == 36 or status==37) and (ref == 'decisionn'):
+                    rej_res = request.POST.get('rej_res', '').strip()
+                    refusal_file = request.FILES.get('file')
+
+                    if rej_res!='' and status in [37]:
+                        internal_user_comments.objects.create(
+                            workflow=wf,
+                            comments=rej_res,
+                            created_at=datetime.now(),
+                            created_by=str(user),
+                            updated_at=datetime.now(),
+                            updated_by=str(user)
+                        )
+
+                    # Save refusal file if provided
+                    if refusal_file:
+                        response3 = internal_docs_upload(refusal_file, role_id, user, wf, ser, 'Refusal Document')
+                        refusal_file_resp = citizen_docs_upload(refusal_file, form_user_id, form_id, user, ser, 13)
+                        # if response3:
+                        #     return JsonResponse(response3, safe=False)
+                        # else:
+                        #     #  fallback if upload fails
+                        #     messages.error(request, "File upload failed.")
+                        #     return redirect(request.META.get("HTTP_REFERER", "/"))
+
+                    # Call approval SP after reason/file save
+                    r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
+
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        
+                    else:
+                        messages.error(request, "Oops...! Something went wrong!")
+                    if status == 37: #Rejected
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+                   
+                else:
+                    f_remark = request.POST.get('f_remark')
+                    if f_remark!='' and status in [19]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=f_remark,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        ) 
+                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,f_remark])
+                    if r[0][0] not in (""):
+                        messages.success(request, str(r[0][0]))
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+                    
                             
                     
                     
@@ -535,46 +1033,90 @@ def internal_docs_upload(file,role_id,user,wf,ser,name1):
         else: file_resp =  f"File '{file.name}' has been inserted."
     return file_resp
 
-def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
+
+from datetime import datetime
+from django.conf import settings
+
+def citizen_docs_upload(file, user, form_id, created_by, ser, doc_id1):
+
     file_resp = None
-    
+
     doc = document_master.objects.get(doc_id=doc_id1)
-        
     app_form = application_form.objects.get(id=form_id)
     service = service_master.objects.using("default").get(ser_id=ser)
-    sub_path = f'{service.ser_name}/User/user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}'
-    full_path = os.path.join(MEDIA_ROOT, sub_path)
-    folder_path = os.path.dirname(full_path)
-    
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path, exist_ok=True)
-    file_exists_in_folder = os.path.exists(full_path)
-    file_exists_in_db = citizen_document.objects.filter(filepath=sub_path).exists()
-    if file_exists_in_db:
-        document = citizen_document.objects.filter(filepath=sub_path).first()
-        document.updated_at = datetime.now()
-        document.updated_by = str(user)
-        document.save()
-        with open(full_path, 'wb+') as destination:
+
+    folder_path = os.path.join(
+        settings.MEDIA_ROOT,
+        f"{service.ser_name}/User/user_{user}/application_{form_id}/document_{doc.doc_id}"
+    )
+
+    os.makedirs(folder_path, exist_ok=True)
+
+    file_path = os.path.join(folder_path, file.name)
+
+    sub_path = f"{service.ser_name}/User/user_{user}/application_{form_id}/document_{doc.doc_id}/{file.name}"
+
+    # Check existing document by user + doc + application
+    existing_doc = citizen_document.objects.filter(
+        user_id=user,
+        document=doc,
+        application_id=app_form
+    ).first()
+
+    # ---------------------------------
+    # UPDATE EXISTING DOCUMENT
+    # ---------------------------------
+    if existing_doc:
+
+        # Delete previous file from folder
+        if existing_doc.filepath:
+            old_file = os.path.join(settings.MEDIA_ROOT, existing_doc.filepath)
+
+            if os.path.exists(old_file):
+                os.remove(old_file)
+
+        # Upload new file
+        with open(file_path, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
-        file_resp =  f"File '{file.name}' has been updated."
+
+        # Update DB record
+        existing_doc.file_name = file.name
+        existing_doc.filepath = sub_path
+        existing_doc.updated_at = datetime.now()
+        existing_doc.updated_by = str(user)
+        existing_doc.save()
+
+        file_resp = f"File '{file.name}' updated successfully."
+
+    # ---------------------------------
+    # INSERT NEW DOCUMENT
+    # ---------------------------------
     else:
-        with open(full_path, 'wb+') as destination:
+
+        with open(file_path, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
 
         citizen_document.objects.create(
-            user_id=user,file_name=file.name,filepath=sub_path,
-            document=doc,application_id=app_form,
-            created_by=str(created_by),updated_by=str(created_by),
-            created_at=datetime.now(),updated_at=datetime.now()
+            user_id=user,
+            file_name=file.name,
+            filepath=sub_path,
+            document=doc,
+            application_id=app_form,
+            created_by=str(created_by),
+            updated_by=str(created_by),
+            created_at=datetime.now(),
+            updated_at=datetime.now()
         )
-       
-        file_resp =  f"File '{file.name}' has been inserted."
+
+        file_resp = f"File '{file.name}' uploaded successfully."
+
     return file_resp
 
 
+
+@no_direct_access
 def citizen_index_pa(request):
     try:
         if not request.session.get('user_id') or not request.session.get('phone_number'):
@@ -645,18 +1187,25 @@ def citizen_index_pa(request):
                 if items[5] == 'Refused':
                     refused_id = items[1]
 
+            return render(
+                request,
+                "ProductApproval/CitizenIndex.html",
+                {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "show_apply_button": show_apply_button
+                , "countRefusedDocument": countRefusedDocument, "parameter":ProductType},
+            )
+                
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), ""])
 
-    finally:
-        return render(
-            request,
-            "ProductApproval/CitizenIndex.html",
-            {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "show_apply_button": show_apply_button
-            , "countRefusedDocument": countRefusedDocument, "parameter":ProductType},
-        )
+    # finally:
+    #     return render(
+    #         request,
+    #         "ProductApproval/CitizenIndex.html",
+    #         {"data": getApplicantData, "encrypted_new_id": {encrypted_new_id}, "show_apply_button": show_apply_button
+    #         , "countRefusedDocument": countRefusedDocument, "parameter":ProductType},
+    #     )
 
 @no_direct_access
 def citizen_crate_pa(request):
@@ -730,7 +1279,6 @@ def citizen_crate_pa(request):
                 and factory_name
                 and gstin
                 and pan_no
-                and cin
                 and contact_person_name
                 and mobile_no
                 and email
@@ -854,17 +1402,14 @@ def citizen_crate_pa(request):
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), user_id])
         messages.error(request, "Something went wrong. Please try again.")
-    
     return redirect("citizen_crate_pa")
 
 @no_direct_access
 def citizen_edit_pa(request, row_id, new_id):
     try:
         if not request.session.get('user_id') or not request.session.get('phone_number'):
-            # Set session expiry flag for middleware
             request.session['_session_expired'] = True
             
-            # Clear user-specific session data
             user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
             for key in user_session_keys:
                 if key in request.session:
@@ -874,10 +1419,9 @@ def citizen_edit_pa(request, row_id, new_id):
             return redirect('citizenLoginAccount')
         
         phone_number = request.session.get("phone_number")
-        user_id = None
-        if phone_number:
-            user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
-            user_id = user.id
+
+        user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
+        user_id = user.id
 
         service_db = request.session.get("service_db", "default")
 
@@ -885,27 +1429,45 @@ def citizen_edit_pa(request, row_id, new_id):
 
             new_id = decrypt_parameter(new_id)
             row_id = decrypt_parameter(row_id)
+
             message = request.session.pop("message", None)
+
             viewDetails = get_object_or_404(application_form, id=row_id)
+
             ProductService = parameter_master.objects.filter(
                 parameter_id__in=[25, 26]
             ).values_list("parameter_value", "parameter_value")
-            
-            uploaded_documents = citizen_document.objects.filter(
-                user_id=user_id, application_id=viewDetails
-            )
 
+            # -------------------------------
+            # FETCH UPLOADED DOCUMENTS
+            # -------------------------------
+            uploaded_documents = citizen_document.objects.filter(
+                user_id=user_id,
+                application_id=viewDetails
+            ).select_related("document")
+
+            # Encrypt filepaths and keep correct_mark available
             for row in uploaded_documents:
-                encrypted_filepath = encrypt_parameter(str(row.filepath))
-                row.filepath = encrypted_filepath
+                if row.filepath:
+                    row.filepath = encrypt_parameter(str(row.filepath))
 
             uploaded_doc_ids = uploaded_documents.values_list("document_id", flat=True)
 
-            all_documents = document_master.objects.filter(doc_type=viewDetails.product_type)
+            # -------------------------------
+            # DOCUMENT MASTER
+            # -------------------------------
+            all_documents = document_master.objects.filter(
+                doc_type=viewDetails.product_type
+            )
 
-            not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
+            not_uploaded_documents = all_documents.exclude(
+                doc_id__in=uploaded_doc_ids
+            )
 
-            documentList = document_master.objects.filter(is_active=1, doc_type=viewDetails.product_type)
+            documentList = document_master.objects.filter(
+                is_active=1,
+                doc_type=viewDetails.product_type
+            )
 
             for document in documentList:
                 if document.doc_subpath:
@@ -918,17 +1480,28 @@ def citizen_edit_pa(request, row_id, new_id):
                 "ProductApproval/CitizenEdit.html",
                 {
                     "viewDetails": viewDetails,
-                    "uploaded_documents": uploaded_documents,
+                    "uploaded_documents": uploaded_documents,   # contains correct_mark
                     "not_uploaded_documents": not_uploaded_documents,
                     "new_id": new_id,
                     "message": message,
                     "ProductService": ProductService,
                 },
             )
-            
+
         if request.method == "POST":
 
+            try:
+                new_id = decrypt_parameter(new_id)
+            except:
+                pass
+
+            try:
+                row_id = decrypt_parameter(row_id)
+            except:
+                pass
+
             viewDetails = get_object_or_404(application_form, id=row_id)
+
             viewDetails.factory_name = request.POST.get("factory_name")
             viewDetails.gstin = request.POST.get("gstin")
             viewDetails.pan_no = request.POST.get("pan_no")
@@ -940,14 +1513,24 @@ def citizen_edit_pa(request, row_id, new_id):
             viewDetails.factory_location = request.POST.get("factory_location")
             viewDetails.product_type_service = request.POST.get("product_type_service")
 
-            if not all([viewDetails.factory_name, viewDetails.gstin, viewDetails.pan_no, viewDetails.cin,
-                        viewDetails.contact_person_name, viewDetails.mobile_no, viewDetails.email,
-                        viewDetails.license_no, viewDetails.factory_location]):
-                
+            if not all([
+                viewDetails.factory_name,
+                viewDetails.gstin,
+                viewDetails.pan_no,
+                viewDetails.cin,
+                viewDetails.contact_person_name,
+                viewDetails.mobile_no,
+                viewDetails.email,
+                viewDetails.license_no,
+                viewDetails.factory_location
+            ]):
+
                 new_id = encrypt_parameter(new_id)
                 row_id = encrypt_parameter(row_id)
+
                 message = "All fields are mandatory. Please fill in all fields."
                 request.session["message"] = message
+
                 return redirect("citizen_edit_pa", row_id, new_id)
 
             viewDetails.save()
@@ -955,67 +1538,89 @@ def citizen_edit_pa(request, row_id, new_id):
             servicefetch = service_master.objects.using("default").get(
                 ser_id=service_db
             )
+
             service_name = servicefetch.ser_name
 
             user_folder_path = os.path.join(settings.MEDIA_ROOT, f"{service_name}")
             os.makedirs(user_folder_path, exist_ok=True)
 
-            user_folder_path = os.path.join(user_folder_path, f"User")
+            user_folder_path = os.path.join(user_folder_path, "User")
             os.makedirs(user_folder_path, exist_ok=True)
 
             application_folder_path = os.path.join(
-                user_folder_path, f"user_{user_id}", f"application_{viewDetails.id}"
+                user_folder_path,
+                f"user_{user_id}",
+                f"application_{viewDetails.id}"
             )
+
             os.makedirs(application_folder_path, exist_ok=True)
 
-            for document in document_master.objects.all():
+            # -------------------------------
+            # DOCUMENT LOOP (FILTERED)
+            # -------------------------------
+            documents = document_master.objects.filter(
+                doc_type=viewDetails.product_type
+            )
+
+            for document in documents:
+
                 uploaded_file = request.FILES.get(f"upload_{document.doc_id}")
 
-                if uploaded_file:
-                    document_folder_path = os.path.join(
-                        application_folder_path, f"document_{document.doc_id}"
-                    )
-                    os.makedirs(document_folder_path, exist_ok=True)
+                if not uploaded_file:
+                    continue
 
-                    for file_name in os.listdir(document_folder_path):
-                        file_path = os.path.join(document_folder_path, file_name)
-                        if os.path.isfile(file_path):
-                            os.remove(file_path)
+                existing_document = citizen_document.objects.filter(
+                    user_id=user_id,
+                    document=document.doc_id,
+                    application_id=viewDetails
+                ).first()
 
-                    file_name = uploaded_file.name
+                # -----------------------------------
+                # ALLOW EDIT ONLY IF correct_mark = 0
+                # -----------------------------------
+                if existing_document and existing_document.correct_mark != '0':
+                    continue
+
+                document_folder_path = os.path.join(
+                    application_folder_path,
+                    f"document_{document.doc_id}"
+                )
+
+                os.makedirs(document_folder_path, exist_ok=True)
+
+                for file_name in os.listdir(document_folder_path):
                     file_path = os.path.join(document_folder_path, file_name)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
 
-                    with open(file_path, "wb+") as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
+                file_name = uploaded_file.name
 
-                    relative_file_path = f"{service_name}/User/user_{user_id}/application_{viewDetails.id}/document_{document.doc_id}/{file_name}"
+                file_path = os.path.join(document_folder_path, file_name)
 
-                    existing_document = citizen_document.objects.filter(
+                with open(file_path, "wb+") as destination:
+                    for chunk in uploaded_file.chunks():
+                        destination.write(chunk)
+
+                relative_file_path = f"{service_name}/User/user_{user_id}/application_{viewDetails.id}/document_{document.doc_id}/{file_name}"
+
+                if existing_document:
+                    existing_document.file_name = file_name
+                    existing_document.filepath = relative_file_path
+                    existing_document.updated_by = user_id
+                    existing_document.updated_at = timezone.now()
+                    existing_document.save()
+                else:
+                    citizen_document.objects.create(
                         user_id=user_id,
-                        document=document.doc_id,
+                        file_name=file_name,
+                        filepath=relative_file_path,
+                        document=document,
                         application_id=viewDetails,
-                    ).first()
+                        created_by=user_id,
+                        updated_by=user_id,
+                    )
 
-                    if existing_document:
-                        existing_document.file_name = file_name
-                        existing_document.filepath = relative_file_path
-                        existing_document.updated_by = user_id
-                        existing_document.updated_at = timezone.now()
-                        existing_document.save()
-                    else:
-                        citizen_document.objects.create(
-                            user_id=user_id,
-                            file_name=file_name,
-                            filepath=relative_file_path,
-                            document=document,
-                            application_id=viewDetails,
-                            created_by=user_id,
-                            updated_by=user_id,
-                        )
-            
-            new_id = 0
-            new_id = encrypt_parameter(str(new_id))
+            new_id = encrypt_parameter("0")
             row_id = encrypt_parameter(str(row_id))
 
             return redirect("citizen_view_pa", row_id, new_id)
@@ -1103,11 +1708,19 @@ def citizen_view_pa(request, row_id, new_id):
                     # "product_type_service": product_type_service, 
                 },
             )
+            
         if request.method == "POST":
 
             row_id = int(decrypt_parameter(str(row_id)))
             application = get_object_or_404(application_form, id=row_id)
             viewDetails = get_object_or_404(application_form, id=row_id)
+
+            declaration = request.POST.get("declaration")
+
+            if declaration == "1":
+                application.declaration = 1
+            else:
+                application.declaration = 0
             
             servicefetch = service_master.objects.using("default").get(
                 ser_id=service_db
@@ -1254,7 +1867,6 @@ def Chalan(request, row_id):
         logger.error(f"Error downloading Chalan : {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
 
-
 def upload_chalan_receipt(request, form_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
@@ -1264,7 +1876,7 @@ def upload_chalan_receipt(request, form_id):
         application = application_form.objects.get(id=app_id)
 
         # Prevent duplicate upload
-        if application.status_id == 4:
+        if application.status_id in [4,25]:
             return JsonResponse({
                 "success": False,
                 "message": "Receipt has already been uploaded. You cannot upload again."
@@ -1285,9 +1897,6 @@ def upload_chalan_receipt(request, form_id):
             user_id = None 
         
     
-       
-
-        # Save document (doc_id hardcoded as 24 for Challan Receipt)
         upload_challan_wrapper(
             receipt_file,
             user_id,
@@ -1299,6 +1908,53 @@ def upload_chalan_receipt(request, form_id):
 
         
         callproc("sp_update_status", [4, user_id,app_id, application.id])
+        application.refresh_from_db()
+        # Get latest workflow row for this application
+        wf = workflow_details.objects.filter(form_id=app_id).last()
+
+        if wf:
+            wf_id = wf.id
+            form_user_id = wf.form_user_id
+
+            # -------- UPDATE CITIZEN API ----------
+            dataAPI = api_data.objects.filter(
+                form_id=app_id,
+                form_user_id=form_user_id,
+                workflow_id=wf_id
+            ).first()
+
+            if dataAPI:
+                request.session['userId'] = dataAPI.user_id
+                request.session['trackId'] = dataAPI.track_id
+                request.session['serviceId'] = dataAPI.service_id
+                request.session['applicationId'] = dataAPI.application_no
+                request.session['application_status'] = '3'
+                request.session['remarks'] = ""
+                request.session['form_id'] = dataAPI.form_id
+                request.session['form_user_id'] = dataAPI.form_user_id
+                request.session['workflow_id'] = dataAPI.workflow_id
+                request.session['phone_number'] = dataAPI.mobile_no
+                            
+                from Account.views import upd_citizen
+                upd_citizen(request)
+
+            # -------- UPDATE DESK API ----------
+            role_id = request.session.get('role_id')
+            role = roles.objects.only('role_name').get(id=role_id)
+
+            from Account.desk_detail_api import upd_desk_detail
+
+            request.session["ApplicationId1"] = wf.request_no
+            request.session["DeskNumber"] = 'Desk ' + str(role_id)
+            request.session["ReviewActionBy"] = role.role_name
+            request.session["ReviewActionDetails"] = "Challan Receipt Uploaded"
+            request.session["DeskRemark"] = ""
+
+            desk_api_res = upd_desk_detail(request)
+
+            Log.objects.create(
+                log_text=f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+            )
 
         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
 
@@ -1391,7 +2047,7 @@ def upload_registration_receipt(request, form_id):
         application = application_form.objects.get(id=app_id)
 
         # Prevent duplicate upload
-        if application.status_id == 10:
+        if application.status_id in [18,39]:
                 return JsonResponse({
                 "success": False,
                 "message": "Receipt has already been uploaded. You cannot upload again."
@@ -1422,7 +2078,54 @@ def upload_registration_receipt(request, form_id):
         )
 
         
-        callproc("sp_update_status", [10, user_id,app_id, application.id])
+        callproc("sp_update_status1", [18, user_id,app_id, application.id])
+        application.refresh_from_db()
+        # Get latest workflow row for this application
+        wf = workflow_details.objects.filter(form_id=app_id).last()
+
+        if wf:
+            wf_id = wf.id
+            form_user_id = wf.form_user_id
+
+            # -------- UPDATE CITIZEN API ----------
+            dataAPI = api_data.objects.filter(
+                form_id=app_id,
+                form_user_id=form_user_id,
+                workflow_id=wf_id
+            ).first()
+
+            if dataAPI:
+                request.session['userId'] = dataAPI.user_id
+                request.session['trackId'] = dataAPI.track_id
+                request.session['serviceId'] = dataAPI.service_id
+                request.session['applicationId'] = dataAPI.application_no
+                request.session['application_status'] = '3'
+                request.session['remarks'] = ""
+                request.session['form_id'] = dataAPI.form_id
+                request.session['form_user_id'] = dataAPI.form_user_id
+                request.session['workflow_id'] = dataAPI.workflow_id
+                request.session['phone_number'] = dataAPI.mobile_no
+                            
+                from Account.views import upd_citizen
+                upd_citizen(request)
+
+            # -------- UPDATE DESK API ----------
+            role_id = request.session.get('role_id')
+            role = roles.objects.only('role_name').get(id=role_id)
+
+            from Account.desk_detail_api import upd_desk_detail
+
+            request.session["ApplicationId1"] = wf.request_no
+            request.session["DeskNumber"] = 'Desk ' + str(role_id)
+            request.session["ReviewActionBy"] = role.role_name
+            request.session["ReviewActionDetails"] = "Challan Receipt Uploaded"
+            request.session["DeskRemark"] = ""
+
+            desk_api_res = upd_desk_detail(request)
+
+            Log.objects.create(
+                log_text=f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+            )
 
         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
 
@@ -1505,3 +2208,119 @@ def downloadRefusalDocumentpa(request, row_id):
         callproc("stp_error_log", [fun, str(e), user.id])
         logger.error(f"Error downloading file {file_name}: {str(e)}")
         return HttpResponse("An error occurred while trying to download the file.", status=500)
+
+
+from django.urls import reverse
+
+def FactoryVisit(request, row_id):
+
+    try:
+        phone_number = request.session.get('phone_number')
+        user = CustomUser.objects.get(phone=phone_number, role_id=2)
+
+        row_id = decrypt_parameter(row_id)
+        rows = callproc("sp_get_factoryvisit_docs", [row_id])
+
+        file_urls = []
+
+        for row in rows:
+            filepath = str(row[0]) if row[0] else ''
+
+            if filepath:
+                file_path = os.path.join(settings.MEDIA_ROOT, filepath)
+
+                if os.path.exists(file_path):
+                    encrypted_path = encrypt_parameter(filepath)
+                    url = reverse('download_doc', args=[encrypted_path])
+                    file_urls.append(url)
+
+        if not file_urls:
+            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+
+        # HTML that opens both PDFs in new tabs
+        script = "<script>"
+        for url in file_urls:
+            script += f"window.open('{url}', '_blank');"
+        script += "window.history.back();</script>"
+
+        return HttpResponse(script)
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name if tb else "Factory Visit Docs"
+        callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
+        logger.error(f"Error downloading Factory Visit Docs : {str(e)}")
+        return HttpResponse("An error occurred while trying to download the file.", status=500)
+    
+
+def upload_factory_visit_doc(request, form_id):
+
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
+
+    try:
+        app_id = decrypt_parameter(form_id)
+        application = application_form.objects.get(id=app_id)
+
+        # Prevent duplicate upload
+        if application.status_id in [11,33]:
+            return JsonResponse({
+                "success": False,
+                "message": "Factory Visit Document already uploaded."
+            })
+
+        factory_doc = request.FILES.get("receipt_file1")
+
+        if not factory_doc:
+            return JsonResponse({
+                "success": False,
+                "message": "Please select a file."
+            })
+
+        # ✅ Allow only PDF
+        if not factory_doc.name.lower().endswith(".pdf") or factory_doc.content_type != "application/pdf":
+            return JsonResponse({
+                "success": False,
+                "message": "Only PDF files are allowed."
+            })
+
+        # Get logged-in user
+        phone_number = request.session.get('phone_number')
+
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
+            user_id = user.id
+            full_name = request.session.get("full_name", user.full_name or user.username)
+        else:
+            user_id = None
+            full_name = ""
+
+        # Upload document
+        upload_receipt_wrapper(
+            factory_doc,
+            user_id,
+            app_id,
+            created_by=full_name,
+            ser='5',
+            doc_id1=14
+        )
+
+        # Update status
+        callproc("sp_update_status2", [11, user_id, app_id, application.id])
+
+        return JsonResponse({
+            "success": True,
+            "message": "Factory Visit Document uploaded successfully."
+        })
+
+    except application_form.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Application not found."}, status=404)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+
+        return JsonResponse({
+            "success": False,
+            "message": f"Upload failed: {str(e)}"
+        }, status=500)

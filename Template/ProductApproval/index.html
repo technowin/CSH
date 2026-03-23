@@ -27,131 +27,210 @@
  <!-- INDEX -->
  <div class="row col-lg-12 mb-2 shadow " style="padding: 10px;border: 2px solid #b3b3b3;border-radius: 15px;margin-left:0px;">
     <div class="card-body" style="zoom:90%;">
-        <h1 style="color:#4e73df;font-weight:bold"><u> {{name}}</u></h2>
+        <h1 style="color:#4e73df;font-weight:bold"><u> {{name}}</u></h1>
+
         <div class="table-responsive">
-            <table style="width: 100%;"  class="table"  id="dataTable">   
+            <table style="width: 100%;" class="table" id="dataTable">   
+
                 <thead>
                     <tr>
                         {% for col in header %}
                             {% if not forloop.first %}
-                                <th style="font-weight: bold; color: black; {% if col.1 != "" %} width: {{ col.1 }};{% endif %}">{{ col.0 }}</th>
+                                <th style="font-weight: bold; color: black; {% if col.1 != "" %} width: {{ col.1 }};{% endif %}">
+                                    {{ col.0 }}
+                                </th>
                             {% endif %}
                         {% endfor %}
                     </tr>
                     <tr>
                         {% for col in header %}
                             {% if not forloop.first %}
-                                <th> </th>
+                                <th></th>
                             {% endif %}
                         {% endfor %}
                     </tr>
                 </thead>
+
                 <tbody>
-                  {% for row in data %}
-                    {% if row.3|to_int == user_id %}
-                      <tr style="color:black">
-                          <td>{{ forloop.counter }}</td>
-                          <td>{{ row.5 }}</td>
-                          <td>{{ row.6 }}</td>
-                          <td 
-                            {% if row.14 or row.15 %}
-                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
-                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
-                            {% endif %}
-                          >
-                            {{ row.7 }}
-                            {% if row.14 %}
-                                &nbsp;<span class="orangebell fas fa-bell"></span>
-                            {% endif %}
-                            {% if row.15 %}
-                                &nbsp;<span class="redbell fas fa-bell"></span>
-                            {% endif %}
-                          </td>
-                          <td>{{ row.8 }}</td>
-                          <td>{{ row.11 }}</td>
-                          <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
-                          <td><a href="/matrix_flow_pa?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;" class="btn btn-sm btn-primary">{{ row.10 }}</a></td>
-                      </tr>
-                    {% elif row.4|to_int == user_id %}
-                      <tr style="color:black">
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ row.5 }}</td>
-                        <td>{{ row.6 }}</td>
-                        <td 
-                            {% if row.14 or row.15 %}
-                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
-                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
-                            {% endif %}
-                          >
-                            {{ row.7 }}
-                            {% if row.14 %}
-                                &nbsp;<span class="orangebell fas fa-bell"></span>
-                            {% endif %}
-                            {% if row.15 %}
-                                &nbsp;<span class="redbell fas fa-bell"></span>
-                            {% endif %}
-                          </td>
-                        <td>{{ row.8 }}</td>
-                        <td>{{ row.11 }}</td>
-                        <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
-                        <td><a href="/matrix_flow_pa?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;" class="btn btn-sm btn-primary">View</a></td>
-                      </tr>
-                    {% elif row.2|in_list:"1,2" and role_id == 3 and row.3 is None %}
-                      <tr style="color:black">
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ row.5 }}</td>
-                        <td>{{ row.6 }}</td>
-                        <td 
-                            {% if row.14 or row.15 %}
-                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
-                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
-                            {% endif %}
-                          >
-                            {{ row.7 }}
-                            {% if row.14 %}
-                                &nbsp;<span class="orangebell fas fa-bell"></span>
-                            {% endif %}
-                            {% if row.15 %}
-                                &nbsp;<span class="redbell fas fa-bell"></span>
-                            {% endif %}
-                          </td>
-                        <td>{{ row.8 }}</td>
-                        <td>{{ row.11 }}</td>
-                        <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
-                        <td><a href="/matrix_flow_pa?wf={{row.0}}&af={{row.1}}&ac=action" style="font-size:16px;" class="btn btn-sm btn-primary">{{ row.10 }}</a></td>
-                      </tr>
-                    {% elif row.12 is not None and row.12 != '' and user_id|in_list:row.12 %}  
-                      <tr style="color:black">
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ row.5 }}</td>
-                        <td>{{ row.6 }}</td>
-                        <td 
-                            {% if row.14 or row.15 %}
-                                hover-tooltip="{{ row.14|default:'' }}{{ row.15|default:'' }}"
-                                tooltip-position="{% if row.14 and forloop.counter == 1 %}bottom{% elif row.15 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
-                            {% endif %}
-                          >
-                            {{ row.7 }}
-                            {% if row.14 %}
-                                &nbsp;<span class="orangebell fas fa-bell"></span>
-                            {% endif %}
-                            {% if row.15 %}
-                                &nbsp;<span class="redbell fas fa-bell"></span>
-                            {% endif %}
-                          </td>
-                        <td>{{ row.8 }}</td>
-                        <td>{{ row.11 }}</td>
-                        <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
-                        <td><a href="/matrix_flow_pa?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;" class="btn btn-sm btn-primary">View</a></td>
-                      </tr>
-                    {% endif %}  
-                  {% endfor %}
+
+                {% for row in data %}
+
+                {% if row.3|to_int == user_id %}
+                <tr style="color:black">
+
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.5 }}</td>
+                    <td>{{ row.6 }}</td>
+
+                    <td 
+                    {% if row.15 or row.16 %}
+                        hover-tooltip="{{ row.15|default:'' }}{{ row.16|default:'' }}"
+                        tooltip-position="{% if row.15 and forloop.counter == 1 %}bottom{% elif row.16 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                    {% endif %}
+                    >
+                        {{ row.7 }}
+                        {% if row.15 %}
+                            &nbsp;<span class="orangebell fas fa-bell"></span>
+                        {% endif %}
+                        {% if row.16 %}
+                            &nbsp;<span class="redbell fas fa-bell"></span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ row.8 }}</td>
+                    <td>{{ row.9 }}</td>
+                    <td>{{ row.10 }}</td>
+
+                    <td>
+                        <span class="badge badge-pill badge-{{row.14}}" style="font-size:16px;">
+                            {{ row.11 }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <a href="/matrix_flow_pa?wf={{row.0}}&af={{row.1}}&ac=action"
+                           class="btn btn-sm btn-primary" style="font-size:16px;">
+                           {{ row.12 }}
+                        </a>
+                    </td>
+
+                </tr>
+
+                {% elif row.4|to_int == user_id %}
+
+                <tr style="color:black">
+
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.5 }}</td>
+                    <td>{{ row.6 }}</td>
+
+                    <td 
+                    {% if row.15 or row.16 %}
+                        hover-tooltip="{{ row.15|default:'' }}{{ row.16|default:'' }}"
+                        tooltip-position="{% if row.15 and forloop.counter == 1 %}bottom{% elif row.16 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                    {% endif %}
+                    >
+                        {{ row.7 }}
+                        {% if row.15 %}
+                            &nbsp;<span class="orangebell fas fa-bell"></span>
+                        {% endif %}
+                        {% if row.16 %}
+                            &nbsp;<span class="redbell fas fa-bell"></span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ row.8 }}</td>
+                    <td>{{ row.9 }}</td>
+                    <td>{{ row.10 }}</td>
+
+                    <td>
+                        <span class="badge badge-pill badge-{{row.14}}" style="font-size:16px;">
+                            {{ row.11 }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <a href="/matrix_flow_pa?wf={{row.0}}&af={{row.1}}&ac=view"
+                           class="btn btn-sm btn-primary" style="font-size:16px;">
+                           View
+                        </a>
+                    </td>
+
+                </tr>
+
+                {% elif row.2|in_list:"1,2" and role_id == 3 and row.3 is None %}
+
+                <tr style="color:black">
+
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.5 }}</td>
+                    <td>{{ row.6 }}</td>
+
+                    <td 
+                    {% if row.15 or row.16 %}
+                        hover-tooltip="{{ row.15|default:'' }}{{ row.16|default:'' }}"
+                        tooltip-position="{% if row.15 and forloop.counter == 1 %}bottom{% elif row.16 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                    {% endif %}
+                    >
+                        {{ row.7 }}
+                        {% if row.15 %}
+                            &nbsp;<span class="orangebell fas fa-bell"></span>
+                        {% endif %}
+                        {% if row.16 %}
+                            &nbsp;<span class="redbell fas fa-bell"></span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ row.8 }}</td>
+                    <td>{{ row.9 }}</td>
+                    <td>{{ row.10 }}</td>
+
+                    <td>
+                        <span class="badge badge-pill badge-{{row.14}}" style="font-size:16px;">
+                            {{ row.11 }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <a href="/matrix_flow_pa?wf={{row.0}}&af={{row.1}}&ac=action"
+                           class="btn btn-sm btn-primary" style="font-size:16px;">
+                           {{ row.12 }}
+                        </a>
+                    </td>
+
+                </tr>
+
+                {% elif row.12 is not None and row.12 != '' and user_id|in_list:row.13 %}
+
+                <tr style="color:black">
+
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.5 }}</td>
+                    <td>{{ row.6 }}</td>
+
+                    <td 
+                    {% if row.15 or row.16 %}
+                        hover-tooltip="{{ row.15|default:'' }}{{ row.16|default:'' }}"
+                        tooltip-position="{% if row.15 and forloop.counter == 1 %}bottom{% elif row.16 and forloop.counter == 1 %}bottom{% else %}top{% endif %}"
+                    {% endif %}
+                    >
+                        {{ row.7 }}
+                        {% if row.15 %}
+                            &nbsp;<span class="orangebell fas fa-bell"></span>
+                        {% endif %}
+                        {% if row.16 %}
+                            &nbsp;<span class="redbell fas fa-bell"></span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ row.8 }}</td>
+                    <td>{{ row.9 }}</td>
+                    <td>{{ row.10 }}</td>
+
+                    <td>
+                        <span class="badge badge-pill badge-{{row.14}}" style="font-size:16px;">
+                            {{ row.11 }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <a href="/matrix_flow_pa?wf={{row.0}}&af={{row.1}}&ac=view"
+                           class="btn btn-sm btn-primary" style="font-size:16px;">
+                           View
+                        </a>
+                    </td>
+
+                </tr>
+
+                {% endif %}
+
+                {% endfor %}
+
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
 {% if messages %}
   {% for message in messages %}
     <script>

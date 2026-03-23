@@ -49,7 +49,7 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="cin" class="form-label">CIN<span style="color:red;"> *</span> :</label>
+                            <label for="cin" class="form-label">CIN :</label>
                             <input type="text" name="cin" class="form-control" id="cin" placeholder="Enter CIN" value="{{ viewDetails.cin }}" readonly>
                         </div>
                         <div class="col-md-4">
@@ -107,6 +107,25 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="form-check">
+
+                                <input class="form-check-input"
+                                    type="checkbox"
+                                    id="declaration"
+                                    name="declaration"
+                                    value="1"
+                                    {% if viewDetails.declaration %}checked{% endif %} required>
+
+                                <label class="form-check-label" for="declaration">
+                                    <b>Declaration:</b> Each & Every page shall be self attested by company's seal & sign,
+                                    failure to which application will be rejected.
+                                </label>
+
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="text-center">
                         {% if plain_new_id == '0'%}
