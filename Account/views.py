@@ -861,43 +861,51 @@ def format_message(template, otp_value, action, service):
 def send_sms(mobile, message, template_id): 
     try:
         import requests
-        import urllib.parse
         
-        encoded_message = urllib.parse.quote(message)
+        # DON'T encode the message - send it exactly as provided
+        # The message should match the template exactly
         
         url = (
             f"https://push3.aclgateway.com/servlet/com.aclwireless.pushconnectivity.listeners.TextListener"
             f"?appid=MahaITcidc&userId=MahaITcidc&pass=mitcidc_10&contenttype=1"
-            f"&from=MAHGOV&to={mobile}&text={encoded_message}&alert=1&selfid=true&dlrreq=true"
+            f"&from=MAHGOV&to={mobile}&text={message}&alert=1&selfid=true&dlrreq=true"
             f"&intflag=false&dtm={template_id}"
         )
         
-        # Send request with timeout
-        response = requests.get(url, timeout=10)
+        print(f"Full URL being sent: {url}")  # Debug: see exact URL
         
-        # Check if SMS was actually sent (you may need to adjust based on response)
+        # Send request with timeout
+        response = requests.get(url, timeout=30)
+        
+        print(f"Response Status Code: {response.status_code}")
+        print(f"Response Text: {response.text}")
+        
+        # Check if SMS was actually sent
         if response.status_code == 200:
-            print(f"SMS sent successfully: {response.text[:100]}")
+            print(f"SMS sent successfully to {mobile}")
             
             # Log success
             try:
                 sms_log(response, mobile, message, template_id)
-            except:
-                pass
+            except Exception as log_error:
+                print(f"Logging error (non-critical): {log_error}")
                 
-            return True  # Return True for success
+            return True
         else:
             print(f"SMS failed with status {response.status_code}")
-            return False  # Return False for failure
+            print(f"Response: {response.text}")
+            return False
         
     except requests.exceptions.Timeout:
-        print("SMS gateway timeout")
+        print("SMS gateway timeout - server not responding")
         return False
-    except requests.exceptions.ConnectionError:
-        print("SMS gateway connection error")
+    except requests.exceptions.ConnectionError as e:
+        print(f"SMS gateway connection error: {e}")
         return False
     except Exception as e:
         print(f"SMS error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # Optimized SMS log function
