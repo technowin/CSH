@@ -92,11 +92,11 @@
                         </div>
                     </div>
                     
-                    {% if viewDetails.status_id == 6 or viewDetails.status_id == 27%}
+                    {% if viewDetails.status_id == 6 or viewDetails.status_id == 9 or viewDetails.status_id == 13 or viewDetails.status_id == 16 or viewDetails.status_id == 27 or viewDetails.status_id == 29 or viewDetails.status_id == 31 or viewDetails.status_id == 35 or viewDetails.status_id == 37 %}
                         <p style="color:red">
-                            Rejected Reason :- {{viewDetails.rejected_reason}}
+                            Rejected Reason :- {{ viewDetails.rejected_reason }}
                         </p>
-                    {% endif %} 
+                    {% endif %}
 
                     {% comment %} table here {% endcomment %}
 
@@ -113,72 +113,77 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Loop for documents that already have been uploaded -->
                             {% for document in uploaded_documents %}
-                                {% if document.correct_mark == '0' %}
-                                <tr>
-                                    <td>
-                                        {{ document.document.doc_name }}
-                                        {% if document.document.mandatory == 1 %}
-                                            <span style="color: red;">*</span>
-                                        {% endif %}
 
-                                        {% if document.doc_subpath %}
-                                            <a href="{% url 'download_doc' filepath=document.encrypted_subpath %}" target="_blank" style="color: #4e73df; margin-left: 10px;"  >
-                                                <i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i>
-                                            </a>
-                                        {% endif %}
-                                        
-                                    </td>
-                                    <td>
-                                        {% if document.correct_mark == '0' %}
+                                {% if viewDetails.status_id == 6 or viewDetails.status_id == 27 %}
+                                    {# 🔁 EDIT MODE → ONLY incorrect docs #}
+                                    {% if document.correct_mark == '0' %}
+                                    <tr>
+                                        <td>
+                                            {{ document.document.doc_name }}
+                                            {% if document.document.mandatory == 1 %}
+                                                <span style="color: red;">*</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
                                             <input type="file"
                                                 name="upload_{{ document.document.doc_id }}"
                                                 class="form-control"
                                                 accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
                                                 onchange="previewFile(this, {{ document.document.doc_id }})">
-                                        {% else %}
+                                        </td>
+
+                                        <td>
+                                            {% if document.filepath %}
+                                                <a href="{% url 'download_doc' document.filepath %}" target="_blank">
+                                                    <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                                    View
+                                                </a>
+                                            {% else %}
+                                                <span>No file uploaded</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            <i class="fa-solid fa-circle-xmark" style="color:red;"></i>
+                                        </td>
+
+                                        <td style="color:red;">
+                                            {{ document.comment }}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+
+                                {% else %}
+                                    {# 👁 VIEW MODE → SHOW ALL DOCS #}
+                                    <tr>
+                                        <td>
+                                            {{ document.document.doc_name }}
+                                            {% if document.document.mandatory == 1 %}
+                                                <span style="color: red;">*</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
                                             <span style="color:gray;">Not allowed</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if document.filepath %}
-                                            <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
-                                                <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
-                                                <span class="edit-text">View</span>
-                                            </a>
-                                        {% else %}
-                                            <span>No file uploaded</span>
-                                        {% endif %}
-                                    </td>
+                                        </td>
 
-                                    {% if viewDetails.status_id == 6 or viewDetails.status_id == 27 %}
-                                        {% if document.correct_mark == '0' %}
-                                            <td>
-                                                <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
-                                            </td>
-                                        {% elif document.correct_mark == '1' %}
-                                            <td>
-                                                <i class="fa-solid fa-check" style="font-size: 24px; color: green;"></i>
-                                            </td>
-                                        {% else %}   
-                                            <td></td>
-                                        {% endif %}    
-                                    {% endif %}
-
-                                    {% if viewDetails.status_id == 6 or viewDetails.status_id == 27 %}
-                                        {% if document.comment != null %}
-                                            <td style="color:red;">
-                                                {{ document.comment }}
-                                            </td>
-                                        {% else %}
-                                            <td></td>
-                                        {% endif %}
-                                    {% endif %}
-                                </tr>
+                                        <td>
+                                            {% if document.filepath %}
+                                                <a href="{% url 'download_doc' document.filepath %}" target="_blank">
+                                                    <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                                    View
+                                                </a>
+                                            {% else %}
+                                                <span>No file uploaded</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
                                 {% endif %}
+
                             {% endfor %}
-                    
+
                             <!-- Loop for documents not uploaded yet -->
                             {% comment %} {% for document in not_uploaded_documents %}
                             <tr>
