@@ -1803,7 +1803,7 @@ def create_partial_view_product(request):
                 user_id = user.id
                 service_db = request.session.get("service_db", "default")
             
-            documents = document_master.objects.filter(doc_type=selected_Type, is_active=1)
+            documents = document_master.objects.filter(doc_type=selected_Type, is_active=1).order_by('order_by') 
 
             document_list = []
             for document in documents:
