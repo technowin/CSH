@@ -92,7 +92,7 @@
                         </div>
                     </div>
                     
-                    {% if viewDetails.status_id == 4 %}
+                    {% if viewDetails.status_id == 6 or viewDetails.status_id == 27%}
                         <p style="color:red">
                             Rejected Reason :- {{viewDetails.rejected_reason}}
                         </p>
@@ -106,7 +106,7 @@
                                 <th style="width:50%">Document Name</th>
                                 <th>ReUpload Document</th>
                                 <th>Uploaded Document</th>
-                                {% if viewDetails.status_id == 4 %}
+                                {% if viewDetails.status_id == 6 or viewDetails.status_id == 27 %}
                                 <th>Remark</th>
                                 <th>Comment</th>
                                 {% endif %}
@@ -115,70 +115,72 @@
                         <tbody>
                             <!-- Loop for documents that already have been uploaded -->
                             {% for document in uploaded_documents %}
-                            <tr>
-                                <td>
-                                    {{ document.document.doc_name }}
-                                    {% if document.document.mandatory == 1 %}
-                                        <span style="color: red;">*</span>
+                                {% if document.correct_mark == '0' %}
+                                <tr>
+                                    <td>
+                                        {{ document.document.doc_name }}
+                                        {% if document.document.mandatory == 1 %}
+                                            <span style="color: red;">*</span>
+                                        {% endif %}
+
+                                        {% if document.doc_subpath %}
+                                            <a href="{% url 'download_doc' filepath=document.encrypted_subpath %}" target="_blank" style="color: #4e73df; margin-left: 10px;"  >
+                                                <i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i>
+                                            </a>
+                                        {% endif %}
+                                        
+                                    </td>
+                                    <td>
+                                        {% if document.correct_mark == '0' %}
+                                            <input type="file"
+                                                name="upload_{{ document.document.doc_id }}"
+                                                class="form-control"
+                                                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+                                                onchange="previewFile(this, {{ document.document.doc_id }})">
+                                        {% else %}
+                                            <span style="color:gray;">Not allowed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if document.filepath %}
+                                            <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
+                                                <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                                <span class="edit-text">View</span>
+                                            </a>
+                                        {% else %}
+                                            <span>No file uploaded</span>
+                                        {% endif %}
+                                    </td>
+
+                                    {% if viewDetails.status_id == 6 or viewDetails.status_id == 27 %}
+                                        {% if document.correct_mark == '0' %}
+                                            <td>
+                                                <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
+                                            </td>
+                                        {% elif document.correct_mark == '1' %}
+                                            <td>
+                                                <i class="fa-solid fa-check" style="font-size: 24px; color: green;"></i>
+                                            </td>
+                                        {% else %}   
+                                            <td></td>
+                                        {% endif %}    
                                     {% endif %}
 
-                                    {% if document.doc_subpath %}
-                                        <a href="{% url 'download_doc' filepath=document.encrypted_subpath %}" target="_blank" style="color: #4e73df; margin-left: 10px;"  >
-                                            <i class="fa fa-file-pdf" style="font-size: 30px; color: red;"></i>
-                                        </a>
+                                    {% if viewDetails.status_id == 6 or viewDetails.status_id == 27 %}
+                                        {% if document.comment != null %}
+                                            <td style="color:red;">
+                                                {{ document.comment }}
+                                            </td>
+                                        {% else %}
+                                            <td></td>
+                                        {% endif %}
                                     {% endif %}
-                                    
-                                </td>
-                                <td>
-                                    {% if document.correct_mark == '0' %}
-                                        <input type="file"
-                                            name="upload_{{ document.document.doc_id }}"
-                                            class="form-control"
-                                            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
-                                            onchange="previewFile(this, {{ document.document.doc_id }})">
-                                    {% else %}
-                                        <span style="color:gray;">Not allowed</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if document.filepath %}
-                                        <a class="edit-link" href="{% url 'download_doc' document.filepath %}" id="viewFile_{{ document.document.doc_id }}" target="_blank">
-                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
-                                            <span class="edit-text">View</span>
-                                        </a>
-                                    {% else %}
-                                        <span>No file uploaded</span>
-                                    {% endif %}
-                                </td>
-
-                                {% if viewDetails.status_id == 4 %}
-                                    {% if document.correct_mark == '0' %}
-                                        <td>
-                                            <i class="fa-solid fa-circle-xmark" style="font-size: 24px; color: red;"></i>
-                                        </td>
-                                    {% elif document.correct_mark == '1' %}
-                                        <td>
-                                            <i class="fa-solid fa-check" style="font-size: 24px; color: green;"></i>
-                                        </td>
-                                    {% else %}   
-                                        <td></td>
-                                    {% endif %}    
+                                </tr>
                                 {% endif %}
-
-                                {% if viewDetails.status_id == 4 %}
-                                    {% if document.comment != null %}
-                                        <td style="color:red;">
-                                            {{ document.comment }}
-                                        </td>
-                                    {% else %}
-                                        <td></td>
-                                    {% endif %}
-                                {% endif %}
-                            </tr>
                             {% endfor %}
                     
                             <!-- Loop for documents not uploaded yet -->
-                            {% for document in not_uploaded_documents %}
+                            {% comment %} {% for document in not_uploaded_documents %}
                             <tr>
                                 <td>
                                     {{ document.doc_name }}
@@ -201,7 +203,7 @@
                                     <td></td>
                                 {% endif %}
                             </tr>
-                            {% endfor %}
+                            {% endfor %} {% endcomment %}
                         </tbody>
                     </table>
                 

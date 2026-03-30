@@ -274,7 +274,7 @@ def matrix_flow_pa(request):
                     
                     # code to update api_data
                     
-                    if status == 4:
+                    if status == 6: #Rejected
                         
                         dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
                         
@@ -293,12 +293,70 @@ def matrix_flow_pa(request):
                             
                             from Account.views import upd_citizen
                             upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
                 elif status == 3 and ref == 'chalan':
                     
                     scru_chalan_file = request.FILES.get('scru_chalan_file')
                     if scru_chalan_file:
                         internal_resp = internal_docs_upload(scru_chalan_file,role_id,user,wf,ser,'Chalan')
                         #citizen_resp = citizen_docs_upload(issue_permission_file, form_user_id, form_id, user, ser, id1)
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '1'
+                            request.session['remarks'] = f_remark
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id 
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Sent back to citizen"
+                        request.session["DeskRemark"]="Upload Payment Receipt"
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
                         
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     if r[0][0] not in (""):
@@ -335,8 +393,57 @@ def matrix_flow_pa(request):
                         
                     else:
                         messages.error(request, "Oops...! Something went wrong!")
+                    if status == 9: #Rejected
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
 
                     return redirect(request.META.get("HTTP_REFERER", "/"))
+                
                 
                 elif status == 10 and ref == 'inspection':
                     factory_visit_doc1 = request.FILES.get('factory_visit_doc1')
@@ -347,7 +454,38 @@ def matrix_flow_pa(request):
                     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
+                    
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                    if dataAPI:
+                            
+                        request.session['userId'] = dataAPI.user_id
+                        request.session['trackId'] = dataAPI.track_id
+                        request.session['serviceId'] = dataAPI.service_id
+                        request.session['applicationId'] = dataAPI.application_no
+                        request.session['application_status'] = '1'
+                        request.session['remarks'] = f_remark
+                        request.session['form_id'] = dataAPI.form_id
+                        request.session['form_user_id'] = dataAPI.form_user_id
+                        request.session['workflow_id'] = dataAPI.workflow_id
+                        request.session['phone_number'] = dataAPI.mobile_no
+                            
+                        from Account.views import upd_citizen
+                        upd_citizen(request)
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Sent back to citizen"
+                    request.session["DeskRemark"]="Upload Payment Receipt"
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
+                    
                 
                 elif (status == 12 or status == 13) and ref == 'marks':
 
@@ -404,6 +542,54 @@ def matrix_flow_pa(request):
                             return redirect(request.META.get("HTTP_REFERER", "/"))
                         else:
                             messages.error(request, 'Oops...! Something went wrong!')
+                        if status == 13: #Rejected
+                        
+                            dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                            
+                            if dataAPI:
+                                
+                                request.session['userId'] = dataAPI.user_id
+                                request.session['trackId'] = dataAPI.track_id
+                                request.session['serviceId'] = dataAPI.service_id
+                                request.session['applicationId'] = dataAPI.application_no
+                                request.session['application_status'] = '5'
+                                request.session['remarks'] = rej_res
+                                request.session['form_id'] = dataAPI.form_id
+                                request.session['form_user_id'] = dataAPI.form_user_id
+                                request.session['workflow_id'] = dataAPI.workflow_id
+                                request.session['phone_number'] = dataAPI.mobile_no
+                                
+                                from Account.views import upd_citizen
+                                upd_citizen(request)
+                                
+                            # DESK DETAIL API 
+                            role_id = request.session.get('role_id')
+                            role = roles.objects.only('role_name').get(id=role_id)
+                            designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                            from Account.desk_detail_api import upd_desk_detail
+                            request.session["ApplicationId1"]=wf.request_no
+                            request.session["DeskNumber"] = 'Desk ' + role_id  
+                            request.session["ReviewActionBy"] = role.role_name
+                            request.session["ReviewActionDetails"]="Rejected"
+                            request.session["DeskRemark"]=rej_res
+                            desk_api_res = upd_desk_detail(request)
+                            message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                            Log.objects.create(log_text=message)
+
+                        else:
+                            # DESK DETAIL API 
+                            role_id = request.session.get('role_id')
+                            role = roles.objects.only('role_name').get(id=role_id)
+                            designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                            from Account.desk_detail_api import upd_desk_detail
+                            request.session["ApplicationId1"]=wf.request_no
+                            request.session["DeskNumber"] = 'Desk ' + role_id  
+                            request.session["ReviewActionBy"] = role.role_name
+                            request.session["ReviewActionDetails"]="Approved"
+                            request.session["DeskRemark"]=""
+                            desk_api_res = upd_desk_detail(request)
+                            message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                            Log.objects.create(log_text=message)
                 
                 elif (status == 15 or status==16) and (ref == 'decision'):
                     rej_res = request.POST.get('rej_res', '').strip()
@@ -438,6 +624,54 @@ def matrix_flow_pa(request):
                         
                     else:
                         messages.error(request, "Oops...! Something went wrong!")
+                    if status == 16: #Rejected
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
 
 
 
@@ -509,6 +743,55 @@ def matrix_flow_pa(request):
                         # return JsonResponse({"success": True, "message": str(r1[0][0])})
                     else: messages.error(request, 'Oops...! Something went wrong!')
 
+                    if status == 27: #Rejected
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
                 elif status == 32 and ref == 'report':
                     factory_visit_doc1 = request.FILES.get('factory_visit_doc1')
                     factory_visit_doc2 = request.FILES.get('factory_visit_doc2')
@@ -519,6 +802,35 @@ def matrix_flow_pa(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+                    dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                    if dataAPI:
+                            
+                        request.session['userId'] = dataAPI.user_id
+                        request.session['trackId'] = dataAPI.track_id
+                        request.session['serviceId'] = dataAPI.service_id
+                        request.session['applicationId'] = dataAPI.application_no
+                        request.session['application_status'] = '1'
+                        request.session['remarks'] = f_remark
+                        request.session['form_id'] = dataAPI.form_id
+                        request.session['form_user_id'] = dataAPI.form_user_id
+                        request.session['workflow_id'] = dataAPI.workflow_id
+                        request.session['phone_number'] = dataAPI.mobile_no
+                            
+                        from Account.views import upd_citizen
+                        upd_citizen(request)
+                    role_id = request.session.get('role_id')
+                    role = roles.objects.only('role_name').get(id=role_id)
+                    designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                    from Account.desk_detail_api import upd_desk_detail
+                    request.session["ApplicationId1"]=wf.request_no
+                    request.session["DeskNumber"] = 'Desk ' + role_id 
+                    request.session["ReviewActionBy"] = role.role_name
+                    request.session["ReviewActionDetails"]="Sent back to citizen"
+                    request.session["DeskRemark"]="Upload Payment Receipt"
+                    desk_api_res = upd_desk_detail(request)
+                    message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                    Log.objects.create(log_text=message)
                 
                 elif (status == 34 or status == 35) and ref == 'markss':
 
@@ -609,6 +921,54 @@ def matrix_flow_pa(request):
                         
                     else:
                         messages.error(request, "Oops...! Something went wrong!")
+                    if status == 37: #Rejected
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
                    
                 else:
                     f_remark = request.POST.get('f_remark')
@@ -622,45 +982,6 @@ def matrix_flow_pa(request):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
                     
-                    if status == 11:
-                        
-                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
-                        
-                        if dataAPI:
-                            
-                            request.session['userId'] = dataAPI.user_id
-                            request.session['trackId'] = dataAPI.track_id
-                            request.session['serviceId'] = dataAPI.service_id
-                            request.session['applicationId'] = dataAPI.application_no
-                            request.session['application_status'] = '4'
-                            request.session['remarks'] = f_remark
-                            request.session['form_id'] = dataAPI.form_id
-                            request.session['form_user_id'] = dataAPI.form_user_id
-                            request.session['workflow_id'] = dataAPI.workflow_id
-                            request.session['phone_number'] = dataAPI.mobile_no
-                            
-                            from Account.views import upd_citizen
-                            upd_citizen(request)
-                            
-                    if status == 12 or status == 9:
-                        
-                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
-                        
-                        if dataAPI:
-                            
-                            request.session['userId'] = dataAPI.user_id
-                            request.session['trackId'] = dataAPI.track_id
-                            request.session['serviceId'] = dataAPI.service_id
-                            request.session['applicationId'] = dataAPI.application_no
-                            request.session['application_status'] = '5'
-                            request.session['remarks'] = f_remark
-                            request.session['form_id'] = dataAPI.form_id
-                            request.session['form_user_id'] = dataAPI.form_user_id
-                            request.session['workflow_id'] = dataAPI.workflow_id
-                            request.session['phone_number'] = dataAPI.mobile_no
-                            
-                            from Account.views import upd_citizen
-                            upd_citizen(request)
                             
                     
                     
@@ -1139,9 +1460,9 @@ def citizen_edit_pa(request, row_id, new_id):
                 doc_type=viewDetails.product_type
             )
 
-            not_uploaded_documents = all_documents.exclude(
-                doc_id__in=uploaded_doc_ids
-            )
+            # not_uploaded_documents = all_documents.exclude(
+            #     doc_id__in=uploaded_doc_ids
+            # )
 
             documentList = document_master.objects.filter(
                 is_active=1,
@@ -1160,7 +1481,7 @@ def citizen_edit_pa(request, row_id, new_id):
                 {
                     "viewDetails": viewDetails,
                     "uploaded_documents": uploaded_documents,   # contains correct_mark
-                    "not_uploaded_documents": not_uploaded_documents,
+                    # "not_uploaded_documents": not_uploaded_documents,
                     "new_id": new_id,
                     "message": message,
                     "ProductService": ProductService,
@@ -1587,6 +1908,53 @@ def upload_chalan_receipt(request, form_id):
 
         
         callproc("sp_update_status", [4, user_id,app_id, application.id])
+        application.refresh_from_db()
+        # Get latest workflow row for this application
+        wf = workflow_details.objects.filter(form_id=app_id).last()
+
+        if wf:
+            wf_id = wf.id
+            form_user_id = wf.form_user_id
+
+            # -------- UPDATE CITIZEN API ----------
+            dataAPI = api_data.objects.filter(
+                form_id=app_id,
+                form_user_id=form_user_id,
+                workflow_id=wf_id
+            ).first()
+
+            if dataAPI:
+                request.session['userId'] = dataAPI.user_id
+                request.session['trackId'] = dataAPI.track_id
+                request.session['serviceId'] = dataAPI.service_id
+                request.session['applicationId'] = dataAPI.application_no
+                request.session['application_status'] = '3'
+                request.session['remarks'] = ""
+                request.session['form_id'] = dataAPI.form_id
+                request.session['form_user_id'] = dataAPI.form_user_id
+                request.session['workflow_id'] = dataAPI.workflow_id
+                request.session['phone_number'] = dataAPI.mobile_no
+                            
+                from Account.views import upd_citizen
+                upd_citizen(request)
+
+            # -------- UPDATE DESK API ----------
+            role_id = request.session.get('role_id')
+            role = roles.objects.only('role_name').get(id=role_id)
+
+            from Account.desk_detail_api import upd_desk_detail
+
+            request.session["ApplicationId1"] = wf.request_no
+            request.session["DeskNumber"] = 'Desk ' + str(role_id)
+            request.session["ReviewActionBy"] = role.role_name
+            request.session["ReviewActionDetails"] = "Challan Receipt Uploaded"
+            request.session["DeskRemark"] = ""
+
+            desk_api_res = upd_desk_detail(request)
+
+            Log.objects.create(
+                log_text=f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+            )
 
         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
 
@@ -1711,6 +2079,53 @@ def upload_registration_receipt(request, form_id):
 
         
         callproc("sp_update_status1", [18, user_id,app_id, application.id])
+        application.refresh_from_db()
+        # Get latest workflow row for this application
+        wf = workflow_details.objects.filter(form_id=app_id).last()
+
+        if wf:
+            wf_id = wf.id
+            form_user_id = wf.form_user_id
+
+            # -------- UPDATE CITIZEN API ----------
+            dataAPI = api_data.objects.filter(
+                form_id=app_id,
+                form_user_id=form_user_id,
+                workflow_id=wf_id
+            ).first()
+
+            if dataAPI:
+                request.session['userId'] = dataAPI.user_id
+                request.session['trackId'] = dataAPI.track_id
+                request.session['serviceId'] = dataAPI.service_id
+                request.session['applicationId'] = dataAPI.application_no
+                request.session['application_status'] = '3'
+                request.session['remarks'] = ""
+                request.session['form_id'] = dataAPI.form_id
+                request.session['form_user_id'] = dataAPI.form_user_id
+                request.session['workflow_id'] = dataAPI.workflow_id
+                request.session['phone_number'] = dataAPI.mobile_no
+                            
+                from Account.views import upd_citizen
+                upd_citizen(request)
+
+            # -------- UPDATE DESK API ----------
+            role_id = request.session.get('role_id')
+            role = roles.objects.only('role_name').get(id=role_id)
+
+            from Account.desk_detail_api import upd_desk_detail
+
+            request.session["ApplicationId1"] = wf.request_no
+            request.session["DeskNumber"] = 'Desk ' + str(role_id)
+            request.session["ReviewActionBy"] = role.role_name
+            request.session["ReviewActionDetails"] = "Challan Receipt Uploaded"
+            request.session["DeskRemark"] = ""
+
+            desk_api_res = upd_desk_detail(request)
+
+            Log.objects.create(
+                log_text=f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+            )
 
         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
 
