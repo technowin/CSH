@@ -1460,9 +1460,9 @@ def citizen_edit_pa(request, row_id, new_id):
                 doc_type=viewDetails.product_type
             )
 
-            not_uploaded_documents = all_documents.exclude(
-                doc_id__in=uploaded_doc_ids
-            )
+            # not_uploaded_documents = all_documents.exclude(
+            #     doc_id__in=uploaded_doc_ids
+            # )
 
             documentList = document_master.objects.filter(
                 is_active=1,
@@ -1481,7 +1481,7 @@ def citizen_edit_pa(request, row_id, new_id):
                 {
                     "viewDetails": viewDetails,
                     "uploaded_documents": uploaded_documents,   # contains correct_mark
-                    "not_uploaded_documents": not_uploaded_documents,
+                    # "not_uploaded_documents": not_uploaded_documents,
                     "new_id": new_id,
                     "message": message,
                     "ProductService": ProductService,
