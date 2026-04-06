@@ -22,6 +22,7 @@ from datetime import timedelta
 from django.shortcuts import redirect
 from django.http import Http404, HttpResponse 
 from CSH.access_control import no_direct_access
+from django.db.models import Q
 
 # Create your views here.
 import logging
@@ -149,7 +150,8 @@ def matrix_flow_pa(request):
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
-            for doc_master in document_master.objects.filter(doc_type=product_type).exclude(doc_id=18):
+            # for doc_master in document_master.objects.filter(doc_type=product_type).exclude(doc_id=18):
+            for doc_master in document_master.objects.filter(Q(doc_type=product_type) | Q(doc_type__isnull=True)):
                 matching_doc = citizen_docs.filter(document=doc_master).first()
                 doc_entry = {'doc_name': doc_master.doc_name,'file_path': None,'file_name': None,'id': None,'correct': None,'comment': None}
                 if matching_doc and matching_doc.filepath:
