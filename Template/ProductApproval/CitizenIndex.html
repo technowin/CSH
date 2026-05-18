@@ -143,8 +143,8 @@
 
                             {% endif %}
 
-                            {% if row.status == 'Scrutiny Fee Uploaded'  %}
-                                <a class="download-link" href="{% url 'Chalan' row.id %}">
+                            {% if row.status == 'Make Payment'%}
+                                <a class="download-link" href="{% url 'Chalan' row.id %}" target="_blank">
                                     <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="download-text">Download Chalan</span>
                                 </a> 
@@ -177,7 +177,7 @@
                             {% endif %}
 
                             {% if row.status == 'Registration Fee Uploaded'  %}
-                                <a class="download-link" href="{% url 'RegistrationChalan' row.id %}">
+                                <a class="download-link" href="{% url 'RegistrationChalan' row.id %}" target="_blank">
                                     <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="download-text">Download Registration Chalan</span>
                                 </a> 
