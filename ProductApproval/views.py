@@ -491,7 +491,10 @@ def matrix_flow_pa(request):
                 
                 elif (status == 12 or status == 13) and ref == 'marks':
 
-                    doc_id = 14
+                    application = application_form.objects.get(id=form_id)
+                    product_type = application.product_type
+
+                    doc_id = 14 if product_type == 'Product Approval' else 31
 
                     # Check if document exists
                     existing_doc = citizen_document.objects.filter(
@@ -836,7 +839,10 @@ def matrix_flow_pa(request):
                 
                 elif (status == 34 or status == 35) and ref == 'markss':
 
-                    doc_id = 14
+                    application = application_form.objects.get(id=form_id)
+                    product_type = application.product_type
+
+                    doc_id = 14 if product_type == 'Product Approval' else 31
 
                     # Check if document exists
                     existing_doc = citizen_document.objects.filter(
@@ -2264,8 +2270,12 @@ def upload_factory_visit_doc(request, form_id):
         app_id = decrypt_parameter(form_id)
         application = application_form.objects.get(id=app_id)
 
+        # Dynamic doc_id based on service type
+        product_type = application.product_type
+        doc_id = 14 if product_type == 'Product Approval' else 31
+
         # Prevent duplicate upload
-        if application.status_id in [11,33]:
+        if application.status_id in [11, 33]:
             return JsonResponse({
                 "success": False,
                 "message": "Factory Visit Document already uploaded."
@@ -2279,7 +2289,7 @@ def upload_factory_visit_doc(request, form_id):
                 "message": "Please select a file."
             })
 
-        # ✅ Allow only PDF
+        # Allow only PDF
         if not factory_doc.name.lower().endswith(".pdf") or factory_doc.content_type != "application/pdf":
             return JsonResponse({
                 "success": False,
@@ -2304,7 +2314,7 @@ def upload_factory_visit_doc(request, form_id):
             app_id,
             created_by=full_name,
             ser='5',
-            doc_id1=14
+            doc_id1=doc_id
         )
 
         # Update status
