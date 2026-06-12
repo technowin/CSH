@@ -96,7 +96,7 @@
                         <td><span class="badge badge-pill badge-{{row.13}}" style="font-size: 16px;">{{ row.9 }}</span></td>
                         <td><a href="/matrix_flow_ac?wf={{row.0}}&af={{row.1}}&ac=view" style="font-size:16px;" class="btn btn-sm btn-primary">View</a></td>
                       </tr>
-                    {% elif row.2|in_list:"1,2,11" and role_id == 3 and row.3 is None %}
+                    {% elif row.2|in_list:"1,2,3,11" and role_id == 3 and row.3 is None %}
                       <tr style="color:black">
                         <td>{{ forloop.counter }}</td>
                         <td>{{ row.5 }}</td>
