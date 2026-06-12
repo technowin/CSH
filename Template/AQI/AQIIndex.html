@@ -1,0 +1,154 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+    <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+    <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+
+    <body>
+        <div class="card mb-4" style="zoom:85%">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h1 style="color:#4e73df;font-weight:bold">
+                            <u>AQI Compliance Application</u>
+                        </h1>
+                        <p class="text-muted">Submit monthly AQI compliance proof for construction site</p>
+                    </div>
+                        
+                    <div class="col-md-6 text-right">
+                        <a href="{% url 'aqi_application_create' %}" style="font-size:16px;" class="btn btn-lg btn-primary">
+                            <i class="fas fa-plus-circle"></i> Apply for AQI Compliance
+                        </a>
+                    </div>
+                </div>
+            
+                <div class="table-responsive">
+                    <table style="width: 100%; margin-top:2%;" class="table" id="aqiTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Request No</th>
+                                <th>Architect Name</th>
+                                <th>Submission Month</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data %}
+                            <tr>
+                                <td>{{ row.srno }}</td>
+                                <td>{% if row.request_no %}{{ row.request_no }}{% else %}&nbsp;{% endif %}</td>
+                                <td>{{ row.architect_name }}</td>
+                                <td>{{ row.submission_month|default:"-" }}</td>
+                                <td>
+                                    {% if row.status == "Approved" %}
+                                        <span class="badge badge-success">✓ {{ row.status }}</span>
+                                    {% elif row.status == "Rejected" or row.status == "Stop Work Notice Issued" or row.status == "Show Cause Notice Issued" %}
+                                        <span class="badge badge-danger">✗ {{ row.status }}</span>
+                                    {% elif row.status == "Refused" %}
+                                        <span class="badge badge-warning">⚠ {{ row.status }}</span>
+                                    {% elif row.status == "Draft" %}
+                                        <span class="badge badge-secondary">✎ {{ row.status }}</span>
+                                    {% elif row.status == "Resubmitted" %}
+                                        <span class="badge badge-info">↻ {{ row.status }}</span>
+                                    {% elif row.status == "Inspection Completed" %}
+                                        <span class="badge badge-warning">◉ {{ row.status }}</span>
+                                    {% else %}
+                                        <span class="badge badge-primary">⟳ {{ row.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{% if row.remarks %}{{ row.remarks|truncatechars:50 }}{% else %}&nbsp;{% endif %}</td>
+                                <td>
+                                    <!-- View button - always show -->
+                                    {% if row.status == 'Draft' %}
+                                        <a class="edit-link" href="{% url 'aqi_application_view' row.id encrypted_new_id %}" title="View and Submit">
+                                            <i class="fa-solid fa-eye" style="font-size: 24px; color: #274FC2;"></i>
+                                        </a>
+                                    {% else %}
+                                        <a class="edit-link" href="{% url 'aqi_application_view' row.id encrypted_new_id %}" title="View">
+                                            <i class="fa-solid fa-eye" style="font-size: 24px; color: #274FC2;"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <!-- Edit button - for Draft, Refused -->
+                                    {% if row.status == 'Draft' or row.status == 'Refused' %}
+                                        <a class="edit-link" href="{% url 'aqi_application_edit' row.id encrypted_new_id %}" style="margin-left: 10px;" title="Edit">
+                                            <i class="fa-solid fa-pencil-alt" style="font-size: 24px; color: #FF5733;"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <!-- Download Stop Work Notice button -->
+                                    {% if row.status == 'Stop Work Notice Issued' %}
+                                        <a class="edit-link" href="{% url 'download_notice' row.id 17 %}" style="margin-left: 10px;" title="Download Stop Work Notice">
+                                            <i class="fa-solid fa-download" style="font-size: 24px; color: #dc3545;"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <!-- Download Show Cause Notice button -->
+                                    {% if row.status == 'Show Cause Notice Issued' %}
+                                        <a class="edit-link" href="{% url 'download_notice' row.id 18 %}" style="margin-left: 10px;" title="Download Show Cause Notice">
+                                            <i class="fa-solid fa-download" style="font-size: 24px; color: #fd7e14;"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="alert alert-info">No applications found. Click "Apply for AQI Compliance" to create your first application.</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <script>
+                Swal.fire({
+                    title: "{{ message.tags }}",
+                    text: "{{ message }}",
+                    icon: "{{ message.tags }}",
+                    confirmButtonText: "OK",
+                });
+                </script>
+            {% endfor %}
+        {% endif %}
+    </body>
+
+    <script>
+        // Wait for DOM to be fully ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if DataTables is available
+            if (typeof $.fn !== 'undefined' && $.fn.DataTable) {
+                // Destroy existing instance if any
+                if ($.fn.DataTable.isDataTable('#aqiTable')) {
+                    $('#aqiTable').DataTable().destroy();
+                }
+                
+                // Initialize DataTable
+                $('#aqiTable').DataTable({
+                    pageLength: 10,
+                    order: [[0, 'desc']],
+                    language: {
+                        emptyTable: "No AQI applications found. Click 'Apply for AQI Compliance' to get started."
+                    }
+                });
+            } else {
+                console.log("DataTables not loaded yet");
+            }
+        });
+    </script>
+
+{% endblock %}

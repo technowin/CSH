@@ -31,6 +31,7 @@ class ServiceRouter:
             'TreeTrimming': '3',
             'ContractRegistration': '4',
             'ProductApproval': '5',
+            'aqi': '6',
         }
         return mapping.get(app, service)
 

@@ -166,6 +166,14 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': '3306',
     },
+    '6': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'aqi_db',
+        'USER': 'root',
+        'PASSWORD': 'Techno-cidco_MH-047319',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+    },
 }
 
 # ==================== ALLOWED HOSTS (CRITICAL) ====================
