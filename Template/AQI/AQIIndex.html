@@ -24,6 +24,80 @@
                         </a>
                     </div>
                 </div>
+                
+                <!-- Filter Section -->
+                <div class="row mt-4 mb-3">
+                    <div class="col-md-12">
+                        <div class="card" style="background-color: #f8f9fc;">
+                            <div class="card-body">
+                                <h6 class="mb-3" style="color:#4e73df;"><i class="fas fa-filter"></i> Filter Applications</h6>
+                                <form method="GET" action="{% url 'citizen_index_ac' %}" id="filterForm">
+                                    <div class="row">
+
+                                        <div class="col-md-2 mb-2">
+                                            <label for="request_no" class="form-label">Request No:</label>
+                                            <select name="request_no" id="request_no" class="form-control">
+                                                <option value="">All Request Nos</option>
+                                                {% for req_no in distinct_request_nos %}
+                                                    <option value="{{ req_no }}" {% if filter_request_no == req_no %}selected{% endif %}>{{ req_no }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-2 mb-2">
+                                            <label for="plot_no" class="form-label">Plot No:</label>
+                                            <select name="plot_no" id="plot_no" class="form-control">
+                                                <option value="">All Plot Nos</option>
+                                                {% for plot in distinct_plot_nos %}
+                                                    <option value="{{ plot }}" {% if filter_plot_no == plot %}selected{% endif %}>{{ plot }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-2 mb-2">
+                                            <label for="survey_no" class="form-label">Survey No:</label>
+                                            <select name="survey_no" id="survey_no" class="form-control">
+                                                <option value="">All Survey Nos</option>
+                                                {% for survey in distinct_survey_nos %}
+                                                    <option value="{{ survey }}" {% if filter_survey_no == survey %}selected{% endif %}>{{ survey }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-2 mb-2">
+                                            <label for="submission_month" class="form-label">Submission Month:</label>
+                                            <select name="submission_month" id="submission_month" class="form-control">
+                                                <option value="">All Months</option>
+                                                {% for month in distinct_months %}
+                                                    <option value="{{ month }}" {% if filter_submission_month == month %}selected{% endif %}>{{ month }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 mb-2">
+                                            <label for="status" class="form-label">Status:</label>
+                                            <select name="status" id="status" class="form-control">
+                                                <option value="">All Status</option>
+                                                <!-- ... status options ... -->
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-2 mb-2 d-flex align-items-end">
+                                            <div class="btn-group w-100">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-search"></i> Apply
+                                                </button>
+                                                <a href="{% url 'citizen_index_ac' %}" class="btn btn-secondary">
+                                                    <i class="fas fa-undo"></i> Reset
+                                                </a>
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             
                 <div class="table-responsive">
                     <table style="width: 100%; margin-top:2%;" class="table" id="aqiTable">
@@ -32,6 +106,8 @@
                                 <th>#</th>
                                 <th>Request No</th>
                                 <th>Architect Name</th>
+                                <th>Plot No</th>
+                                <th>Survey No</th>
                                 <th>Submission Month</th>
                                 <th>Type</th>
                                 <th>Status</th>
@@ -45,6 +121,8 @@
                                 <td>{{ row.srno }}</td>
                                 <td>{% if row.request_no %}{{ row.request_no }}{% else %}&nbsp;{% endif %}</td>
                                 <td>{{ row.architect_name }}</td>
+                                <td>{{ row.plot_no|default:"-" }}</td>
+                                <td>{{ row.survey_no|default:"-" }}</td>
                                 <td>{{ row.submission_month|default:"-" }}</td>
                                 <td>
                                     {% if row.submission_type == "First" %}
@@ -83,7 +161,7 @@
                                         </a>
                                     {% endif %}
                                     
-                                    <!-- Edit button - for Draft, Refused -->
+                                    <!-- Edit button -->
                                     {% if row.status == 'Draft' or row.status == 'Refused' %}
                                         <a class="edit-link" href="{% url 'aqi_application_edit' row.id encrypted_new_id %}" style="margin-left: 10px;" title="Edit">
                                             <i class="fa-solid fa-pencil-alt" style="font-size: 24px; color: #FF5733;"></i>
@@ -104,7 +182,7 @@
                                         </a>
                                     {% endif %}
                                     
-                                    <!-- Monthly Submission button - ONLY for First submission type AND not Draft/Notice/Rejected -->
+                                    <!-- Monthly Submission button -->
                                     {% if row.submission_type == 'First' and row.status != 'Draft' and row.status != 'Stop Work Notice Issued' and row.status != 'Show Cause Notice Issued' and row.status != 'Rejected' %}
                                         <a class="edit-link" href="{% url 'aqi_monthly_create' row.id %}" style="margin-left: 10px;" title="Monthly Submission">
                                             <i class="fa-solid fa-calendar-plus" style="font-size: 24px; color: #17a2b8;"></i>
@@ -121,7 +199,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="8" class="text-center">
+                                <td colspan="10" class="text-center">
                                     <div class="alert alert-info">No applications found. Click "Apply for AQI Compliance" to create your first application.</div>
                                 </td>
                             </tr>
@@ -164,6 +242,11 @@
                 });
             }
         });
+        
+        // Optional: Auto-submit on filter change (if you want instant filtering)
+        // $('#plot_no, #survey_no, #submission_month, #status').on('change', function() {
+        //     $('#filterForm').submit();
+        // });
     </script>
 
 {% endblock %}

@@ -55,29 +55,106 @@ def citizen_index_ac(request):
             else:
                 user_id = None
 
+            # Get filter parameters from request
+            filter_request_no = request.GET.get('request_no', '')
+            filter_plot_no = request.GET.get('plot_no', '')
+            filter_survey_no = request.GET.get('survey_no', '')
+            filter_submission_month = request.GET.get('submission_month', '')
+            filter_status = request.GET.get('status', '')
+
             # Encrypt ID for new application
             new_id = 0
             encrypted_new_id = encrypt_parameter(str(new_id))
             
             # Get all applications for this architect
             getApplicantData = []
+            all_applications = []
             applicationIndex = callproc("stp_getAqiApplicationsForCitizen", [user_id])
 
+            # First, collect all applications
             for items in applicationIndex:
-                encrypted_id = encrypt_parameter(str(items[1]))
-                default_new_id = encrypt_parameter(str(0))
-                item = {
+                parent_id = items[10] if len(items) > 10 else None
+                all_applications.append({
                     "srno": items[0],
-                    "id": encrypted_id,
-                    "default_new_id": default_new_id,
+                    "id": items[1],
                     "request_no": items[2],
                     "architect_name": items[3],
                     "status": items[4],
                     "submission_month": items[5],
                     "remarks": items[6],
-                    "submission_type": items[7],  # Add this line
-                }
-                getApplicantData.append(item)
+                    "submission_type": items[7] if len(items) > 7 else 'First',
+                    "plot_no": items[8] if len(items) > 8 else '',
+                    "survey_no": items[9] if len(items) > 9 else '',
+                    "parent_application_id": parent_id,
+                })
+            
+            # Find applications to show based on request_no filter
+            request_ids_to_show = set()
+            
+            if filter_request_no:
+                # Find the application with matching request_no
+                target_app = next((app for app in all_applications if app['request_no'] == filter_request_no), None)
+                
+                if target_app:
+                    # Add the target application itself
+                    request_ids_to_show.add(target_app['id'])
+                    
+                    # If it's a first submission, find all its monthly submissions (children)
+                    if target_app['submission_type'] == 'First':
+                        for app in all_applications:
+                            if app['parent_application_id'] == target_app['id']:
+                                request_ids_to_show.add(app['id'])
+                    
+                    # If it's a monthly submission, find its parent
+                    elif target_app['submission_type'] == 'Monthly' and target_app['parent_application_id']:
+                        request_ids_to_show.add(target_app['parent_application_id'])
+                        # Also find other monthly submissions of the same parent
+                        for app in all_applications:
+                            if app['parent_application_id'] == target_app['parent_application_id']:
+                                request_ids_to_show.add(app['id'])
+            
+            # Now build the filtered list
+            for app in all_applications:
+                # Apply request_no filter
+                if filter_request_no and app['id'] not in request_ids_to_show:
+                    continue
+                
+                # Apply other filters
+                show_row = True
+                
+                if filter_plot_no and filter_plot_no.lower() not in str(app['plot_no']).lower():
+                    show_row = False
+                if filter_survey_no and filter_survey_no.lower() not in str(app['survey_no']).lower():
+                    show_row = False
+                if filter_submission_month and filter_submission_month != app['submission_month']:
+                    show_row = False
+                if filter_status and filter_status != app['status']:
+                    show_row = False
+                
+                if show_row:
+                    encrypted_id = encrypt_parameter(str(app['id']))
+                    default_new_id = encrypt_parameter(str(0))
+                    item = {
+                        "srno": app['srno'],
+                        "id": encrypted_id,
+                        "default_new_id": default_new_id,
+                        "request_no": app['request_no'],
+                        "architect_name": app['architect_name'],
+                        "status": app['status'],
+                        "submission_month": app['submission_month'],
+                        "remarks": app['remarks'],
+                        "submission_type": app['submission_type'],
+                        "plot_no": app['plot_no'],
+                        "survey_no": app['survey_no'],
+                    }
+                    getApplicantData.append(item)
+            
+            # Get distinct values for filter dropdowns
+            distinct_request_nos = sorted(list(set([app['request_no'] for app in all_applications if app['request_no']])))
+            distinct_plot_nos = sorted(list(set([app['plot_no'] for app in all_applications if app['plot_no']])))
+            distinct_survey_nos = sorted(list(set([app['survey_no'] for app in all_applications if app['survey_no']])))
+            distinct_months = sorted(list(set([app['submission_month'] for app in all_applications if app['submission_month']])), reverse=True)
+            distinct_statuses = list(set([app['status'] for app in all_applications if app['status']]))
             
             return render(
                 request,
@@ -85,6 +162,16 @@ def citizen_index_ac(request):
                 {
                     "data": getApplicantData, 
                     "encrypted_new_id": encrypted_new_id,
+                    "filter_request_no": filter_request_no,
+                    "filter_plot_no": filter_plot_no,
+                    "filter_survey_no": filter_survey_no,
+                    "filter_submission_month": filter_submission_month,
+                    "filter_status": filter_status,
+                    "distinct_request_nos": distinct_request_nos,
+                    "distinct_plot_nos": distinct_plot_nos,
+                    "distinct_survey_nos": distinct_survey_nos,
+                    "distinct_months": distinct_months,
+                    "distinct_statuses": distinct_statuses,
                 }
             )
 
@@ -95,7 +182,7 @@ def citizen_index_ac(request):
         logger.error(f"Error in citizen_index_ac: {str(e)}")
         messages.error(request, "Something went wrong. Please try again.")
         return redirect('citizenDashboard')
-    
+
 @no_direct_access
 def aqi_application_create(request):
     try:
