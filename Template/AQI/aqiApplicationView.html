@@ -18,11 +18,35 @@
                 <h2 class="text-center" style="color:#4e73df;">
                   <u>AQI Compliance Application</u>
                 </h2>
-                <p class="text-center text-muted">Request No: {{ viewDetails.request_no|default:"Not Generated Yet" }}</p>
+                <!-- In the view page, add this after the request no display -->
+                <p class="text-center text-muted">
+                    Request No: {{ viewDetails.request_no|default:"Not Generated Yet" }}
+                    {% if viewDetails.submission_type == 'Monthly' and parent_request_no %}
+                        <br><small>Main Application Request No: <strong>{{ parent_request_no }}</strong></small>
+                    {% endif %}
+                </p>
                 <br>
                 
                 <form method="POST" action="{% url 'aqi_application_view' row_id=row_id new_id=new_id %}" enctype="multipart/form-data">
                     {% csrf_token %}
+
+                    <!-- Monthly AQI Data Section (only for monthly submissions) -->
+                    {% if viewDetails.submission_type == 'Monthly' %}
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">AQI Value :</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.monthly_aqi_value }}" disabled>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">AQI Category :</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.monthly_aqi_category }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">Monthly Remarks :</label>
+                                <textarea class="form-control" rows="2" disabled>{{ viewDetails.monthly_remarks }}</textarea>
+                            </div>
+                        </div>
+                    {% endif %}
                 
                     <div class="row mb-3">
                         <div class="col-md-3">

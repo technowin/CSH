@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'TreeTrimming',
     'ContractRegistration',
     'ProductApproval',
+    'aqi',
 ]
 
 # MIDDLEWARE = [

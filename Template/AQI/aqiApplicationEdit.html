@@ -24,69 +24,173 @@
                 <form method="POST" action="{% url 'aqi_application_edit' row_id=encrypted_row_id new_id=encrypted_new_id %}" enctype="multipart/form-data">
                     {% csrf_token %}
                 
-                    <div class="row mb-3">
-                        <div class="form-group col-md-3">
-                            <label for="village_name" class="form-label">Village Name<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="village_name" class="form-control" id="village_name" placeholder="Enter Village Name" value="{{ viewDetails.village_name }}" required>
+                    {% if is_monthly_edit %}
+                        <!-- Monthly Submission Edit Form -->
+                        <div class="alert alert-info">
+                            <strong>Editing Monthly AQI Report</strong><br>
+                            Main Application: <strong>{{ parent_request_no }}</strong><br>
+                            You can update the AQI readings and re-upload the AQI Monitoring Report if needed.
                         </div>
-                        <div class="col-md-3">
-                            <label for="bp_fire_no" class="form-label">BP Fire No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="bp_fire_no" class="form-control" id="bp_fire_no" placeholder="Enter BP Fire No." value="{{ viewDetails.bp_fire_no }}" required>
+                        
+                        <!-- Pre-filled Read-only Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Village Name:</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.village_name }}" readonly>
+                                <input type="hidden" name="village_name" value="{{ viewDetails.village_name }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">BP Fire No.:</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.bp_fire_no }}" readonly>
+                                <input type="hidden" name="bp_fire_no" value="{{ viewDetails.bp_fire_no }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Survey No / Gut No:</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.survey_no }}" readonly>
+                                <input type="hidden" name="survey_no" value="{{ viewDetails.survey_no }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Plot No:</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.plot_no }}" readonly>
+                                <input type="hidden" name="plot_no" value="{{ viewDetails.plot_no }}">
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="survey_no" class="form-label">Survey No / Gut No<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="survey_no" class="form-control" id="survey_no" placeholder="Enter Survey No." value="{{ viewDetails.survey_no }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Name of Architect:</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.architect_name }}" readonly>
+                                <input type="hidden" name="architect_name" value="{{ viewDetails.architect_name }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Name of Builder:</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.builder_name }}" readonly>
+                                <input type="hidden" name="builder_name" value="{{ viewDetails.builder_name }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Plot Area (sq.m):</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.plot_area }}" readonly>
+                                <input type="hidden" name="plot_area" value="{{ viewDetails.plot_area }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Latitude:</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.latitude }}" readonly>
+                                <input type="hidden" name="latitude" value="{{ viewDetails.latitude }}">
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="plot_no" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="plot_no" class="form-control" id="plot_no" placeholder="Enter Plot No." value="{{ viewDetails.plot_no }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Longitude:</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.longitude }}" readonly>
+                                <input type="hidden" name="longitude" value="{{ viewDetails.longitude }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="submission_month" class="form-label">Submission Month<span style="color:red;"> *</span> :</label>
+                                <input type="month" name="submission_month" class="form-control" id="submission_month" value="{{ viewDetails.submission_month }}" required>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="architect_name" class="form-label">Name of Architect<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="architect_name" class="form-control" id="architect_name" placeholder="Enter Architect Name" value="{{ viewDetails.architect_name }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="monthly_aqi_value" class="form-label">AQI Value<span style="color:red;"> *</span> :</label>
+                                <input type="number" name="monthly_aqi_value" class="form-control" id="monthly_aqi_value" value="{{ viewDetails.monthly_aqi_value }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="monthly_aqi_category" class="form-label">AQI Category :</label>
+                                <select name="monthly_aqi_category" id="monthly_aqi_category" class="form-control">
+                                    <option value="">Select Category</option>
+                                    <option value="Good" {% if viewDetails.monthly_aqi_category == "Good" %}selected{% endif %}>Good (0-50)</option>
+                                    <option value="Satisfactory" {% if viewDetails.monthly_aqi_category == "Satisfactory" %}selected{% endif %}>Satisfactory (51-100)</option>
+                                    <option value="Moderate" {% if viewDetails.monthly_aqi_category == "Moderate" %}selected{% endif %}>Moderate (101-200)</option>
+                                    <option value="Poor" {% if viewDetails.monthly_aqi_category == "Poor" %}selected{% endif %}>Poor (201-300)</option>
+                                    <option value="Very Poor" {% if viewDetails.monthly_aqi_category == "Very Poor" %}selected{% endif %}>Very Poor (301-400)</option>
+                                    <option value="Severe" {% if viewDetails.monthly_aqi_category == "Severe" %}selected{% endif %}>Severe (401-500)</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="builder_name" class="form-label">Name of Builder<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="builder_name" class="form-control" id="builder_name" placeholder="Enter Builder Name" value="{{ viewDetails.builder_name }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="monthly_remarks" class="form-label">Monthly Remarks :</label>
+                                <textarea name="monthly_remarks" id="monthly_remarks" class="form-control" rows="3" placeholder="Enter any additional remarks for this month's AQI report...">{{ viewDetails.monthly_remarks }}</textarea>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="plot_area" class="form-label">Plot Area (sq.m)<span style="color:red;"> *</span> :</label>
-                            <input type="number" step="0.01" name="plot_area" class="form-control" id="plot_area" placeholder="Enter Plot Area" value="{{ viewDetails.plot_area }}" required>
+                        
+                        <input type="hidden" name="submission_type" value="Monthly">
+                        
+                    {% else %}
+                        <!-- Regular First Submission Form -->
+                        <div class="row mb-3">
+                            <div class="form-group col-md-3">
+                                <label for="village_name" class="form-label">Village Name<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="village_name" class="form-control" id="village_name" placeholder="Enter Village Name" value="{{ viewDetails.village_name }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="bp_fire_no" class="form-label">BP Fire No.<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="bp_fire_no" class="form-control" id="bp_fire_no" placeholder="Enter BP Fire No." value="{{ viewDetails.bp_fire_no }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="survey_no" class="form-label">Survey No / Gut No<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="survey_no" class="form-control" id="survey_no" placeholder="Enter Survey No." value="{{ viewDetails.survey_no }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="plot_no" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="plot_no" class="form-control" id="plot_no" placeholder="Enter Plot No." value="{{ viewDetails.plot_no }}" required>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="submission_month" class="form-label">Submission Month<span style="color:red;"> *</span> :</label>
-                            <input type="month" name="submission_month" class="form-control" id="submission_month" value="{{ viewDetails.submission_month|default:'' }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="architect_name" class="form-label">Name of Architect<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="architect_name" class="form-control" id="architect_name" placeholder="Enter Architect Name" value="{{ viewDetails.architect_name }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="builder_name" class="form-label">Name of Builder<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="builder_name" class="form-control" id="builder_name" placeholder="Enter Builder Name" value="{{ viewDetails.builder_name }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="plot_area" class="form-label">Plot Area (sq.m)<span style="color:red;"> *</span> :</label>
+                                <input type="number" step="0.01" name="plot_area" class="form-control" id="plot_area" placeholder="Enter Plot Area" value="{{ viewDetails.plot_area }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="submission_month" class="form-label">Submission Month<span style="color:red;"> *</span> :</label>
+                                <input type="month" name="submission_month" class="form-control" id="submission_month" value="{{ viewDetails.submission_month|default:'' }}" required>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="latitude" class="form-label">Latitude<span style="color:red;"> *</span> :</label>
-                            <input type="number" step="0.0000001" name="latitude" class="form-control" id="latitude" placeholder="Enter Latitude" value="{{ viewDetails.latitude }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="longitude" class="form-label">Longitude<span style="color:red;"> *</span> :</label>
-                            <input type="number" step="0.0000001" name="longitude" class="form-control" id="longitude" placeholder="Enter Longitude" value="{{ viewDetails.longitude }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="submission_type" class="form-label">Submission Type<span style="color:red;"> *</span> :</label>
-                            <select name="submission_type" id="submission_type" class="form-control" required>
-                                <option value="First" {% if viewDetails.submission_type == "First" %}selected{% endif %}>First Submission</option>
-                                <option value="Monthly" {% if viewDetails.submission_type == "Monthly" %}selected{% endif %}>Monthly Submission</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {% if viewDetails.status.status_name == "Refused" %}
-                        <div class="alert alert-danger">
-                            <strong>Refusal Reason:</strong> {{ viewDetails.comments }}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="latitude" class="form-label">Latitude<span style="color:red;"> *</span> :</label>
+                                <input type="number" step="0.0000001" name="latitude" class="form-control" id="latitude" placeholder="Enter Latitude" value="{{ viewDetails.latitude }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="longitude" class="form-label">Longitude<span style="color:red;"> *</span> :</label>
+                                <input type="number" step="0.0000001" name="longitude" class="form-control" id="longitude" placeholder="Enter Longitude" value="{{ viewDetails.longitude }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="submission_type" class="form-label">Submission Type<span style="color:red;"> *</span> :</label>
+                                <select name="submission_type" id="submission_type" class="form-control" required>
+                                    <option value="First" {% if viewDetails.submission_type == "First" %}selected{% endif %}>First Submission</option>
+                                    <option value="Monthly" {% if viewDetails.submission_type == "Monthly" %}selected{% endif %}>Monthly Submission</option>
+                                </select>
+                            </div>
                         </div>
                     {% endif %}
 
-                    {% comment %} Table For Documents {% endcomment %}
+                    {% if viewDetails.status.status_name == "Refused" %}
+                        <div class="alert alert-warning">
+                            <strong>Application Refused:</strong> Please review the comments below and re-upload the corrected documents.
+                        </div>
+                        <!-- Show refusal reason/comments from officer -->
+                        {% if viewDetails.comments %}
+                            <div class="alert alert-danger">
+                                <strong>Refusal Reason:</strong> {{ viewDetails.comments }}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+
+                    {% comment %} Table For Documents - WITHOUT Status and Comment columns for architect {% endcomment %}
                     <h5 class="mt-4 mb-3" style="color:#4e73df;">Upload Documents</h5>
                     <table class="table table-bordered">
                         <thead>
@@ -94,10 +198,6 @@
                                 <th style="width:40%">Document Name</th>
                                 <th>Re-Upload Document</th>
                                 <th>Uploaded Document</th>
-                                {% if viewDetails.status.status_name == "Refused" %}
-                                <th>Status</th>
-                                <th>Comment</th>
-                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -109,6 +209,11 @@
                                         {% if document.document_master.mandatory == 1 %}
                                             <span style="color: red;">*</span>
                                         {% endif %}
+                                        <!-- Show officer comment if document was incorrect -->
+                                        {% if document.correct_mark == '0' and document.comment %}
+                                            <br>
+                                            <small class="text-danger">Previous comment: {{ document.comment }}</small>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <input type="file" name="upload_{{ document.document_master.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.document_master.doc_id }})">
@@ -117,26 +222,16 @@
                                         {% if document.filepath %}
                                             <a class="edit-link" href="{% url 'download_doc' document.encrypted_filepath %}" target="_blank">
                                                 <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
-                                                <span class="edit-text">View</span>
+                                                <span class="edit-text">View Current Document</span>
                                             </a>
+                                            {% if document.correct_mark == '0' %}
+                                                <br>
+                                                <span class="text-danger">⚠ This document was marked incorrect. Please re-upload corrected version.</span>
+                                            {% endif %}
                                         {% else %}
                                             <span>No file uploaded</span>
                                         {% endif %}
                                     </td>
-                                    {% if viewDetails.status.status_name == "Refused" %}
-                                        {% if document.correct_mark == '0' %}
-                                            <td style="color: red;">
-                                                <i class="fa-solid fa-circle-xmark" style="font-size: 24px;"></i> Incorrect
-                                            </td>
-                                        {% elif document.correct_mark == '1' %}
-                                            <td style="color: green;">
-                                                <i class="fa-solid fa-check" style="font-size: 24px;"></i> Correct
-                                            </td>
-                                        {% else %}   
-                                            <td>-</td>
-                                        {% endif %}    
-                                        <td style="color:red;">{{ document.comment|default:"-" }}</td>
-                                    {% endif %}
                                 </tr>
                             {% endfor %}
                     
@@ -148,21 +243,17 @@
                                         {% if document.mandatory == 1 %}
                                             <span style="color: red;">*</span>
                                         {% endif %}
-                                    
+                                    \n
                                     <td>
                                         <input type="file" name="upload_{{ document.doc_id }}" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" onchange="previewFile(this, {{ document.doc_id }})">
-                                    
+                                    \n
                                     <td>
                                         <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ document.doc_id }}" 
                                             target="_blank" style="display: none;">
                                             <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
-                                            <span class="edit-text">View</span>
+                                            <span class="edit-text">Preview</span>
                                         </a>
-                                    
-                                    {% if viewDetails.status.status_name == "Refused" %}
-                                        <td>-</td>
-                                        <td>-</td>
-                                    {% endif %}
+                                    \n
                                 </tr>
                             {% endfor %}
                         </tbody>

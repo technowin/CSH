@@ -50,7 +50,7 @@ def citizen_index_ac(request):
             phone_number = request.session["phone_number"]
 
             if phone_number:
-                user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)  # role_id=2 for Architect
+                user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
                 user_id = user.id
             else:
                 user_id = None
@@ -74,13 +74,14 @@ def citizen_index_ac(request):
                     "architect_name": items[3],
                     "status": items[4],
                     "submission_month": items[5],
-                    "remarks": items[6],  # Now this is at index 6 (since we removed is_draft)
+                    "remarks": items[6],
+                    "submission_type": items[7],  # Add this line
                 }
                 getApplicantData.append(item)
             
             return render(
                 request,
-                "AQI/AQIIndex.html",  # You'll create this template
+                "AQI/AQIIndex.html",
                 {
                     "data": getApplicantData, 
                     "encrypted_new_id": encrypted_new_id,
@@ -94,7 +95,7 @@ def citizen_index_ac(request):
         logger.error(f"Error in citizen_index_ac: {str(e)}")
         messages.error(request, "Something went wrong. Please try again.")
         return redirect('citizenDashboard')
-
+    
 @no_direct_access
 def aqi_application_create(request):
     try:
@@ -162,6 +163,20 @@ def aqi_application_create(request):
                 messages.error(request, "All fields are required.")
                 return redirect("aqi_application_create")
 
+            # NEW VALIDATION: Check if there's an existing application with active notice for same survey_no and plot_no
+            existing_application_with_notice = application_form.objects.filter(
+                survey_no=survey_no,
+                plot_no=plot_no,
+                created_by=user_id,
+                status_id__in=[9, 10]  # Stop Work Notice Issued (9) or Show Cause Notice Issued (10)
+            ).exists()
+
+            if existing_application_with_notice:
+                # messages.error(request, "You cannot submit a new application for this Survey No and Plot No as there is an active Stop Work/Show Cause Notice pending. Please resolve the notice first.")
+                message = f"You cannot submit a new application for this Survey No and Plot No as there is an active Stop Work/Show Cause Notice pending. Please resolve the notice first."
+                request.session["message"] = message
+                return redirect("aqi_application_create")
+
             # Check mandatory documents
             mandatory_documents = document_master.objects.filter(mandatory=1, is_active=1)
             all_uploaded = True
@@ -207,7 +222,7 @@ def aqi_application_create(request):
                 submission_month=submission_month,
                 submission_type=submission_type,
                 is_draft=1,
-                status_id=draft_status.status_id,  # Assign the ID directly
+                status_id=draft_status.status_id,
                 created_by=user_id,
             )
 
@@ -251,13 +266,13 @@ def aqi_application_create(request):
 
                     relative_file_path = f"{service_name}/User/user_{user_id}/aqi_application_{application.id}/document_{document.doc_id}/{file_name}"
 
-                    # Save to aqi_citizen_document - FIXED VERSION
+                    # Save to citizen_document
                     citizen_document.objects.create(
                         user_id=user_id,
                         file_name=file_name,
                         filepath=relative_file_path,
-                        doc_id=document.doc_id,  # ✅ Changed from 'document' to 'doc_id'
-                        application_id=application.id,  # ✅ Changed from 'application' to 'application_id'
+                        doc_id=document.doc_id,
+                        application_id=application.id,
                         created_by=user_id,
                         updated_by=user_id,
                     )
@@ -268,7 +283,7 @@ def aqi_application_create(request):
             row_id = encrypt_parameter(str(application.id))
 
             messages.success(request, "Application saved as draft successfully.")
-            return redirect("aqi_application_view", row_id, new_id)  # ✅ Redirect to view, not index
+            return redirect("aqi_application_view", row_id, new_id)
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -311,7 +326,6 @@ def aqi_application_edit(request, row_id, new_id):
                 user_id=user_id, application_id=viewDetails.id
             )
             
-            # Import with alias to avoid naming conflict
             from Masters.models import document_master as DocumentMaster
             
             for row in uploaded_documents:
@@ -323,25 +337,41 @@ def aqi_application_edit(request, row_id, new_id):
             # Get list of uploaded document IDs
             uploaded_doc_ids = uploaded_documents.values_list("doc_id", flat=True)
             
-            # Get all documents and separate uploaded vs not uploaded
-            all_documents = document_master.objects.filter(
-                is_active=1
-            ).exclude(
-                doc_id__in=[17, 18, 19, 20, 21, 22]
-            ).order_by('order_by')
-            not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
-
-            # Prepare document list with encrypted subpaths
-            document_list = document_master.objects.filter(
-                is_active=1
-            ).exclude(
-                doc_id__in=[17, 18, 19, 20, 21, 22]
-            ).order_by('order_by')
+            # Check if this is a monthly submission
+            if viewDetails.submission_type == 'Monthly':
+                # For monthly submission, only show AQI Monitoring Report (doc_id=5)
+                all_documents = DocumentMaster.objects.filter(
+                    is_active=1, doc_id=5
+                ).order_by('order_by')
+                not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
+                document_list = DocumentMaster.objects.filter(
+                    is_active=1, doc_id=5
+                ).order_by('order_by')
+            else:
+                # For first submission, show all documents except officer-only
+                all_documents = DocumentMaster.objects.filter(
+                    is_active=1
+                ).exclude(
+                    doc_id__in=[17, 18, 19, 20, 21, 22]
+                ).order_by('order_by')
+                not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
+                document_list = DocumentMaster.objects.filter(
+                    is_active=1
+                ).exclude(
+                    doc_id__in=[17, 18, 19, 20, 21, 22]
+                ).order_by('order_by')
+            
             for doc in document_list:
                 if doc.doc_subpath:
                     doc.encrypted_subpath = encrypt_parameter(doc.doc_subpath)
                 else:
                     doc.encrypted_subpath = None
+                    
+            parent_request_no = None
+            if viewDetails.submission_type == 'Monthly' and viewDetails.parent_application_id:
+                parent_app = application_form.objects.filter(id=viewDetails.parent_application_id).first()
+                if parent_app:
+                    parent_request_no = parent_app.request_no
 
             return render(
                 request,
@@ -351,14 +381,15 @@ def aqi_application_edit(request, row_id, new_id):
                     "uploaded_documents": uploaded_documents,
                     "not_uploaded_documents": not_uploaded_documents,
                     "documentList": document_list,
-                    "encrypted_row_id": row_id,  # Pass original encrypted values
+                    "encrypted_row_id": row_id,
                     "encrypted_new_id": new_id,
                     "message": message,
+                    "is_monthly_edit": viewDetails.submission_type == 'Monthly',
+                    "parent_request_no": parent_request_no,
                 },
             )
             
         if request.method == "POST":
-            # Use the already decrypted values from the URL
             viewDetails = get_object_or_404(application_form, id=row_id_decrypted)
             
             # Update form data
@@ -374,15 +405,30 @@ def aqi_application_edit(request, row_id, new_id):
             viewDetails.submission_month = request.POST.get("submission_month")
             viewDetails.submission_type = request.POST.get("submission_type", "First")
             
+            # For monthly submission, update monthly fields
+            if viewDetails.submission_type == 'Monthly':
+                viewDetails.monthly_aqi_value = request.POST.get("monthly_aqi_value")
+                viewDetails.monthly_aqi_category = request.POST.get("monthly_aqi_category")
+                viewDetails.monthly_remarks = request.POST.get("monthly_remarks")
+            
             # Validate required fields
-            if not all([viewDetails.village_name, viewDetails.bp_fire_no, viewDetails.survey_no, 
-                       viewDetails.plot_no, viewDetails.architect_name, viewDetails.builder_name,
-                       viewDetails.plot_area, viewDetails.latitude, viewDetails.longitude, 
-                       viewDetails.submission_month]):
-                
+            required_fields = [viewDetails.village_name, viewDetails.bp_fire_no, viewDetails.survey_no, 
+                               viewDetails.plot_no, viewDetails.architect_name, viewDetails.builder_name,
+                               viewDetails.plot_area, viewDetails.latitude, viewDetails.longitude, 
+                               viewDetails.submission_month]
+            
+            if not all(required_fields):
                 new_id_encrypted = encrypt_parameter(str(new_id_decrypted))
                 row_id_encrypted = encrypt_parameter(str(row_id_decrypted))
                 message = "All fields are mandatory. Please fill in all fields."
+                request.session["message"] = message
+                return redirect("aqi_application_edit", row_id_encrypted, new_id_encrypted)
+            
+            # For monthly submission, validate AQI value
+            if viewDetails.submission_type == 'Monthly' and not viewDetails.monthly_aqi_value:
+                new_id_encrypted = encrypt_parameter(str(new_id_decrypted))
+                row_id_encrypted = encrypt_parameter(str(row_id_decrypted))
+                message = "AQI Value is mandatory for monthly submission."
                 request.session["message"] = message
                 return redirect("aqi_application_edit", row_id_encrypted, new_id_encrypted)
 
@@ -404,10 +450,15 @@ def aqi_application_edit(request, row_id, new_id):
             )
             os.makedirs(application_folder_path, exist_ok=True)
 
-            # Upload/Update documents - use DocumentMaster alias
             from Masters.models import document_master as DocumentMaster
             
-            for document in DocumentMaster.objects.filter(is_active=1):
+            # For monthly submission, only process doc_id=5
+            if viewDetails.submission_type == 'Monthly':
+                documents_to_process = DocumentMaster.objects.filter(doc_id=5)
+            else:
+                documents_to_process = DocumentMaster.objects.filter(is_active=1)
+            
+            for document in documents_to_process:
                 uploaded_file = request.FILES.get(f"upload_{document.doc_id}")
 
                 if uploaded_file:
@@ -416,7 +467,6 @@ def aqi_application_edit(request, row_id, new_id):
                     )
                     os.makedirs(document_folder_path, exist_ok=True)
 
-                    # Clear existing files
                     for file_name in os.listdir(document_folder_path):
                         file_path = os.path.join(document_folder_path, file_name)
                         if os.path.isfile(file_path):
@@ -454,7 +504,6 @@ def aqi_application_edit(request, row_id, new_id):
                             updated_by=user_id,
                         )
             
-            # Encrypt for redirect
             new_id_encrypted = encrypt_parameter(str(new_id_decrypted))
             row_id_encrypted = encrypt_parameter(str(row_id_decrypted))
             
@@ -509,6 +558,13 @@ def aqi_application_view(request, row_id, new_id):
             plain_new_id = new_id_decrypted
             new_id_encrypted = str(encrypt_parameter(str(new_id_decrypted)))
             row_id_encrypted = str(encrypt_parameter(str(row_id_decrypted)))
+            
+            # Get parent request_no for monthly submissions
+            parent_request_no = None
+            if viewDetails.submission_type == 'Monthly' and viewDetails.parent_application_id:
+                parent_app = application_form.objects.filter(id=viewDetails.parent_application_id).first()
+                if parent_app:
+                    parent_request_no = parent_app.request_no
 
             return render(
                 request,
@@ -519,6 +575,7 @@ def aqi_application_view(request, row_id, new_id):
                     "new_id": new_id_encrypted,
                     "row_id": row_id_encrypted,
                     "plain_new_id": plain_new_id,
+                    "parent_request_no": parent_request_no,
                 },
             )
         
@@ -622,7 +679,231 @@ def download_notice(request, row_id, doc_id):
         callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
         logger.error(f"Error in download_notice: {str(e)}")
         return redirect(f"{request.META.get('HTTP_REFERER', 'citizen_index_ac')}?doc_status=not_uploaded")
+
+@no_direct_access
+def aqi_monthly_create(request, parent_id):
+    try:
+        # Session validation
+        if not request.session.get('user_id') or not request.session.get('phone_number'):
+            request.session['_session_expired'] = True
+            user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
+            for key in user_session_keys:
+                if key in request.session:
+                    del request.session[key]
+            messages.warning(request, "Your session has expired. Please log in again.")
+            return redirect('citizenLoginAccount')
+        
+        phone_number = request.session.get("phone_number")
+        user_id = None
+        if phone_number:
+            user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
+            user_id = user.id
+
+        service_db = request.session.get("service_db", "")
+        
+        # Decrypt parent_id
+        parent_id_decrypted = decrypt_parameter(parent_id)
+        
+        # Get parent application
+        parent_application = get_object_or_404(application_form, id=parent_id_decrypted, created_by=user_id)
+        parent_request_no = parent_application.request_no
+        
+        # Check if monthly submission already exists for current month
+        current_month = timezone.now().strftime('%Y-%m')
+        existing_monthly = application_form.objects.filter(
+            parent_application_id=parent_id_decrypted,
+            submission_month=current_month,
+            created_by=user_id
+        ).exists()
+        
+        if request.method == "GET":
+            message = request.session.pop("message", None)
+            form_data = request.session.pop("form_data", None)
+            
+            # Get documents - for monthly, only show AQI Monitoring Report (doc_id=5)
+            documentList = document_master.objects.filter(
+                is_active=1,
+                doc_type__in=['image', 'pdf']
+            ).exclude(
+                doc_id__in=[17, 18, 19, 20, 21, 22]
+            ).order_by('order_by')
+            
+            # For monthly submission, only keep doc_id=5
+            documentList = documentList.filter(doc_id=5)
+            
+            for document in documentList:
+                if document.doc_subpath:
+                    document.encrypted_subpath = encrypt_parameter(document.doc_subpath)
+                else:
+                    document.encrypted_subpath = None
+            
+            # Pre-filled data from parent
+            pre_filled_data = {
+                'village_name': parent_application.village_name,
+                'survey_no': parent_application.survey_no,
+                'plot_no': parent_application.plot_no,
+                'bp_fire_no': parent_application.bp_fire_no,
+                'architect_name': parent_application.architect_name,
+                'builder_name': parent_application.builder_name,
+                'plot_area': parent_application.plot_area,
+                'latitude': parent_application.latitude,
+                'longitude': parent_application.longitude,
+                
+            }
+            
+            return render(
+                request,
+                "AQI/aqiApplicationCreate.html",
+                {
+                    "documentList": documentList,
+                    "parent_id": parent_id,
+                    "pre_filled_data": pre_filled_data,
+                    "message": message,
+                    "form_data": form_data,
+                    "current_month": current_month,
+                    "is_monthly_submission": True,  # Flag to indicate monthly submission
+                    "existing_monthly": existing_monthly,
+                    "parent_request_no": parent_request_no, 
+                },
+            )
+        
+        elif request.method == "POST":
+            # Get form data
+            submission_month = request.POST.get("submission_month")
+            monthly_aqi_value = request.POST.get("monthly_aqi_value")
+            monthly_aqi_category = request.POST.get("monthly_aqi_category")
+            monthly_remarks = request.POST.get("monthly_remarks")
+            
+            # Get pre-filled data from hidden fields or parent
+            village_name = request.POST.get("village_name") or parent_application.village_name
+            bp_fire_no = request.POST.get("bp_fire_no") or parent_application.bp_fire_no
+            survey_no = request.POST.get("survey_no") or parent_application.survey_no
+            plot_no = request.POST.get("plot_no") or parent_application.plot_no
+            architect_name = request.POST.get("architect_name") or parent_application.architect_name
+            builder_name = request.POST.get("builder_name") or parent_application.builder_name
+            plot_area = request.POST.get("plot_area") or parent_application.plot_area
+            latitude = request.POST.get("latitude") or parent_application.latitude
+            longitude = request.POST.get("longitude") or parent_application.longitude
+            
+            # Validate required fields
+            if not all([submission_month, monthly_aqi_value]):
+                messages.error(request, "Submission Month and AQI Value are required.")
+                return redirect("aqi_monthly_create", parent_id=parent_id)
+            
+            # Check if monthly submission already exists for this month
+            if existing_monthly:
+                messages.error(request, f"You have already submitted monthly report for {submission_month}.")
+                return redirect("citizen_index_ac")
+            
+            # Check mandatory document (AQI Monitoring Report - doc_id=5)
+            mandatory_documents = document_master.objects.filter(doc_id=5, mandatory=1, is_active=1)
+            all_uploaded = True
+            
+            for document in mandatory_documents:
+                if not request.FILES.get(f"upload_{document.doc_id}"):
+                    all_uploaded = False
+                    break
+            
+            if not all_uploaded:
+                message = "Please upload the AQI Monitoring Report."
+                request.session["message"] = message
+                request.session["form_data"] = {
+                    "submission_month": submission_month,
+                    "monthly_aqi_value": monthly_aqi_value,
+                    "monthly_aqi_category": monthly_aqi_category,
+                    "monthly_remarks": monthly_remarks,
+                }
+                return redirect("aqi_monthly_create", parent_id=parent_id)
+            
+            # Get Draft status
+            draft_status = status_master.objects.get(status_name='Draft', service_type='AQI')
+            
+            # Create monthly application
+            application = application_form.objects.create(
+                village_name=village_name,
+                bp_fire_no=bp_fire_no,
+                survey_no=survey_no,
+                plot_no=plot_no,
+                architect_name=architect_name,
+                builder_name=builder_name,
+                plot_area=plot_area,
+                latitude=latitude,
+                longitude=longitude,
+                submission_month=submission_month,
+                submission_type='Monthly',
+                is_draft=1,
+                status_id=draft_status.status_id,
+                parent_application_id=parent_id_decrypted,
+                monthly_aqi_value=monthly_aqi_value,
+                monthly_aqi_category=monthly_aqi_category,
+                monthly_remarks=monthly_remarks,
+                created_by=user_id,
+            )
+            
+            # Create folder structure
+            servicefetch = service_master.objects.using("default").get(ser_id=service_db)
+            service_name = servicefetch.ser_name
+            
+            user_folder_path = os.path.join(settings.MEDIA_ROOT, f"{service_name}")
+            os.makedirs(user_folder_path, exist_ok=True)
+            
+            user_folder_path = os.path.join(user_folder_path, f"User")
+            os.makedirs(user_folder_path, exist_ok=True)
+            
+            application_folder_path = os.path.join(
+                user_folder_path, f"user_{user_id}", f"aqi_application_{application.id}"
+            )
+            os.makedirs(application_folder_path, exist_ok=True)
+            
+            # Upload AQI Monitoring Report (doc_id=5)
+            for document in document_master.objects.filter(doc_id=5):
+                uploaded_file = request.FILES.get(f"upload_{document.doc_id}")
+                
+                if uploaded_file:
+                    document_folder_path = os.path.join(
+                        application_folder_path, f"document_{document.doc_id}"
+                    )
+                    os.makedirs(document_folder_path, exist_ok=True)
+                    
+                    for file_name in os.listdir(document_folder_path):
+                        file_path = os.path.join(document_folder_path, file_name)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)
+                    
+                    file_name = uploaded_file.name
+                    file_path = os.path.join(document_folder_path, file_name)
+                    
+                    with open(file_path, "wb+") as destination:
+                        for chunk in uploaded_file.chunks():
+                            destination.write(chunk)
+                    
+                    relative_file_path = f"{service_name}/User/user_{user_id}/aqi_application_{application.id}/document_{document.doc_id}/{file_name}"
+                    
+                    citizen_document.objects.create(
+                        user_id=user_id,
+                        file_name=file_name,
+                        filepath=relative_file_path,
+                        doc_id=document.doc_id,
+                        application_id=application.id,
+                        created_by=user_id,
+                        updated_by=user_id,
+                    )
+            
+            # Redirect to VIEW page
+            new_id = encrypt_parameter(str(0))
+            row_id = encrypt_parameter(str(application.id))
+            
+            messages.success(request, f"Monthly report for {submission_month} saved as draft successfully.")
+            return redirect("aqi_application_view", row_id, new_id)
     
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), user_id if 'user_id' in locals() else ""])
+        logger.error(f"Error in aqi_monthly_create: {str(e)}")
+        messages.error(request, "Something went wrong. Please try again.")
+        return redirect("citizen_index_ac")
+
 # Workflow & document models (same table names for both TreeTrimming and AQI)
 
 @login_required 

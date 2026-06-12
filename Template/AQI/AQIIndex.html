@@ -33,6 +33,7 @@
                                 <th>Request No</th>
                                 <th>Architect Name</th>
                                 <th>Submission Month</th>
+                                <th>Type</th>
                                 <th>Status</th>
                                 <th>Remarks</th>
                                 <th>Action</th>
@@ -45,6 +46,13 @@
                                 <td>{% if row.request_no %}{{ row.request_no }}{% else %}&nbsp;{% endif %}</td>
                                 <td>{{ row.architect_name }}</td>
                                 <td>{{ row.submission_month|default:"-" }}</td>
+                                <td>
+                                    {% if row.submission_type == "First" %}
+                                        <span class="badge badge-primary">First</span>
+                                    {% else %}
+                                        <span class="badge badge-info">Monthly</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if row.status == "Approved" %}
                                         <span class="badge badge-success">✓ {{ row.status }}</span>
@@ -64,7 +72,7 @@
                                 </td>
                                 <td>{% if row.remarks %}{{ row.remarks|truncatechars:50 }}{% else %}&nbsp;{% endif %}</td>
                                 <td>
-                                    <!-- View button - always show -->
+                                    <!-- View button -->
                                     {% if row.status == 'Draft' %}
                                         <a class="edit-link" href="{% url 'aqi_application_view' row.id encrypted_new_id %}" title="View and Submit">
                                             <i class="fa-solid fa-eye" style="font-size: 24px; color: #274FC2;"></i>
@@ -95,11 +103,25 @@
                                             <i class="fa-solid fa-download" style="font-size: 24px; color: #fd7e14;"></i>
                                         </a>
                                     {% endif %}
+                                    
+                                    <!-- Monthly Submission button - ONLY for First submission type AND not Draft/Notice/Rejected -->
+                                    {% if row.submission_type == 'First' and row.status != 'Draft' and row.status != 'Stop Work Notice Issued' and row.status != 'Show Cause Notice Issued' and row.status != 'Rejected' %}
+                                        <a class="edit-link" href="{% url 'aqi_monthly_create' row.id %}" style="margin-left: 10px;" title="Monthly Submission">
+                                            <i class="fa-solid fa-calendar-plus" style="font-size: 24px; color: #17a2b8;"></i>
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <!-- Download Certificate button for approved monthly submissions -->
+                                    {% if row.status == 'Approved' and row.submission_type == 'Monthly' %}
+                                        <a class="edit-link" href="#" style="margin-left: 10px;" title="Download Certificate">
+                                            <i class="fa-solid fa-download" style="font-size: 24px; color: #28a745;"></i>
+                                        </a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">
+                                <td colspan="8" class="text-center">
                                     <div class="alert alert-info">No applications found. Click "Apply for AQI Compliance" to create your first application.</div>
                                 </td>
                             </tr>
@@ -128,16 +150,11 @@
     </body>
 
     <script>
-        // Wait for DOM to be fully ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if DataTables is available
             if (typeof $.fn !== 'undefined' && $.fn.DataTable) {
-                // Destroy existing instance if any
                 if ($.fn.DataTable.isDataTable('#aqiTable')) {
                     $('#aqiTable').DataTable().destroy();
                 }
-                
-                // Initialize DataTable
                 $('#aqiTable').DataTable({
                     pageLength: 10,
                     order: [[0, 'desc']],
@@ -145,8 +162,6 @@
                         emptyTable: "No AQI applications found. Click 'Apply for AQI Compliance' to get started."
                     }
                 });
-            } else {
-                console.log("DataTables not loaded yet");
             }
         });
     </script>

@@ -30,7 +30,14 @@ class application_form(models.Model):
     approved_remark = models.TextField(null=True, blank=True)
     rejected_reason = models.TextField(null=True, blank=True)
     refused_reason = models.TextField(null=True, blank=True)
-    issued_certificate_remark = models.TextField(null=True, blank=True)  
+    issued_certificate_remark = models.TextField(null=True, blank=True)
+    
+    parent_application_id = models.IntegerField(null=True, blank=True)
+
+    # Monthly AQI specific fields
+    monthly_aqi_value = models.IntegerField(null=True, blank=True)
+    monthly_aqi_category = models.CharField(max_length=50, null=True, blank=True)
+    monthly_remarks = models.TextField(null=True, blank=True)  
     
     # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)

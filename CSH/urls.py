@@ -242,6 +242,7 @@ urlpatterns = [
     path('aqi_application_edit/<str:row_id>/<str:new_id>/', aqi_application_edit, name='aqi_application_edit'),
     path('matrix_flow_ac', matrix_flow_ac, name='matrix_flow_ac'),
     path('download_notice/<str:row_id>/<int:doc_id>/', download_notice, name='download_notice'),
+    path('aqi_monthly_create/<str:parent_id>/', aqi_monthly_create, name='aqi_monthly_create'),
 ]
 
 if settings.DEBUG:

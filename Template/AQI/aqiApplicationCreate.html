@@ -19,67 +19,174 @@
                 </h2>
                 <p class="text-center text-muted">Submit monthly AQI compliance proof for construction site</p>
                 <br>
+
+                <!-- Check if this is a monthly submission -->
+                {% if is_monthly_submission %}
+                    <div class="alert alert-info">
+                        <strong>Monthly AQI Report Submission</strong><br>
+                        Submitting monthly report for Main Application: <strong>{{ parent_request_no }}</strong><br>
+                        Please fill in the AQI readings for the month and upload the AQI Monitoring Report.
+                    </div>
+                    
+                    {% if existing_monthly %}
+                        <div class="alert alert-warning">
+                            <strong>Warning:</strong> You have already submitted a monthly report for {{ current_month }}.
+                        </div>
+                    {% endif %}
+                {% endif %}
                 
-                <form method="POST" action="{% url 'aqi_application_create' %}" enctype="multipart/form-data">
+                <form method="POST" action="{% if is_monthly_submission %}{% url 'aqi_monthly_create' parent_id=parent_id %}{% else %}{% url 'aqi_application_create' %}{% endif %}" enctype="multipart/form-data">
                     {% csrf_token %}
                 
-                    <div class="row mb-3">
-                        <div class="form-group col-md-3">
-                            <label for="village_name" class="form-label">Village Name<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="village_name" class="form-control" id="village_name" placeholder="Enter Village Name" value="{{ form_data.village_name }}" required>
+                    {% if is_monthly_submission %}
+                        <!-- Monthly Submission Form - Pre-filled Read-only Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Village Name:</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.village_name }}" readonly>
+                                <input type="hidden" name="village_name" value="{{ pre_filled_data.village_name }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">BP Fire No.:</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.bp_fire_no }}" readonly>
+                                <input type="hidden" name="bp_fire_no" value="{{ pre_filled_data.bp_fire_no }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Survey No / Gut No:</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.survey_no }}" readonly>
+                                <input type="hidden" name="survey_no" value="{{ pre_filled_data.survey_no }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Plot No:</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.plot_no }}" readonly>
+                                <input type="hidden" name="plot_no" value="{{ pre_filled_data.plot_no }}">
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="bp_fire_no" class="form-label">BP Fire No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="bp_fire_no" class="form-control" id="bp_fire_no" placeholder="Enter BP Fire No." value="{{ form_data.bp_fire_no }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Name of Architect:</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.architect_name }}" readonly>
+                                <input type="hidden" name="architect_name" value="{{ pre_filled_data.architect_name }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Name of Builder:</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.builder_name }}" readonly>
+                                <input type="hidden" name="builder_name" value="{{ pre_filled_data.builder_name }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Plot Area (sq.m):</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.plot_area }}" readonly>
+                                <input type="hidden" name="plot_area" value="{{ pre_filled_data.plot_area }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Latitude:</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.latitude }}" readonly>
+                                <input type="hidden" name="latitude" value="{{ pre_filled_data.latitude }}">
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="survey_no" class="form-label">Survey No / Gut No<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="survey_no" class="form-control" id="survey_no" placeholder="Enter Survey No." value="{{ form_data.survey_no }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">Longitude:</label>
+                                <input type="text" class="form-control" value="{{ pre_filled_data.longitude }}" readonly>
+                                <input type="hidden" name="longitude" value="{{ pre_filled_data.longitude }}">
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="plot_no" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="plot_no" class="form-control" id="plot_no" placeholder="Enter Plot No." value="{{ form_data.plot_no }}" required>
+                        
+                        <!-- Monthly Entry Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="submission_month" class="form-label">Submission Month<span style="color:red;"> *</span> :</label>
+                                <input type="month" name="submission_month" class="form-control" id="submission_month" value="{{ form_data.submission_month|default:current_month }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="monthly_aqi_value" class="form-label">AQI Value<span style="color:red;"> *</span> :</label>
+                                <input type="number" name="monthly_aqi_value" class="form-control" id="monthly_aqi_value" placeholder="Enter AQI Value (0-500)" value="{{ form_data.monthly_aqi_value }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="monthly_aqi_category" class="form-label">AQI Category :</label>
+                                <select name="monthly_aqi_category" id="monthly_aqi_category" class="form-control">
+                                    <option value="" {% if not form_data.monthly_aqi_category %}selected{% endif %}>Select Category</option>
+                                    <option value="Good" {% if form_data.monthly_aqi_category == "Good" %}selected{% endif %}>Good (0-50)</option>
+                                    <option value="Satisfactory" {% if form_data.monthly_aqi_category == "Satisfactory" %}selected{% endif %}>Satisfactory (51-100)</option>
+                                    <option value="Moderate" {% if form_data.monthly_aqi_category == "Moderate" %}selected{% endif %}>Moderate (101-200)</option>
+                                    <option value="Poor" {% if form_data.monthly_aqi_category == "Poor" %}selected{% endif %}>Poor (201-300)</option>
+                                    <option value="Very Poor" {% if form_data.monthly_aqi_category == "Very Poor" %}selected{% endif %}>Very Poor (301-400)</option>
+                                    <option value="Severe" {% if form_data.monthly_aqi_category == "Severe" %}selected{% endif %}>Severe (401-500)</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="architect_name" class="form-label">Name of Architect<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="architect_name" class="form-control" id="architect_name" placeholder="Enter Architect Name" value="{{ form_data.architect_name }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="monthly_remarks" class="form-label">Monthly Remarks :</label>
+                                <textarea name="monthly_remarks" id="monthly_remarks" class="form-control" rows="3" placeholder="Enter any additional remarks for this month's AQI report...">{{ form_data.monthly_remarks }}</textarea>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="builder_name" class="form-label">Name of Builder<span style="color:red;"> *</span> :</label>
-                            <input type="text" name="builder_name" class="form-control" id="builder_name" placeholder="Enter Builder Name" value="{{ form_data.builder_name }}" required>
+                        
+                        <input type="hidden" name="submission_type" value="Monthly">
+                        
+                    {% else %}
+                        <!-- Regular First Submission Form -->
+                        <div class="row mb-3">
+                            <div class="form-group col-md-3">
+                                <label for="village_name" class="form-label">Village Name<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="village_name" class="form-control" id="village_name" placeholder="Enter Village Name" value="{{ form_data.village_name }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="bp_fire_no" class="form-label">BP Fire No.<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="bp_fire_no" class="form-control" id="bp_fire_no" placeholder="Enter BP Fire No." value="{{ form_data.bp_fire_no }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="survey_no" class="form-label">Survey No / Gut No<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="survey_no" class="form-control" id="survey_no" placeholder="Enter Survey No." value="{{ form_data.survey_no }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="plot_no" class="form-label">Plot No.<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="plot_no" class="form-control" id="plot_no" placeholder="Enter Plot No." value="{{ form_data.plot_no }}" required>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="plot_area" class="form-label">Plot Area (sq.m)<span style="color:red;"> *</span> :</label>
-                            <input type="number" step="0.01" name="plot_area" class="form-control" id="plot_area" placeholder="Enter Plot Area" value="{{ form_data.plot_area }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="architect_name" class="form-label">Name of Architect<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="architect_name" class="form-control" id="architect_name" placeholder="Enter Architect Name" value="{{ form_data.architect_name }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="builder_name" class="form-label">Name of Builder<span style="color:red;"> *</span> :</label>
+                                <input type="text" name="builder_name" class="form-control" id="builder_name" placeholder="Enter Builder Name" value="{{ form_data.builder_name }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="plot_area" class="form-label">Plot Area (sq.m)<span style="color:red;"> *</span> :</label>
+                                <input type="number" step="0.01" name="plot_area" class="form-control" id="plot_area" placeholder="Enter Plot Area" value="{{ form_data.plot_area }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="submission_month" class="form-label">Submission Month<span style="color:red;"> *</span> :</label>
+                                <input type="month" name="submission_month" class="form-control" id="submission_month" value="{{ form_data.submission_month|default:'' }}" required>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="submission_month" class="form-label">Submission Month<span style="color:red;"> *</span> :</label>
-                            <input type="month" name="submission_month" class="form-control" id="submission_month" value="{{ form_data.submission_month|default:'' }}" required>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="latitude" class="form-label">Latitude<span style="color:red;"> *</span> :</label>
+                                <input type="number" step="0.0000001" name="latitude" class="form-control" id="latitude" placeholder="Enter Latitude" value="{{ form_data.latitude }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="longitude" class="form-label">Longitude<span style="color:red;"> *</span> :</label>
+                                <input type="number" step="0.0000001" name="longitude" class="form-control" id="longitude" placeholder="Enter Longitude" value="{{ form_data.longitude }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="submission_type" class="form-label">Submission Type<span style="color:red;"> *</span> :</label>
+                                <select name="submission_type" id="submission_type" class="form-control" required>
+                                    <option value="First" {% if form_data.submission_type == "First" %}selected{% endif %}>First Submission</option>
+                                    <option value="Monthly" {% if form_data.submission_type == "Monthly" %}selected{% endif %}>Monthly Submission</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="latitude" class="form-label">Latitude<span style="color:red;"> *</span> :</label>
-                            <input type="number" step="0.0000001" name="latitude" class="form-control" id="latitude" placeholder="Enter Latitude" value="{{ form_data.latitude }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="longitude" class="form-label">Longitude<span style="color:red;"> *</span> :</label>
-                            <input type="number" step="0.0000001" name="longitude" class="form-control" id="longitude" placeholder="Enter Longitude" value="{{ form_data.longitude }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="submission_type" class="form-label">Submission Type<span style="color:red;"> *</span> :</label>
-                            <select name="submission_type" id="submission_type" class="form-control" required>
-                                <option value="First" {% if form_data.submission_type == "First" %}selected{% endif %}>First Submission</option>
-                                <option value="Monthly" {% if form_data.submission_type == "Monthly" %}selected{% endif %}>Monthly Submission</option>
-                            </select>
-                        </div>
-                    </div>
+                    {% endif %}
 
-                    {% comment %} Table For Document {% endcomment %}
+                    <!-- Document Upload Table -->
                     <h5 class="mt-4 mb-3" style="color:#4e73df;">Upload Documents</h5>
                     <table class="table table-bordered">
                         <thead>
@@ -104,7 +211,7 @@
                                     {% endif %}
                                 
                                 <td>
-                                    <input type="file" name="upload_{{ document.doc_id }}" class="form-control" onchange="previewFile(this, '{{ document.doc_id }}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"> 
+                                    <input type="file" name="upload_{{ document.doc_id }}" class="form-control" onchange="previewFile(this, '{{ document.doc_id }}')" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" {% if document.mandatory == 1 and not is_monthly_submission %}required{% elif is_monthly_submission and document.doc_id == 5 %}required{% endif %}> 
                                 
                                 <td>
                                     <a class="edit-link" href="javascript:void(0);" id="viewFile_{{ document.doc_id }}" 
