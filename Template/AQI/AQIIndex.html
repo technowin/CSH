@@ -6,6 +6,53 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
     <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    
+    <style>
+        /* Custom badge styles for better visibility */
+        .badge-custom {
+            display: inline-block;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 20px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .badge-type {
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 20px;
+            display: inline-block;
+            text-align: center;
+        }
+        .badge-status {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 20px;
+            display: inline-block;
+            text-align: center;
+            min-width: 160px;
+        }
+        .action-icons i {
+            font-size: 22px;
+            margin: 0 5px;
+        }
+        .action-icons a {
+            text-decoration: none;
+        }
+        /* Make table rows more readable */
+        table.dataTable tbody td {
+            vertical-align: middle;
+            padding: 12px 8px;
+        }
+        .filter-card {
+            background-color: #f8f9fc;
+            border: 1px solid #e3e6f0;
+            border-radius: 10px;
+        }
+    </style>
 
     <body>
         <div class="card mb-4" style="zoom:85%">
@@ -28,12 +75,11 @@
                 <!-- Filter Section -->
                 <div class="row mt-4 mb-3">
                     <div class="col-md-12">
-                        <div class="card" style="background-color: #f8f9fc;">
+                        <div class="card filter-card">
                             <div class="card-body">
                                 <h6 class="mb-3" style="color:#4e73df;"><i class="fas fa-filter"></i> Filter Applications</h6>
                                 <form method="GET" action="{% url 'citizen_index_ac' %}" id="filterForm">
                                     <div class="row">
-
                                         <div class="col-md-2 mb-2">
                                             <label for="request_no" class="form-label">Request No:</label>
                                             <select name="request_no" id="request_no" class="form-control">
@@ -43,7 +89,6 @@
                                                 {% endfor %}
                                             </select>
                                         </div>
-
                                         <div class="col-md-2 mb-2">
                                             <label for="plot_no" class="form-label">Plot No:</label>
                                             <select name="plot_no" id="plot_no" class="form-control">
@@ -53,7 +98,6 @@
                                                 {% endfor %}
                                             </select>
                                         </div>
-
                                         <div class="col-md-2 mb-2">
                                             <label for="survey_no" class="form-label">Survey No:</label>
                                             <select name="survey_no" id="survey_no" class="form-control">
@@ -63,7 +107,6 @@
                                                 {% endfor %}
                                             </select>
                                         </div>
-
                                         <div class="col-md-2 mb-2">
                                             <label for="submission_month" class="form-label">Submission Month:</label>
                                             <select name="submission_month" id="submission_month" class="form-control">
@@ -77,10 +120,18 @@
                                             <label for="status" class="form-label">Status:</label>
                                             <select name="status" id="status" class="form-control">
                                                 <option value="">All Status</option>
-                                                <!-- ... status options ... -->
+                                                <option value="Draft" {% if filter_status == "Draft" %}selected{% endif %}>Draft</option>
+                                                <option value="New" {% if filter_status == "New" %}selected{% endif %}>New</option>
+                                                <option value="Scrutiny Completed" {% if filter_status == "Scrutiny Completed" %}selected{% endif %}>Scrutiny Completed</option>
+                                                <option value="Refused" {% if filter_status == "Refused" %}selected{% endif %}>Refused</option>
+                                                <option value="Inspection Completed" {% if filter_status == "Inspection Completed" %}selected{% endif %}>Inspection Completed</option>
+                                                <option value="Approved" {% if filter_status == "Approved" %}selected{% endif %}>Approved</option>
+                                                <option value="Rejected" {% if filter_status == "Rejected" %}selected{% endif %}>Rejected</option>
+                                                <option value="Stop Work Notice Issued" {% if filter_status == "Stop Work Notice Issued" %}selected{% endif %}>Stop Work Notice Issued</option>
+                                                <option value="Show Cause Notice Issued" {% if filter_status == "Show Cause Notice Issued" %}selected{% endif %}>Show Cause Notice Issued</option>
+                                                <option value="Resubmitted" {% if filter_status == "Resubmitted" %}selected{% endif %}>Resubmitted</option>
                                             </select>
                                         </div>
-
                                         <div class="col-md-2 mb-2 d-flex align-items-end">
                                             <div class="btn-group w-100">
                                                 <button type="submit" class="btn btn-primary">
@@ -91,7 +142,6 @@
                                                 </a>
                                             </div>
                                         </div>
-                                        
                                     </div>
                                 </form>
                             </div>
@@ -101,98 +151,132 @@
             
                 <div class="table-responsive">
                     <table style="width: 100%; margin-top:2%;" class="table" id="aqiTable">
-                        <thead>
+                        <thead style="background-color: #f2f2f2;">
                             <tr>
-                                <th>#</th>
-                                <th>Request No</th>
-                                <th>Architect Name</th>
-                                <th>Plot No</th>
-                                <th>Survey No</th>
-                                <th>Submission Month</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Remarks</th>
-                                <th>Action</th>
+                                <th style="font-size: 14px; font-weight: 600;">#</th>
+                                <th style="font-size: 14px; font-weight: 600;">Request No</th>
+                                <th style="font-size: 14px; font-weight: 600;">Architect Name</th>
+                                <th style="font-size: 14px; font-weight: 600;">Plot No</th>
+                                <th style="font-size: 14px; font-weight: 600;">Survey No</th>
+                                <th style="font-size: 14px; font-weight: 600;">Submission Month</th>
+                                <th style="font-size: 14px; font-weight: 600;">Type</th>
+                                <th style="font-size: 14px; font-weight: 600;">Status</th>
+                                <th style="font-size: 14px; font-weight: 600;">Remarks</th>
+                                <th style="font-size: 14px; font-weight: 600;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for row in data %}
                             <tr>
-                                <td>{{ row.srno }}</td>
-                                <td>{% if row.request_no %}{{ row.request_no }}{% else %}&nbsp;{% endif %}</td>
-                                <td>{{ row.architect_name }}</td>
-                                <td>{{ row.plot_no|default:"-" }}</td>
-                                <td>{{ row.survey_no|default:"-" }}</td>
-                                <td>{{ row.submission_month|default:"-" }}</td>
+                                <td style="font-size: 14px;">{{ row.srno }}</td>
+                                <td style="font-size: 14px; font-weight: 500;">{% if row.request_no %}{{ row.request_no }}{% else %}&nbsp;{% endif %}</td>
+                                <td style="font-size: 14px;">{{ row.architect_name }}</td>
+                                <td style="font-size: 14px;">{{ row.plot_no|default:"-" }}</td>
+                                <td style="font-size: 14px;">{{ row.survey_no|default:"-" }}</td>
+                                <td style="font-size: 14px;">{{ row.submission_month|default:"-" }}</td>
                                 <td>
                                     {% if row.submission_type == "First" %}
-                                        <span class="badge badge-primary">First</span>
+                                        <span class="badge-type" style="background-color: #4e73df; color: white;">
+                                            <i class="fas fa-file-alt"></i> First
+                                        </span>
                                     {% else %}
-                                        <span class="badge badge-info">Monthly</span>
+                                        <span class="badge-type" style="background-color: #36b9cc; color: white;">
+                                            <i class="fas fa-calendar-alt"></i> Monthly
+                                        </span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if row.status == "Approved" %}
-                                        <span class="badge badge-success">✓ {{ row.status }}</span>
-                                    {% elif row.status == "Rejected" or row.status == "Stop Work Notice Issued" or row.status == "Show Cause Notice Issued" %}
-                                        <span class="badge badge-danger">✗ {{ row.status }}</span>
+                                        <span class="badge-status" style="background-color: #1cc88a; color: white;">
+                                            <i class="fas fa-check-circle"></i> {{ row.status }}
+                                        </span>
+                                    {% elif row.status == "Rejected" %}
+                                        <span class="badge-status" style="background-color: #e74a3b; color: white;">
+                                            <i class="fas fa-times-circle"></i> {{ row.status }}
+                                        </span>
+                                    {% elif row.status == "Stop Work Notice Issued" %}
+                                        <span class="badge-status" style="background-color: #e74a3b; color: white;">
+                                            <i class="fas fa-stop-circle"></i> Stop Work
+                                        </span>
+                                    {% elif row.status == "Show Cause Notice Issued" %}
+                                        <span class="badge-status" style="background-color: #f6c23e; color: #333;">
+                                            <i class="fas fa-exclamation-triangle"></i> Show Cause
+                                        </span>
                                     {% elif row.status == "Refused" %}
-                                        <span class="badge badge-warning">⚠ {{ row.status }}</span>
+                                        <span class="badge-status" style="background-color: #f6c23e; color: #333;">
+                                            <i class="fas fa-undo-alt"></i> {{ row.status }}
+                                        </span>
                                     {% elif row.status == "Draft" %}
-                                        <span class="badge badge-secondary">✎ {{ row.status }}</span>
+                                        <span class="badge-status" style="background-color: #858796; color: white;">
+                                            <i class="fas fa-pencil-alt"></i> {{ row.status }}
+                                        </span>
                                     {% elif row.status == "Resubmitted" %}
-                                        <span class="badge badge-info">↻ {{ row.status }}</span>
+                                        <span class="badge-status" style="background-color: #36b9cc; color: white;">
+                                            <i class="fas fa-sync-alt"></i> {{ row.status }}
+                                        </span>
                                     {% elif row.status == "Inspection Completed" %}
-                                        <span class="badge badge-warning">◉ {{ row.status }}</span>
+                                        <span class="badge-status" style="background-color: #f6c23e; color: #333;">
+                                            <i class="fas fa-clipboard-list"></i> Inspection Done
+                                        </span>
+                                    {% elif row.status == "Scrutiny Completed" %}
+                                        <span class="badge-status" style="background-color: #4e73df; color: white;">
+                                            <i class="fas fa-search"></i> Scrutiny Done
+                                        </span>
+                                    {% elif row.status == "New" %}
+                                        <span class="badge-status" style="background-color: #4e73df; color: white;">
+                                            <i class="fas fa-clock"></i> {{ row.status }}
+                                        </span>
                                     {% else %}
-                                        <span class="badge badge-primary">⟳ {{ row.status }}</span>
+                                        <span class="badge-status" style="background-color: #4e73df; color: white;">
+                                            <i class="fas fa-spinner"></i> {{ row.status }}
+                                        </span>
                                     {% endif %}
                                 </td>
-                                <td>{% if row.remarks %}{{ row.remarks|truncatechars:50 }}{% else %}&nbsp;{% endif %}</td>
-                                <td>
+                                <td style="font-size: 13px;">{% if row.remarks %}{{ row.remarks|truncatechars:60 }}{% else %}&nbsp;{% endif %}</td>
+                                <td class="action-icons">
                                     <!-- View button -->
                                     {% if row.status == 'Draft' %}
-                                        <a class="edit-link" href="{% url 'aqi_application_view' row.id encrypted_new_id %}" title="View and Submit">
-                                            <i class="fa-solid fa-eye" style="font-size: 24px; color: #274FC2;"></i>
+                                        <a href="{% url 'aqi_application_view' row.id encrypted_new_id %}" title="View and Submit" style="color: #274FC2;">
+                                            <i class="fa-solid fa-eye"></i>
                                         </a>
                                     {% else %}
-                                        <a class="edit-link" href="{% url 'aqi_application_view' row.id encrypted_new_id %}" title="View">
-                                            <i class="fa-solid fa-eye" style="font-size: 24px; color: #274FC2;"></i>
+                                        <a href="{% url 'aqi_application_view' row.id encrypted_new_id %}" title="View" style="color: #274FC2;">
+                                            <i class="fa-solid fa-eye"></i>
                                         </a>
                                     {% endif %}
                                     
                                     <!-- Edit button -->
                                     {% if row.status == 'Draft' or row.status == 'Refused' %}
-                                        <a class="edit-link" href="{% url 'aqi_application_edit' row.id encrypted_new_id %}" style="margin-left: 10px;" title="Edit">
-                                            <i class="fa-solid fa-pencil-alt" style="font-size: 24px; color: #FF5733;"></i>
+                                        <a href="{% url 'aqi_application_edit' row.id encrypted_new_id %}" title="Edit" style="color: #FF5733;">
+                                            <i class="fa-solid fa-pencil-alt"></i>
                                         </a>
                                     {% endif %}
                                     
                                     <!-- Download Stop Work Notice button -->
                                     {% if row.status == 'Stop Work Notice Issued' %}
-                                        <a class="edit-link" href="{% url 'download_notice' row.id 17 %}" style="margin-left: 10px;" title="Download Stop Work Notice">
-                                            <i class="fa-solid fa-download" style="font-size: 24px; color: #dc3545;"></i>
+                                        <a href="{% url 'download_notice' row.id 17 %}" title="Download Stop Work Notice" style="color: #dc3545;">
+                                            <i class="fa-solid fa-download"></i>
                                         </a>
                                     {% endif %}
                                     
                                     <!-- Download Show Cause Notice button -->
                                     {% if row.status == 'Show Cause Notice Issued' %}
-                                        <a class="edit-link" href="{% url 'download_notice' row.id 18 %}" style="margin-left: 10px;" title="Download Show Cause Notice">
-                                            <i class="fa-solid fa-download" style="font-size: 24px; color: #fd7e14;"></i>
+                                        <a href="{% url 'download_notice' row.id 18 %}" title="Download Show Cause Notice" style="color: #fd7e14;">
+                                            <i class="fa-solid fa-download"></i>
                                         </a>
                                     {% endif %}
                                     
                                     <!-- Monthly Submission button -->
                                     {% if row.submission_type == 'First' and row.status != 'Draft' and row.status != 'Stop Work Notice Issued' and row.status != 'Show Cause Notice Issued' and row.status != 'Rejected' %}
-                                        <a class="edit-link" href="{% url 'aqi_monthly_create' row.id %}" style="margin-left: 10px;" title="Monthly Submission">
-                                            <i class="fa-solid fa-calendar-plus" style="font-size: 24px; color: #17a2b8;"></i>
+                                        <a href="{% url 'aqi_monthly_create' row.id %}" title="Monthly Submission" style="color: #17a2b8;">
+                                            <i class="fa-solid fa-calendar-plus"></i>
                                         </a>
                                     {% endif %}
                                     
-                                    <!-- Download Certificate button for approved monthly submissions -->
+                                    <!-- Download Certificate button -->
                                     {% if row.status == 'Approved' and row.submission_type == 'Monthly' %}
-                                        <a class="edit-link" href="#" style="margin-left: 10px;" title="Download Certificate">
-                                            <i class="fa-solid fa-download" style="font-size: 24px; color: #28a745;"></i>
+                                        <a href="#" title="Download Certificate" style="color: #28a745;">
+                                            <i class="fa-solid fa-download"></i>
                                         </a>
                                     {% endif %}
                                 </td>
@@ -238,15 +322,13 @@
                     order: [[0, 'desc']],
                     language: {
                         emptyTable: "No AQI applications found. Click 'Apply for AQI Compliance' to get started."
-                    }
+                    },
+                    columnDefs: [
+                        { orderable: false, targets: [9] }  // Disable sorting on action column
+                    ]
                 });
             }
         });
-        
-        // Optional: Auto-submit on filter change (if you want instant filtering)
-        // $('#plot_no, #survey_no, #submission_month, #status').on('change', function() {
-        //     $('#filterForm').submit();
-        // });
     </script>
 
 {% endblock %}
