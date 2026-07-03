@@ -211,3 +211,15 @@ class SessionActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.user_type} | {self.user_id} | {self.action}"
+
+
+class passwordChangeLog (models.Model):
+    user_id = models.CharField(max_length=50, null=True, blank=True)
+    old_password = models.CharField(max_length=256, null=True, blank=True)
+    new_password = models.CharField(max_length=256, null=True, blank=True)
+    changed_by = models.CharField(max_length=256, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'tbl_password_change_log'
+        ordering = ['-updated_at']

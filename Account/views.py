@@ -2,6 +2,7 @@ import json
 import random
 import string
 from django.contrib import messages
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib.auth import authenticate, login ,logout,get_user_model
@@ -393,138 +394,147 @@ def logoutView(request):
         fun = tb[0].name
 
 def register_new_user(request):
-    if request.method=="GET":
-        id = request.GET.get('id', '0')
-        roles = callproc("stp_get_dropdown_values",['roles'])
-        user_list = callproc("stp_get_dropdown_values",['user'])
-        department = callproc("stp_get_dropdown_values",['department'])
-        service = callproc("stp_get_dropdown_values",['service'])
-        
-        if id != '0':
-            id1 = decrypt_parameter(id)
-            users = get_object_or_404(CustomUser, id=id1)
-            user_dept_ser = user_dept_services.objects.using('default').filter(user_id=id1).first()
-            full_name = users.full_name.split(" ", 1) 
-            first_name = full_name[0] 
-            last_name = full_name[1] if len(full_name) > 1 else ""  
-            context = {'users':users,'first_name':first_name,'last_name':last_name,'roles':roles,'user_list':user_list,'department':department,'service':service,'user_dept_ser':user_dept_ser}
+    try:
+        if request.method=="GET":
             
-        else:
-            context = {'id':id,'roles': roles,'department':department,'service':service,'user_list':user_list}
-        return render(request,'Account/register_new_user.html',context)
+            id = request.GET.get('id', '0')
+            roles = callproc("stp_get_dropdown_values",['roles'])
+            user_list = callproc("stp_get_dropdown_values",['user'])
+            department = callproc("stp_get_dropdown_values",['department'])
+            service = callproc("stp_get_dropdown_values",['service'])
+            
+            if id != '0':
+                id1 = decrypt_parameter(id)
+                users = get_object_or_404(CustomUser, id=id1)
+                encrypted_user_id = encrypt_parameter(str(users.id))
+                user_dept_ser = user_dept_services.objects.using('default').filter(user_id=id1).first()
+                full_name = users.full_name.split(" ", 1) 
+                first_name = full_name[0] 
+                last_name = full_name[1] if len(full_name) > 1 else ""  
+                context = {'users':users,'first_name':first_name,'last_name':last_name,'roles':roles,'user_list':user_list,'department':department,'service':service,'user_dept_ser':user_dept_ser, 'encrypted_user_id': encrypted_user_id,}
+                
+            else:
+                context = {'id':id,'roles': roles,'department':department,'service':service,'user_list':user_list}
+            return render(request,'Account/register_new_user.html',context)
 
-    if request.method == "POST":
-        id = request.POST.get('id', '')
-        try:  
-            if id == '0':                
-                firstname = request.POST.get('firstname')
-                lastname = request.POST.get('lastname')
-                email = request.POST.get('email')
-                password = request.POST.get('password') 
-                phone = request.POST.get('mobileNumber')
-                role_id = request.POST.get('role_id')
-                # superior_id = request.POST.get('superior_id')
-                department = request.POST.get('department')
-                service_db = request.POST.get('service', 'default')
-                full_name = f"{firstname} {lastname}"
-                if role_id and role_id != '2':
-                    phone = email
-                # superior_id=superior_id
-                existing_user = CustomUser.objects.using('default').filter(email=email, phone=phone, role_id=role_id).exists()
-                exist_inservice = CustomUser.objects.using(service_db).filter(email=email, phone=phone, role_id=role_id).exists()
-                if exist_inservice:
-                    messages.error(request, "A user with the same email, phone, and role already exists.")
-                    return redirect('/register_new_user?id=0')
-                else:
-                    from django.db import transaction
+        if request.method == "POST":
+            id = request.POST.get('id', '')
+            try:  
+                if id == '0':                
+                    firstname = request.POST.get('firstname')
+                    lastname = request.POST.get('lastname')
+                    email = request.POST.get('email')
+                    password = request.POST.get('password') 
+                    phone = request.POST.get('mobileNumber')
+                    role_id = request.POST.get('role_id')
+                    # superior_id = request.POST.get('superior_id')
+                    department = request.POST.get('department')
+                    service_db = request.POST.get('service', 'default')
+                    full_name = f"{firstname} {lastname}"
+                    if role_id and role_id != '2':
+                        phone = email
+                    # superior_id=superior_id
+                    existing_user = CustomUser.objects.using('default').filter(email=email, phone=phone, role_id=role_id).exists()
+                    exist_inservice = CustomUser.objects.using(service_db).filter(email=email, phone=phone, role_id=role_id).exists()
+                    if exist_inservice:
+                        messages.error(request, "A user with the same email, phone, and role already exists.")
+                        return redirect('/register_new_user?id=0')
+                    else:
+                        from django.db import transaction
 
-                    user = CustomUser(
-                        full_name=full_name,email=email,phone=phone,role_id=role_id
-                    )
-                    user.username = user.email
-                    user.is_active = True 
-                    try:
-                        validate_password(password, user=user)
-                        user.set_password(password)
-                        if existing_user:
-                            user = CustomUser.objects.using('default').get(email=email, phone=phone, role_id=role_id)
-                            user_id = user.id
-                        else:
-                            with transaction.atomic(using='default'):
-                                user.save(using='default') 
-                                password_storage.objects.using('default').create(
-                                    user_id=user.id,
-                                    passwordText=password
+                        user = CustomUser(
+                            full_name=full_name,email=email,phone=phone,role_id=role_id
+                        )
+                        user.username = user.email
+                        user.is_active = True 
+                        try:
+                            validate_password(password, user=user)
+                            user.set_password(password)
+                            if existing_user:
+                                user = CustomUser.objects.using('default').get(email=email, phone=phone, role_id=role_id)
+                                user_id = user.id
+                            else:
+                                with transaction.atomic(using='default'):
+                                    user.save(using='default') 
+                                    password_storage.objects.using('default').create(
+                                        user_id=user.id,
+                                        passwordText=password
+                                    )
+                                user_id = user.id
+                            if department:
+                                user_dept_services.objects.using('default').get_or_create(
+                                    user_id=user_id,department_id=int(department),service_id=int(service_db)
                                 )
-                            user_id = user.id
-                        if department:
-                            user_dept_services.objects.using('default').get_or_create(
-                                user_id=user_id,department_id=int(department),service_id=int(service_db)
+                            if service_db:
+                                user.id = user_id
+                                with transaction.atomic(using=service_db):
+                                    user.save(using=service_db)
+                                    password_storage.objects.using(service_db).create(
+                                        user_id=user.id,
+                                        passwordText=password
+                                    )
+                            assigned_menus = RoleMenuMaster.objects.using(service_db).filter(role_id=role_id)
+                            for menu in assigned_menus:
+                                UserMenuDetails.objects.using(service_db).create(
+                                    user_id=user.id,
+                                    menu_id=menu.menu_id,
+                                    role_id=role_id
                             )
-                        if service_db:
-                            user.id = user_id
-                            with transaction.atomic(using=service_db):
-                                user.save(using=service_db)
-                                password_storage.objects.using(service_db).create(
-                                    user_id=user.id,
-                                    passwordText=password
-                                )
-                        assigned_menus = RoleMenuMaster.objects.using(service_db).filter(role_id=role_id)
-                        for menu in assigned_menus:
-                            UserMenuDetails.objects.using(service_db).create(
-                                user_id=user.id,
-                                menu_id=menu.menu_id,
-                                role_id=role_id
+
+                            messages.success(request, "User registered successfully!")
+
+                        except ValidationError as e:
+                            messages.error(request, ' '.join(e.messages))
+                    
+                else:
+                    firstname = request.POST.get('firstname')
+                    lastname = request.POST.get('lastname')
+                    email = request.POST.get('email')
+                    full_name = f"{firstname} {lastname}"
+                    phone = request.POST.get('mobileNumber')
+                    role_id = request.POST.get('role_id')
+                    # superior_id = request.POST.get('superior_id')
+                    if role_id and role_id != '2':
+                        phone = email
+
+                    user = CustomUser.objects.get(id=id)
+                    user.full_name = full_name
+                    user.email = email
+                    user.phone = phone
+                    user.role_id = role_id
+                    # user.superior_id = superior_id
+                    user.save()
+                    from django.utils import timezone
+                    department = request.POST.get('department')
+                    service_db = request.POST.get('service', 'default')
+                    if department:
+                        obj, created = user_dept_services.objects.using('default').update_or_create(
+                            user_id=id,
+                            department_id=department,
+                            service_id=service_db,
+                            defaults={
+                                'updated_at': timezone.now(),
+                                'updated_by': id,
+                            }
                         )
 
-                        messages.success(request, "User registered successfully!")
-
-                    except ValidationError as e:
-                        messages.error(request, ' '.join(e.messages))
-                    
-            else:
-                firstname = request.POST.get('firstname')
-                lastname = request.POST.get('lastname')
-                email = request.POST.get('email')
-                full_name = f"{firstname} {lastname}"
-                phone = request.POST.get('mobileNumber')
-                role_id = request.POST.get('role_id')
-                # superior_id = request.POST.get('superior_id')
-                if role_id and role_id != '2':
-                    phone = email
-
-                user = CustomUser.objects.get(id=id)
-                user.full_name = full_name
-                user.email = email
-                user.phone = phone
-                user.role_id = role_id
-                # user.superior_id = superior_id
-                user.save()
-                from django.utils import timezone
-                department = request.POST.get('department')
-                service_db = request.POST.get('service', 'default')
-                if department:
-                    obj, created = user_dept_services.objects.using('default').update_or_create(
-                        user_id=id,
-                        department_id=department,
-                        service_id=service_db,
-                        defaults={
-                            'updated_at': timezone.now(),
-                            'updated_by': id,
-                        }
-                    )
-
-                messages.success(request, "User details updated successfully!")
-            return redirect('/masters?entity=user&type=i')
+                    messages.success(request, "User details updated successfully!")
+                return redirect('/masters?entity=user&type=i')
 
 
-        except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            fun = tb[0].name
-            callproc("stp_error_log",[fun,str(e),request.user.id])  
-            print(f"error: {e}")
-            messages.error(request, 'Oops...! Something went wrong!')
-            response = {'result': 'fail','messages ':'something went wrong !'}   
+            except Exception as e:
+                tb = traceback.extract_tb(e.__traceback__)
+                fun = tb[0].name
+                callproc("stp_error_log",[fun,str(e),request.user.id])  
+                print(f"error: {e}")
+                messages.error(request, 'Oops...! Something went wrong!')
+                response = {'result': 'fail','messages ':'something went wrong !'}   
+
+    except Exception as e:
+        tb = traceback.extract_tb(e.__traceback__)
+        fun = tb[0].name
+        callproc("stp_error_log", [fun, str(e), request.user.id])
+        messages.error(request, 'Oops...! Something went wrong!')
 
 def forgot_password(request):
     try:
@@ -567,51 +577,90 @@ def search(request):
         return render(request, 'Bootstrap/search_results.html', {'query': query, 'results': results})
 
 @login_required       
-def change_password(request):
-    try:
-        if request.method == "POST":
-            password = request.POST.get('password')  # The password entered by the user
-            username = request.session.get('username', '')  # The username from the session
-            user = CustomUser.objects.get(email=username)
-            if check_password(password, user.password):
-                status = "1"
-            else:
-                status = "0" 
+def change_password(request, user_id):
+    user_id = decrypt_parameter(user_id)
 
-    except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            fun = tb[0].name
-            callproc("stp_error_log",[fun,str(e),request.user.id])  
-            print(f"error: {e}")
-            messages.error(request, 'Oops...! Something went wrong!')
-            response = {'result': 'fail','messages ':'something went wrong !'}
-    finally:
-        if request.method == "GET":
-            return render(request,'Account/change_password.html')
-        else:
-           return JsonResponse({'status': status})
+    user = CustomUser.objects.get(id=user_id)
+
+    user_mapping = user_dept_services.objects.using("default").filter(
+        user_id=user_id
+    ).first()
+
+    service_db = "default"
+    if user_mapping:
+        service_db = str(user_mapping.service_id)
+
+    return render(
+        request,
+        "Account/change_password.html",
+        {
+            "user_id": user_id,          # used in hidden field
+            "username": user.email,
+            "service_db": service_db,
+            "encrypted_user_id": encrypt_parameter(str(user_id)),
+        }
+    )
         
 @login_required
 def reset_password(request):
     try:
-        email = request.POST.get('email')
-        if not email:
-            email = request.session.get('username', '')
-        password = request.POST.get('password')
-        user = CustomUser.objects.get(email=email)
-        # Update password
-        user.set_password(password)
-        user.save()
-        messages.success(request, 'Password has been successfully updated.')
+        if request.method != "POST":
+            return redirect('/masters?entity=user&type=i')
+
+        # user_id = request.POST.get("user_id")
+        encrypted_user_id = request.POST.get("user_id")
+        user_id = decrypt_parameter(encrypted_user_id)      
+        service_db = request.POST.get("service_db", "default")
+        password = request.POST.get("password")
+
+        # Update in DEFAULT database
+        with transaction.atomic(using="default"):
+            user = CustomUser.objects.using("default").get(id=user_id)
+            old_password = user.password
+
+            user.set_password(password)
+            user.save(using="default")
+
+            password_storage.objects.using("default").update_or_create(
+                user_id=user_id,
+                defaults={
+                    "passwordText": password
+                }
+            )
+
+            passwordChangeLog.objects.using("default").create(
+                user_id=user_id,
+                old_password=old_password,
+                new_password=user.password,      # hashed password
+                changed_by=request.user.id
+            )
+
+        # Update in SERVICE database (if different)
+        if service_db != "default":
+            with transaction.atomic(using=service_db):
+                service_user = CustomUser.objects.using(service_db).get(id=user_id)
+                service_user.set_password(password)
+                service_user.save(using=service_db)
+
+                password_storage.objects.using(service_db).update_or_create(
+                    user_id=user_id,
+                    defaults={
+                        "passwordText": password
+                    }
+                )
+
+        messages.success(request, "Password has been successfully updated.")
+
+    except CustomUser.DoesNotExist:
+        messages.error(request, "User not found.")
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), request.user.id])
-        messages.error(request, 'Oops...! Something went wrong!')
-    
-    finally:
-        return redirect( f'change_password')
+        messages.error(request, "Oops...! Something went wrong!")
+
+    return redirect("change_password", user_id=encrypted_user_id)
     
 @login_required    
 def forget_password_change(request):
