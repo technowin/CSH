@@ -108,7 +108,12 @@
                     </button>
                     &nbsp;&nbsp;&nbsp; 
                     <a type="button" href="masters/?entity=user&type=i" id="Btn3" class="btn btn-primary btn-user ">Back</a>
-
+                    &nbsp;&nbsp;&nbsp;
+                    {% if id != '0' %}
+                        <a href="{% url 'change_password' encrypted_user_id %}" class="btn btn-primary btn-user">
+                            Change Password
+                        </a>
+                    {% endif %}
                 </div>     
                 {% comment %} <div class="text-center">
                     <a class="small" href="/">Already have an account? Login!</a>

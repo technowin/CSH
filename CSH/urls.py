@@ -54,6 +54,7 @@ urlpatterns = [
     path("register_new_user",register_new_user, name="register_new_user"),
     path("reset_password",reset_password, name="reset_password"),
     path("change_password",change_password, name="change_password"),
+    path('change_password/<str:user_id>/',change_password, name='change_password'),
     path("forget_password_change",forget_password_change, name="forget_password_change"),
 
     path("onetimepage",onetimepage, name="onetimepage"),
