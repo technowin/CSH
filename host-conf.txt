@@ -158,6 +158,7 @@ python manage.py makemigrations MenuManager
 python manage.py makemigrations Reports
 python manage.py makemigrations DrainageConnection
 python manage.py makemigrations TreeCutting
+python manage.py makemigrations aqi
 
 python manage.py migrate Account --database=default
 python manage.py migrate Account --database=1
@@ -172,6 +173,8 @@ python manage.py migrate MenuManager --database=2
 python manage.py migrate Reports --database=1
 python manage.py migrate Reports --database=2
 
+python manage.py migrate aqi --database=6
+python manage.py migrate MenuManager --database=6
 
 python manage.py migrate DrainageConnection --database=1
 

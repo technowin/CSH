@@ -30,6 +30,7 @@ from ContractRegistration.views import *
 from ProductApproval.views import *
 from Masters.views import site_master as sm
 from Masters.views import company_master as cm
+from aqi.views import *
 from django.urls import path
 
 
@@ -233,6 +234,16 @@ urlpatterns = [
     path('downloadRefusalDocumenttt/<str:row_id>/', downloadRefusalDocumenttt, name='downloadRefusalDocumenttt'), 
     path('downloadRefusalDocumenttc/<str:row_id>/', downloadRefusalDocumenttc, name='downloadRefusalDocumenttc'),
 
+    # AQI Application URLs
+    
+    path('index_ac/', index_ac, name='index_ac'),
+    path('citizen_index_ac', citizen_index_ac, name='citizen_index_ac'),
+    path('aqi_application_create/', aqi_application_create, name='aqi_application_create'),
+    path('aqi_application_view/<str:row_id>/<str:new_id>/', aqi_application_view, name='aqi_application_view'),
+    path('aqi_application_edit/<str:row_id>/<str:new_id>/', aqi_application_edit, name='aqi_application_edit'),
+    path('matrix_flow_ac', matrix_flow_ac, name='matrix_flow_ac'),
+    path('download_notice/<str:row_id>/<int:doc_id>/', download_notice, name='download_notice'),
+    path('aqi_monthly_create/<str:parent_id>/', aqi_monthly_create, name='aqi_monthly_create'),
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,192 @@
+{% extends "Shared/Layout.html" %} 
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/applicationForm.css' %}" />
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+
+<body>
+    
+    <div class="container mt-5" style="max-width: 1800px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center" style="color:#4e73df;">
+                  <u>AQI Compliance Application</u>
+                </h2>
+                <!-- In the view page, add this after the request no display -->
+                <p class="text-center text-muted">
+                    Request No: {{ viewDetails.request_no|default:"Not Generated Yet" }}
+                    {% if viewDetails.submission_type == 'Monthly' and parent_request_no %}
+                        <br><small>Main Application Request No: <strong>{{ parent_request_no }}</strong></small>
+                    {% endif %}
+                </p>
+                <br>
+                
+                <form method="POST" action="{% url 'aqi_application_view' row_id=row_id new_id=new_id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Monthly AQI Data Section (only for monthly submissions) -->
+                    {% if viewDetails.submission_type == 'Monthly' %}
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">AQI Value :</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.monthly_aqi_value }}" disabled>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label font-weight-bold">AQI Category :</label>
+                                <input type="text" class="form-control" value="{{ viewDetails.monthly_aqi_category }}" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">Monthly Remarks :</label>
+                                <textarea class="form-control" rows="2" disabled>{{ viewDetails.monthly_remarks }}</textarea>
+                            </div>
+                        </div>
+                    {% endif %}
+                
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Village Name :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.village_name }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">BP Fire No. :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.bp_fire_no }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Survey No / Gut No :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.survey_no }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Plot No. :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.plot_no }}" disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Name of Architect :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.architect_name }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Name of Builder :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.builder_name }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Plot Area (sq.m) :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.plot_area }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Submission Month :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.submission_month }}" disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Latitude :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.latitude }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Longitude :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.longitude }}" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label font-weight-bold">Submission Type :</label>
+                            <input type="text" class="form-control" value="{{ viewDetails.submission_type }}" disabled>
+                        </div>
+                    </div>
+
+                    {% if viewDetails.status.status_name == "Rejected" and viewDetails.rejected_reason %}
+                        <div class="alert alert-danger">
+                            <strong>Rejection Reason:</strong> {{ viewDetails.rejected_reason }}
+                        </div>
+                    {% endif %}
+
+                    {% if viewDetails.status.status_name == "Approved" and viewDetails.approved_remark %}
+                        <div class="alert alert-success">
+                            <strong>Approval Remark:</strong> {{ viewDetails.approved_remark }}
+                        </div>
+                    {% endif %}
+
+                    <h5 class="mt-4 mb-3" style="color:#4e73df;">Uploaded Documents</h5>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th style="width:50%">Document Name</th>
+                                <th>Document</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in uploaded_documents %}
+                            <tr>
+                                <td>
+                                    {{ document.document_master.doc_name }}
+                                    {% if document.document_master.mandatory == 1 %}
+                                        <span style="color: red;">*</span>
+                                    {% endif %}
+                                <td>
+                                    {% if document.filepath %}
+                                        <a class="edit-link" href="{% url 'download_doc' document.encrypted_filepath %}" target="_blank">
+                                            <i class="fa fa-eye" style="font-size: 24px; color: #4e73df;"></i>
+                                            <span class="edit-text">View Document</span>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">No document uploaded</span>
+                                    {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    <div class="text-center">
+                        {% if plain_new_id == '0' and viewDetails.is_draft == 1 %}
+                            <button type="submit" id="submitBtn" class="btn btn-success">Final Submit</button>
+                            <a href="{% url 'aqi_application_edit' row_id new_id %}" class="btn btn-warning">Edit Application</a>
+                        
+                        {% elif viewDetails.status.status_name == "Refused" %}
+                            <button type="submit" id="submitBtn" class="btn btn-success">Resubmit Application</button>
+                            <a href="{% url 'aqi_application_edit' row_id new_id %}" class="btn btn-warning">Revise Application</a>
+                        
+                        {% comment %} {% elif viewDetails.status.status_name == "Resubmitted" %}
+                            <button type="submit" id="submitBtn" class="btn btn-success">Resubmit Application</button>
+                            <a href="{% url 'aqi_application_edit' row_id new_id %}" class="btn btn-warning">Edit Application</a> {% endcomment %}
+                        
+                        {% elif viewDetails.status.status_name == "Rejected" %}
+                            <a href="#" class="btn btn-danger" disabled>Application Rejected</a>
+                        
+                        {% elif viewDetails.status.status_name == "Approved" %}
+                            <a href="#" class="btn btn-success" disabled>Application Approved</a>
+                        
+                        {% else %}
+                            <!-- For other statuses like New, Scrutiny Completed, Inspection Completed -->
+                            <a href="#" class="btn btn-secondary" disabled>Application Under Process</a>
+                        {% endif %}
+                        <a href="{% url 'citizen_index_ac' %}" class="btn btn-secondary">Go Back</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                Swal.fire({
+                    title: "{{ message.tags|title }}",
+                    text: "{{ message }}",
+                    icon: "{{ message.tags }}",
+                    confirmButtonText: "OK",
+                });
+            </script>
+        {% endfor %}
+    {% endif %}
+    
+</body>
+{% endblock %}
