@@ -743,8 +743,6 @@ def Create_Document_Master(request):
         logger.error(f"Error rendering documentMaster: {str(e)}")
         return HttpResponse("An error occurred while trying to load the page.", status=500)
 
-
-    
 # Edit Document
 
 def Edit_Document_master(request):
@@ -835,3 +833,720 @@ def Edit_Document_master(request):
 
     except Exception as e:
         return HttpResponse(f"An error occurred: {str(e)}", status=500)
+
+import json
+import traceback
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpResponse
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import datetime, timedelta
+from django.apps import apps
+from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import numbers
+from io import BytesIO
+
+# Helper functions
+def get_model_for_service(service_id, model_name):
+    """
+    Dynamically get the model class for the given service and model name
+    """
+    try:
+        service_to_app = {
+            '1': 'DrainageConnection',
+            '2': 'TreeCutting', 
+            '3': 'TreeTrimming',
+            '4': 'ContractRegistration',
+            '5': 'ProductApproval'
+        }
+        
+        # For status_master - it's in Masters app
+        if model_name == 'status_master':
+            try:
+                model = apps.get_model('Masters', 'status_master')
+                return model
+            except LookupError:
+                try:
+                    model = apps.get_model('Masters', 'StatusMaster')
+                    return model
+                except LookupError:
+                    return None
+        
+        # For other models, get from service app
+        app_label = service_to_app.get(str(service_id))
+        if not app_label:
+            return None
+        
+        try:
+            model = apps.get_model(app_label, model_name)
+            return model
+        except LookupError:
+            try:
+                model_class_name = ''.join(word.capitalize() for word in model_name.split('_'))
+                model = apps.get_model(app_label, model_class_name)
+                return model
+            except LookupError:
+                return None
+    except Exception:
+        return None
+
+def get_service_name(service_id):
+    try:
+        service_names = {
+            '1': 'Drainage Connection',
+            '2': 'Tree Cutting',
+            '3': 'Tree Trimming', 
+            '4': 'Contract Registration',
+            '5': 'Product Approval'
+        }
+        return service_names.get(str(service_id), 'Unknown Service')
+    except Exception:
+        return 'Unknown Service'
+
+def get_service_db_name(service_id):
+    try:
+        db_mapping = {
+            '1': '1',
+            '2': '2',
+            '3': '3',
+            '4': '4',
+            '5': '5'
+        }
+        return db_mapping.get(str(service_id), 'default')
+    except Exception:
+        return 'default'
+
+def get_service_color(service_id):
+    try:
+        colors = {
+            '1': '#3498db',
+            '2': '#2ecc71',
+            '3': '#f39c12',
+            '4': '#9b59b6',
+            '5': '#e74c3c'
+        }
+        return colors.get(str(service_id), '#2c3e50')
+    except Exception:
+        return '#2c3e50'
+
+# ========== MAIN DASHBOARD VIEW ==========
+def service_dashboard(request):
+    try:
+        service_id = request.session.get("service_db")
+        
+        if not service_id:
+            return render(request, 'Master/no_service.html', {
+                'message': 'Please select a service first'
+            })
+        
+        # Get models
+        ApplicationForm = get_model_for_service(service_id, 'application_form')
+        StatusMaster = get_model_for_service(service_id, 'status_master')
+        
+        if not ApplicationForm:
+            return render(request, 'Master/error.html', {
+                'message': 'Application form model not found'
+            })
+        
+        db_alias = get_service_db_name(service_id)
+        service_name = get_service_name(service_id)
+        service_color = get_service_color(service_id)
+        
+        # Get filter parameters from request
+        from_date = request.GET.get('from_date')
+        to_date = request.GET.get('to_date')
+        
+        # Base queryset
+        try:
+            applications = ApplicationForm.objects.using(db_alias).all()
+        except Exception as e:
+            print(f"Error getting applications: {e}")
+            applications = ApplicationForm.objects.using(db_alias).none()
+        
+        # Apply date filters if provided
+        try:
+            if from_date:
+                try:
+                    from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+                    applications = applications.filter(created_at__gte=from_date_obj)
+                except ValueError:
+                    pass
+            
+            if to_date:
+                try:
+                    to_date_obj = datetime.strptime(to_date, '%Y-%m-%d')
+                    to_date_obj = to_date_obj + timedelta(days=1)
+                    applications = applications.filter(created_at__lt=to_date_obj)
+                except ValueError:
+                    pass
+        except Exception as e:
+            print(f"Error applying date filters: {e}")
+        
+        try:
+            total_applications = applications.count()
+        except Exception:
+            total_applications = 0
+        
+        # ========== GET STATUSES FROM SERVICE DB ==========
+        status_distribution = {}
+        status_colors = {}
+        status_labels = []
+        status_values = []
+        status_color_list = []
+        
+        try:
+            if StatusMaster:
+                try:
+                    statuses = StatusMaster.objects.using(db_alias).all()
+                    
+                    for status in statuses:
+                        try:
+                            count = applications.filter(status=status).count()
+                            status_name = status.status_name if status.status_name else 'Unknown'
+                            status_distribution[status_name] = count
+                            status_colors[status_name] = status.status_color or '#6c757d'
+                        except Exception as e:
+                            print(f"Error processing status {status}: {e}")
+                            continue
+                    
+                    status_labels = list(status_distribution.keys())
+                    status_values = list(status_distribution.values())
+                    status_color_list = [status_colors.get(label, '#6c757d') for label in status_labels]
+                    
+                except Exception as e:
+                    print(f"Error getting statuses: {e}")
+        except Exception as e:
+            print(f"Status processing error: {e}")
+        
+        # Calculate counts
+        approved_count = 0
+        pending_count = 0
+        rejected_count = 0
+        
+        try:
+            for status_name, count in status_distribution.items():
+                try:
+                    lower_status = status_name.lower()
+                    if 'approved' in lower_status or 'issued' in lower_status or 'certificate' in lower_status:
+                        approved_count += count
+                    elif 'pending' in lower_status or 'process' in lower_status or 'forward' in lower_status:
+                        pending_count += count
+                    elif 'rejected' in lower_status or 'refused' in lower_status:
+                        rejected_count += count
+                except Exception as e:
+                    print(f"Error calculating counts for {status_name}: {e}")
+                    continue
+        except Exception as e:
+            print(f"Count calculation error: {e}")
+        
+        # ========== DAILY DATA ==========
+        date_range = []
+        
+        try:
+            if from_date and to_date:
+                try:
+                    start_date = datetime.strptime(from_date, '%Y-%m-%d')
+                    end_date = datetime.strptime(to_date, '%Y-%m-%d')
+                    days_diff = (end_date - start_date).days
+                    
+                    if days_diff > 60:
+                        start_date = end_date - timedelta(days=60)
+                    
+                    current_date = start_date
+                    while current_date <= end_date:
+                        try:
+                            day_start = datetime(current_date.year, current_date.month, current_date.day)
+                            day_end = day_start + timedelta(days=1)
+                            
+                            day_count = applications.filter(
+                                created_at__gte=day_start,
+                                created_at__lt=day_end
+                            ).count()
+                            
+                            date_range.append({
+                                'date': current_date.strftime('%Y-%m-%d'),
+                                'volume': day_count
+                            })
+                        except Exception as e:
+                            print(f"Error processing date {current_date}: {e}")
+                        current_date += timedelta(days=1)
+                        
+                except ValueError:
+                    date_range = get_default_daily_data(applications)
+            else:
+                date_range = get_default_daily_data(applications)
+        except Exception as e:
+            print(f"Error generating daily data: {e}")
+            date_range = get_default_daily_data(applications)
+        
+        # ========== TABLE DATA ==========
+        table_data = []
+        table_fields = []
+        
+        try:
+            all_applications = applications.order_by('-created_at')
+            
+            if service_id == '1':
+                table_fields = ['request_no', 'name_of_premises', 'plot_no', 'sector_no', 'node', 'name_of_owner', 'status', 'created_at']
+            elif service_id == '2':
+                table_fields = ['request_no', 'name_of_applicant', 'plot_no', 'survey_no', 'address', 'total_existing_no_of_trees', 'status', 'created_at']
+            elif service_id == '3':
+                table_fields = ['request_no', 'name_of_applicant', 'plot_no', 'survey_no', 'address', 'total_trees_to_trim', 'status', 'created_at']
+            elif service_id == '4':
+                table_fields = ['request_no', 'company_name', 'contractor_type', 'gstin', 'contact_person_name', 'mobile_no', 'status', 'created_at']
+            elif service_id == '5':
+                table_fields = ['request_no', 'product_type', 'factory_name', 'gstin', 'contact_person_name', 'mobile_no', 'status', 'created_at']
+            else:
+                table_fields = ['request_no', 'status', 'created_at']
+            
+            for app in all_applications:
+                try:
+                    row = {'id': app.id}
+                    for field in table_fields:
+                        try:
+                            if field == 'status':
+                                row['status'] = app.status.status_name if app.status else 'N/A'
+                                row['status_color'] = app.status.status_color if app.status else '#6c757d'
+                            elif field == 'created_at':
+                                row['created_at'] = app.created_at.strftime('%Y-%m-%d %H:%M') if app.created_at else '-'
+                            else:
+                                value = getattr(app, field, None)
+                                row[field] = str(value) if value is not None and value != '' else '-'
+                        except Exception as e:
+                            print(f"Error processing field {field} for app {app.id}: {e}")
+                            row[field] = '-'
+                    table_data.append(row)
+                except Exception as e:
+                    print(f"Error processing app {app}: {e}")
+                    continue
+                    
+        except Exception as e:
+            print(f"Error generating table data: {e}")
+            table_data = []
+            table_fields = ['request_no', 'status', 'created_at']
+        
+        username = request.session.get('username', 'User')
+        user_id = request.session.get('user_id', 1)
+        role_id = request.session.get('role_id', 1)
+        
+        context = {
+            'service_id': service_id,
+            'service_name': service_name,
+            'service_color': service_color,
+            'total_applications': total_applications,
+            'approved_count': approved_count,
+            'pending_count': pending_count,
+            'rejected_count': rejected_count,
+            'status_distribution': json.dumps({
+                'labels': status_labels,
+                'values': status_values,
+                'colors': status_color_list
+            }),
+            'daily_data': json.dumps(date_range),
+            'table_data': table_data,
+            'table_fields': table_fields,
+            'username': username,
+            'user_id': user_id,
+            'role_id': role_id,
+            'from_date': from_date if from_date else '',
+            'to_date': to_date if to_date else '',
+        }
+        
+        return render(request, 'Master/dashboard.html', context)
+        
+    except Exception as e:
+        print(f"Error in dashboard: {str(e)}")
+        print(traceback.format_exc())
+        messages.error(request, 'Oops...! Something went wrong!')
+        return render(request, 'Master/error.html', {
+            'message': f'Error: {str(e)}'
+        })
+
+def get_default_daily_data(applications):
+    try:
+        date_range = []
+        today = timezone.now()
+        end_date = today
+        start_date = today - timedelta(days=29)
+        current_date = start_date
+        while current_date <= end_date:
+            try:
+                day_start = datetime(current_date.year, current_date.month, current_date.day)
+                day_end = day_start + timedelta(days=1)
+                day_count = applications.filter(
+                    created_at__gte=day_start,
+                    created_at__lt=day_end
+                ).count()
+                date_range.append({
+                    'date': current_date.strftime('%Y-%m-%d'),
+                    'volume': day_count
+                })
+            except Exception as e:
+                print(f"Error processing date {current_date}: {e}")
+            current_date += timedelta(days=1)
+        return date_range
+    except Exception:
+        return []
+
+# ========== GET APPLICATION DETAIL FOR MODAL ==========
+def get_application_detail(request, app_id):
+    """
+    API to get detailed application data for modal popup
+    """
+    try:
+        service_id = request.session.get("service_db")
+        
+        if not service_id:
+            return JsonResponse({'error': 'No service selected'}, status=400)
+        
+        ApplicationForm = get_model_for_service(service_id, 'application_form')
+        WorkflowHistory = get_model_for_service(service_id, 'workflow_history')
+        
+        # Get CustomUser from Account app
+        try:
+            CustomUser = apps.get_model('Account', 'CustomUser')
+        except LookupError:
+            try:
+                CustomUser = apps.get_model('Account', 'customuser')
+            except LookupError:
+                CustomUser = None
+        
+        if not ApplicationForm:
+            return JsonResponse({'error': 'Model not found'}, status=404)
+        
+        db_alias = get_service_db_name(service_id)
+        service_name = get_service_name(service_id)
+        
+        try:
+            application = ApplicationForm.objects.using(db_alias).get(id=app_id)
+        except ApplicationForm.DoesNotExist:
+            return JsonResponse({'error': 'Application not found'}, status=404)
+        
+        # Get all user IDs from application fields
+        user_ids = set()
+        
+        # Check created_by and updated_by
+        if application.created_by:
+            try:
+                user_ids.add(int(application.created_by))
+            except (ValueError, TypeError):
+                pass
+        if application.updated_by:
+            try:
+                user_ids.add(int(application.updated_by))
+            except (ValueError, TypeError):
+                pass
+        
+        # Get all fields and their values
+        app_data = {}
+        for field in application._meta.get_fields():
+            if field.name in ['status', 'form_user']:
+                continue
+            value = getattr(application, field.name, None)
+            if value is not None:
+                if isinstance(value, datetime):
+                    app_data[field.name] = value.strftime('%Y-%m-%d %H:%M:%S')
+                elif isinstance(value, bool):
+                    app_data[field.name] = 'Yes' if value else 'No'
+                else:
+                    app_data[field.name] = str(value)
+            else:
+                app_data[field.name] = '-'
+        
+        # Add status
+        app_data['status'] = application.status.status_name if application.status else 'N/A'
+        app_data['status_color'] = application.status.status_color if application.status else '#6c757d'
+        app_data['request_no'] = application.request_no if application.request_no else 'N/A'
+        
+        # Fetch user names from Account app
+        user_names = {}
+        if CustomUser and user_ids:
+            try:
+                users = CustomUser.objects.using('default').filter(id__in=user_ids)
+                for user in users:
+                    user_names[user.id] = user.full_name if user.full_name else user.phone
+                print(f"Found {len(user_names)} users from Account app")
+            except Exception as e:
+                print(f"Error fetching users from Account app: {e}")
+        
+        # Replace created_by and updated_by with names
+        if app_data.get('created_by') and app_data['created_by'] != '-':
+            try:
+                created_by_id = int(app_data['created_by'])
+                app_data['created_by'] = user_names.get(created_by_id, app_data['created_by'])
+            except (ValueError, TypeError):
+                pass
+        
+        if app_data.get('updated_by') and app_data['updated_by'] != '-':
+            try:
+                updated_by_id = int(app_data['updated_by'])
+                app_data['updated_by'] = user_names.get(updated_by_id, app_data['updated_by'])
+            except (ValueError, TypeError):
+                pass
+        
+        # ========== GET WORKFLOW HISTORY WITH USER NAMES ==========
+        workflow_data = []
+        if WorkflowHistory:
+            history = WorkflowHistory.objects.using(db_alias).filter(
+                form_id=application
+            ).order_by('-updated_at')[:20]
+            
+            # Get all user IDs from workflow history
+            workflow_user_ids = set()
+            for record in history:
+                if record.send_forward:
+                    try:
+                        workflow_user_ids.add(int(record.send_forward))
+                    except (ValueError, TypeError):
+                        pass
+                if record.pre_user:
+                    try:
+                        workflow_user_ids.add(int(record.pre_user))
+                    except (ValueError, TypeError):
+                        pass
+            
+            # Fetch workflow user names
+            workflow_user_names = {}
+            if CustomUser and workflow_user_ids:
+                try:
+                    users = CustomUser.objects.using('default').filter(id__in=workflow_user_ids)
+                    for user in users:
+                        workflow_user_names[user.id] = user.full_name if user.full_name else user.phone
+                except Exception as e:
+                    print(f"Error fetching workflow users: {e}")
+            
+            for record in history:
+                # Get user names
+                send_forward_name = '-'
+                pre_user_name = '-'
+                
+                if record.send_forward:
+                    try:
+                        send_forward_id = int(record.send_forward)
+                        send_forward_name = workflow_user_names.get(send_forward_id, str(record.send_forward))
+                    except (ValueError, TypeError):
+                        send_forward_name = str(record.send_forward)
+                
+                if record.pre_user:
+                    try:
+                        pre_user_id = int(record.pre_user)
+                        pre_user_name = workflow_user_names.get(pre_user_id, str(record.pre_user))
+                    except (ValueError, TypeError):
+                        pre_user_name = str(record.pre_user)
+                
+                status_name = record.status.status_name if record.status else 'N/A'
+                
+                workflow_data.append({
+                    'level': record.level or '-',
+                    'status': status_name,
+                    'send_forward': send_forward_name,
+                    'pre_user': pre_user_name,
+                    'created_at': record.created_at.strftime('%Y-%m-%d %H:%M:%S') if record.created_at else '-',
+                    'updated_at': record.updated_at.strftime('%Y-%m-%d %H:%M:%S') if record.updated_at else '-',
+                })
+        
+        return JsonResponse({
+            'application': app_data,
+            'workflow_history': workflow_data,
+            'service': service_name
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in get_application_detail: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({'error': str(e)}, status=500)
+
+# ========== EXPORT TO EXCEL - WITH DATE FILTER ==========
+def export_to_excel(request):
+    """
+    Export all applications for the current service to Excel with date filter
+    """
+    try:
+        service_id = request.session.get("service_db")
+        
+        if not service_id:
+            return HttpResponse('No service selected', status=400)
+        
+        ApplicationForm = get_model_for_service(service_id, 'application_form')
+        
+        if not ApplicationForm:
+            return HttpResponse('Model not found', status=404)
+        
+        db_alias = get_service_db_name(service_id)
+        service_name = get_service_name(service_id)
+        
+        # Get filter parameters from GET request
+        from_date = request.GET.get('from_date')
+        to_date = request.GET.get('to_date')
+        
+        print(f"=== Export Excel ===")
+        print(f"From Date: {from_date}")
+        print(f"To Date: {to_date}")
+        
+        # Base queryset
+        applications = ApplicationForm.objects.using(db_alias).all()
+        
+        # Apply date filters ONLY if provided
+        if from_date:
+            try:
+                from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+                applications = applications.filter(created_at__gte=from_date_obj)
+                print(f"Applied from_date filter: {from_date}")
+            except ValueError as e:
+                print(f"Error parsing from_date: {e}")
+        
+        if to_date:
+            try:
+                to_date_obj = datetime.strptime(to_date, '%Y-%m-%d')
+                to_date_obj = to_date_obj + timedelta(days=1)
+                applications = applications.filter(created_at__lt=to_date_obj)
+                print(f"Applied to_date filter: {to_date}")
+            except ValueError as e:
+                print(f"Error parsing to_date: {e}")
+        
+        # Order by created_at descending
+        applications = applications.order_by('-created_at')
+        
+        total_count = applications.count()
+        print(f"Total records exported: {total_count}")
+        
+        # ========== GET USER NAMES FROM ACCOUNT APP ==========
+        try:
+            CustomUser = apps.get_model('Account', 'CustomUser')
+        except LookupError:
+            try:
+                CustomUser = apps.get_model('Account', 'customuser')
+            except LookupError:
+                CustomUser = None
+        
+        # Collect all user IDs from applications
+        user_ids = set()
+        for app in applications:
+            if app.created_by:
+                try:
+                    user_ids.add(int(app.created_by))
+                except (ValueError, TypeError):
+                    pass
+            if app.updated_by:
+                try:
+                    user_ids.add(int(app.updated_by))
+                except (ValueError, TypeError):
+                    pass
+        
+        # Fetch user names
+        user_names = {}
+        if CustomUser and user_ids:
+            try:
+                users = CustomUser.objects.using('default').filter(id__in=user_ids)
+                for user in users:
+                    user_names[user.id] = user.full_name if user.full_name else user.phone
+                print(f"Found {len(user_names)} users for Excel export")
+            except Exception as e:
+                print(f"Error fetching users for Excel: {e}")
+        
+        # Get fields - exclude status and form_user
+        fields = []
+        for field in ApplicationForm._meta.get_fields():
+            if field.name not in ['status', 'form_user'] and not field.is_relation:
+                fields.append(field.name)
+        
+        # Create workbook
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Applications"
+        
+        # Styles
+        header_font = Font(bold=True, color="FFFFFF", size=11)
+        header_fill = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        
+        thin_border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        cell_alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+        
+        # Add headers
+        for col, field in enumerate(fields, 1):
+            cell = ws.cell(row=1, column=col)
+            cell.value = field.replace('_', ' ').title()
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = thin_border
+        
+        # Add data with user names
+        for row, app in enumerate(applications, 2):
+            for col, field in enumerate(fields, 1):
+                cell = ws.cell(row=row, column=col)
+                value = getattr(app, field, None)
+                
+                # ========== CONVERT USER IDs TO NAMES ==========
+                if field == 'created_by' or field == 'updated_by':
+                    if value:
+                        try:
+                            user_id = int(value)
+                            value = user_names.get(user_id, str(value))
+                        except (ValueError, TypeError):
+                            value = str(value) if value else '-'
+                    else:
+                        value = '-'
+                elif isinstance(value, datetime):
+                    value = value.strftime('%Y-%m-%d %H:%M:%S')
+                elif value is None:
+                    value = '-'
+                else:
+                    value = str(value)
+                
+                cell.value = value
+                cell.alignment = cell_alignment
+                cell.border = thin_border
+        
+        # Auto-adjust column widths
+        for col in range(1, len(fields) + 1):
+            column_letter = get_column_letter(col)
+            max_length = 0
+            for row in range(1, min(ws.max_row + 1, 50)):
+                cell_value = ws.cell(row=row, column=col).value
+                if cell_value:
+                    max_length = max(max_length, len(str(cell_value)))
+            adjusted_width = min(max_length + 5, 50)
+            ws.column_dimensions[column_letter].width = max(adjusted_width, 15)
+        
+        # Add filter
+        ws.auto_filter.ref = ws.dimensions
+        
+        # Freeze header row
+        ws.freeze_panes = 'A2'
+        
+        # Create response
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        
+        # Add date range to filename if filtered
+        if from_date and to_date:
+            filename = f'{service_name}_Applications_{from_date}_to_{to_date}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        elif from_date:
+            filename = f'{service_name}_Applications_From_{from_date}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        elif to_date:
+            filename = f'{service_name}_Applications_To_{to_date}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        else:
+            filename = f'{service_name}_Applications_All_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        wb.save(response)
+        return response
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in export_to_excel: {str(e)}")
+        print(traceback.format_exc())
+        return HttpResponse(f'Error: {str(e)}', status=500)

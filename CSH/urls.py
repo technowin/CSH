@@ -244,6 +244,12 @@ urlpatterns = [
     path('matrix_flow_ac', matrix_flow_ac, name='matrix_flow_ac'),
     path('download_notice/<str:row_id>/<int:doc_id>/', download_notice, name='download_notice'),
     path('aqi_monthly_create/<str:parent_id>/', aqi_monthly_create, name='aqi_monthly_create'),
+    
+    path('detailsdashboard/',service_dashboard, name='service_dashboard'),
+    # path('api/filter-dashboard/', filter_dashboard_data, name='filter_dashboard_data'),
+    path('get-application-detail/<int:app_id>/', get_application_detail, name='get_application_detail'),
+    path('export-excel/', export_to_excel, name='export_to_excel'),
+    # path('import-excel/', import_from_excel, name='import_from_excel'),
 ]
 
 if settings.DEBUG:
