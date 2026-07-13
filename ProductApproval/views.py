@@ -99,7 +99,7 @@ def matrix_flow_pa(request):
             rb = request.GET.get('rb', '')
             rb1 = request.GET.get('rb1', '')
             if sf and sf !='':
-                r = callproc("stp_update_sendforward",[wf_id,form_id,sf,user,consumer_type])
+                r = callproc("stp_update_sendforward",[wf_id,form_id,sf,user,consumer_type,product_type])
                 if r[0][0] == 'success':
                     messages.success(request, "Send Forward successfully !!")
                 elif r[0][0] == 'incomplete':
