@@ -231,6 +231,19 @@ urlpatterns = [
     path('downloadRefusalDocument/<str:row_id>/', downloadRefusalDocument, name='downloadRefusalDocument'), 
     path('downloadRefusalDocumenttt/<str:row_id>/', downloadRefusalDocumenttt, name='downloadRefusalDocumenttt'), 
     path('downloadRefusalDocumenttc/<str:row_id>/', downloadRefusalDocumenttc, name='downloadRefusalDocumenttc'),
+    
+    path('detailsdashboard/',service_dashboard, name='service_dashboard'),
+    path('get-application-detail/<int:app_id>/', get_application_detail, name='get_application_detail'),
+    path('export-excel/', export_to_excel, name='export_to_excel'),
+    # path('import-excel/', import_from_excel, name='import_from_excel'),
+    # path('api/filter-dashboard/', filter_dashboard_data, name='filter_dashboard_data'),
+    
+    # Common Dashboard URLs
+    
+    path('dashboard/',dashboard, name='dashboard'),
+    path('common-get-application-detail/',common_get_application_detail, name='common_get_application_detail'),
+    path('common-export-excel/', common_export_excel, name='common_export_excel'),
+    # path('export-excel/',export_excel, name='export_excel'),
 
 ]
 

@@ -1,948 +1,1448 @@
-{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
-{% block content %}
+{% extends "Shared/Layout.html" %}
 {% load static %}
-<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
-<link href="{% static 'css/graph.css' %}" rel="stylesheet" type="text/css" >
-{% comment %} <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" > {% endcomment %}
+{% load custom_filters %}
 
+{% block username %}{{ username }}{% endblock %}
 
-<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<!-- Include jQuery -->
+{% block content %}
 
+{% csrf_token %}
 
- <div>
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
-    <!-- Content Row -->
-    <div class="row">
+    <style>
+        /* ========== LOADER OVERLAY ========== */
+        .loader-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
 
-        <!-- Earnings (Monthly) Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Employees</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"> {{ roster_count.3 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa fa-solid fa-users"></i>
-                        </div>
-                    </div>
+        .loader-overlay.active {
+            display: flex;
+        }
+
+        .loader-box {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .loader-spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border: 4px solid #e9ecef;
+            border-top: 4px solid #2ecc71;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-box .loader-icon {
+            font-size: 3rem;
+            color: #2ecc71;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .loader-box h5 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .loader-box p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .loader-progress {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .loader-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            border-radius: 2px;
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+
+        .loader-dots {
+            display: inline-block;
+        }
+
+        .loader-dots span {
+            animation: dots 1.4s infinite both;
+            display: inline-block;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dots {
+            0%, 80%, 100% { opacity: 0; }
+            40% { opacity: 1; }
+        }
+
+        /* Excel icon bounce */
+        .excel-bounce {
+            display: inline-block;
+            animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+        }
+        
+        .dashboard-container {
+            padding: 20px;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            border-left: 4px solid var(--secondary-color);
+            height: 100%;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card .stat-icon {
+            font-size: 2rem;
+            opacity: 0.2;
+        }
+        
+        .stat-card .stat-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .stat-card .stat-label {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .stat-card.approved .stat-number { color: #2ecc71; }
+        .stat-card.approved { border-left-color: #2ecc71; }
+        .stat-card.pending .stat-number { color: #f39c12; }
+        .stat-card.pending { border-left-color: #f39c12; }
+        .stat-card.rejected .stat-number { color: #e74c3c; }
+        .stat-card.rejected { border-left-color: #e74c3c; }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            height: 100%;
+        }
+        
+        .chart-container h5 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .chart-container .chart-wrapper {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+        
+        .chart-container .chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+        
+        .filter-section .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2c3e50;
+        }
+        
+        .filter-section .btn-apply {
+            padding: 8px 30px;
+            margin-top: 6px;
+        }
+        
+        .filter-section .btn-clear {
+            padding: 8px 30px;
+            margin-top: 6px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+        }
+        
+        .filter-section .btn-clear:hover {
+            background: #c0392b;
+            color: white;
+        }
+        
+        /* ========== STATUS BADGE ========== */
+        .status-badge {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+            color: white;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        
+        .status-badge-approved { background: #2ECC71; }
+        .status-badge-pending { background: #F39C12; }
+        .status-badge-rejected { background: #E74C3C; }
+        .status-badge-new { background: #FF6B6B; }
+        .status-badge-acknowledged { background: #4ECDC4; }
+        .status-badge-scrutiny { background: #45B7D1; }
+        .status-badge-inspection { background: #98D8C8; color: #2c3e50; }
+        .status-badge-certificate { background: #27AE60; }
+        .status-badge-initiated { background: #9B59B6; }
+        .status-badge-issued { background: #3498DB; }
+        .status-badge-chalan { background: #27AE60; }
+        .status-badge-permission { background: #8E44AD; }
+        .status-badge-failed { background: #E74C3C; }
+        .status-badge-default { background: #6c757d; }
+        .status-badge-make-payment { background: #1ABC9C; }
+        .status-badge-pass { background: #2ECC71; }
+        .status-badge-no-status { background: #95a5a6; }
+        
+        /* ========== STATUS LEGEND ========== */
+        .status-legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+            margin-top: 18px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .status-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 25px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: default;
+            border: 1px solid transparent;
+        }
+        
+        .status-legend-item:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border-color: #dee2e6;
+        }
+        
+        .status-legend-item .color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.8);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        
+        .status-legend-item .legend-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #2c3e50;
+            flex: 1;
+        }
+        
+        .status-legend-item .legend-count {
+            font-weight: 700;
+            color: white;
+            background: #2c3e50;
+            padding: 1px 10px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            min-width: 24px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* ========== TABLE STYLES ========== */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .table-container .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .table-container .table-header h5 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .table-container .table-header .badge {
+            font-size: 0.85rem;
+            padding: 6px 14px;
+        }
+        
+        .table-container table thead th {
+            background: #2c3e50;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 15px;
+            border: none;
+        }
+        
+        .table-container table tbody td {
+            padding: 10px 15px;
+            vertical-align: middle;
+            font-size: 0.9rem;
+        }
+        
+        .table-container table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .btn-view {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-view:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+            color: white;
+        }
+        
+        .service-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .service-tag-DC { background: #3498db; }
+        .service-tag-TC { background: #2ecc71; }
+        .service-tag-TT { background: #f39c12; }
+        .service-tag-CR { background: #9b59b6; }
+        .service-tag-PA { background: #e74c3c; }
+        
+        /* ========== MODAL STYLES ========== */
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+        
+        .modal-body .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+            padding: 10px 0;
+        }
+        
+        .modal-body .detail-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .modal-body .detail-item label {
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        
+        .modal-body .detail-item span {
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+        
+        .modal-body .status-badge-lg {
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-block;
+            color: white;
+        }
+        
+        .modal-body .workflow-table {
+            font-size: 0.85rem;
+        }
+        
+        .modal-body .workflow-table th {
+            background: #2c3e50;
+            color: white;
+            white-space: nowrap;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 10px;
+        }
+        
+        .modal-body .workflow-table td {
+            padding: 6px 10px;
+            vertical-align: middle;
+        }
+        
+        .modal-body .workflow-table .badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+        }
+        
+        .modal-body .workflow-table small {
+            font-size: 0.7rem;
+            color: #6c757d;
+        }
+        
+        .modal-body .workflow-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            flex-direction: column;
+        }
+        
+        .loading-spinner .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        /* Section headers */
+        .section-title {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--secondary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .stat-card .stat-number {
+                font-size: 1.5rem;
+            }
+            .filter-section .row > div {
+                margin-bottom: 10px;
+            }
+            .status-legend-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                padding: 10px;
+            }
+            .status-legend-item {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+            }
+            .status-legend-item .color-dot {
+                width: 12px;
+                height: 12px;
+            }
+            .table-container .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .modal-body .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            .chart-container .chart-wrapper {
+                height: 220px;
+            }
+        }
+    </style>
+
+    <!-- Dashboard Container -->
+    <div class="dashboard-container">
+        
+        <!-- ============================================================ -->
+        <!-- SECTION 1: HEADER -->
+        <!-- ============================================================ -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2><i class="fas fa-chart-pie me-2"></i>Super Admin Dashboard</h2>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-server me-2"></i>
+                        All Services Overview
+                        {% if from_date and to_date %}
+                            <span class="ms-2 badge bg-light text-dark">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                {{ from_date }} to {{ to_date }}
+                            </span>
+                        {% endif %}
+                        {% if selected_service and selected_service != 'all' %}
+                            <span class="ms-2 badge bg-light text-dark">
+                                <i class="fas fa-filter me-1"></i>
+                                {% for service in services %}
+                                    {% if service.ser_id|stringformat:'s' == selected_service %}
+                                        {{ service.ser_name }}
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <button class="btn btn-light me-2" onclick="window.location.reload()">
+                        <i class="fas fa-sync me-2"></i>Refresh
+                    </button>
+                    <button class="btn btn-success" onclick="exportExcel()">
+                        <i class="fas fa-file-excel me-2"></i>Export Excel
+                    </button>
                 </div>
             </div>
         </div>
-
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Confirmed Employees
-                            </div>
-                            <div class="row no-gutters align-items-center">
-                                <div class="col-auto">
-                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{roster_count.0}}</div>
-                                </div>
-                                <div class="col">
-                                    <div class="progress progress-sm mr-2">
-                                        <div class="progress-bar bg-info" role="progressbar"
-                                            style="width: {{ roster_count.4 }}%" 
-                                            aria-valuenow="{{ roster_count.0 }}" aria-valuemin="0"
-                                            aria-valuemax="{{ roster_count.3 }}">
-                                        </div>
-                                    </div>
-                                </div>
-                                                        
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                        
+        
+        <!-- ============================================================ -->
+        <!-- SECTION 2: FILTERS -->
+        <!-- ============================================================ -->
+        <div class="filter-section">
+            <form method="GET" action="/dashboard/">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-calendar-alt me-2"></i>From Date</label>
+                        <input type="date" class="form-control" id="from_date" name="from_date" value="{{ from_date }}">
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Earnings (Monthly) Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Absent Employees
-                            </div>
-                            <div class="row no-gutters align-items-center">
-                                <div class="col-auto">
-                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{roster_count.1}}</div>
-                                </div>
-                                <div class="col">
-                                    <div class="progress progress-sm mr-2">
-                                        <div class="progress-bar bg-info" role="progressbar"
-                                            style="width: {{ roster_count.5 }}%" 
-                                            aria-valuenow="{{roster_count.1}}" aria-valuemin="0"
-                                            aria-valuemax="{{ roster_count.3 }}">
-                                        </div>
-                                    </div>
-                                </div>
-                                       
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-solid fa-ban fa-2x text-gray-300"></i>
-                        </div>
-                                             
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-calendar-alt me-2"></i>To Date</label>
+                        <input type="date" class="form-control" id="to_date" name="to_date" value="{{ to_date }}">
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Requests Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Pending</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{roster_count.2}}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-sharp fa-regular fa-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-
-    <div class="row">
-        <div class="col-xl-12 col-lg-7">
-            <div class="card shadow mb-4">
-
-
-                <div class="row mb-3 align-items-center">
-                    <div class="col-md-4 d-flex flex-column">
-                        <label for="company-dropdown" class="mb-2">Company List<span style="color:red;"> *</span>:</label>
-                        <select name="company_name" id="company_name" class="form-control form-control-sm" required>
-                            {% for item in company_names %}
-                                <option value="{{ item.0 }}">{{ item.1 }}</option>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-server me-2"></i>Service</label>
+                        <select class="form-select" id="service" name="service">
+                            <option value="all" {% if selected_service == 'all' %}selected{% endif %}>All Services</option>
+                            {% for service in services %}
+                                <option value="{{ service.ser_id }}" {% if selected_service == service.ser_id|stringformat:'s' %}selected{% endif %}>
+                                    {{ service.ser_name }}
+                                </option>
                             {% endfor %}
                         </select>
                     </div>
-                
-                    <div class="col-md-4 d-flex flex-column">
-                        <label for="site-dropdown" class="mb-2">Site List<span style="color:red;"> *</span>:</label>
-                        <select name="site_name" id="site_name" class="form-control form-control-sm" required>
-                            {% for item in site_names %}
-                                <option value="{{ item.0 }}">{{ item.1 }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                
-                    <div class="col-md-4 d-flex flex-column">
-                        <label for="date-input" class="mb-2">Date<span style="color:red;"> *</span>:</label>
-                        <input type="date" name="date" id="dateInput" class="form-control form-control-sm" required>
+                    <div class="col-md-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-apply w-50">
+                                <i class="fas fa-filter me-2"></i>Apply
+                            </button>
+                            <a href="/dashboard/" class="btn btn-clear w-50">
+                                <i class="fas fa-eraser me-2"></i>Clear
+                            </a>
+                        </div>
                     </div>
                 </div>
-                
-                           
-
+            </form>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- SECTION 3: STATS CARDS -->
+        <!-- ============================================================ -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Total Applications</div>
+                            <div class="stat-number">{{ total_applications }}</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div> 
-
-    <div class="my-loader" id="cubeloader" style="display: none;">
-        <div class="rubiks-cube">
-          <div class="face front">
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ffffff;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-          </div>
-      
-          <div class="face back">
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ffffff;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-          </div>
-          <div class="face left">
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #ffffff;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-          </div>
-          <div class="face right">
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ffffff;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-          </div>
-          <div class="face top">
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #ffffff;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-          </div>
-          <div class="face bottom">
-            <div style="background: #ffffff;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-            <div style="background: #ffeb3b;" class="cube"></div>
-            <div style="background: #4caf50;" class="cube"></div>
-            <div style="background: #2196f3;" class="cube"></div>
-            <div style="background: #ffffff;" class="cube"></div>
-            <div style="background: #ff3d00;" class="cube"></div>
-          </div>
-        </div>
-      </div>
-
-    <!-- Bar Graph Content  -->
-
-    <div class="row" id="barGraph">
-        <div class="col-xl-6 col-lg-7">
-            <div class="card shadow mb-4">
-                <div class="d-flex justify-content-between mb-3">
-                    <div class="shift-date">
-                        <strong>Roster Details</span> </strong>
-                    </div>
-
-                    <!-- Right side: Count -->
-                    <div class="">
-                        <strong>Date:<span id="shiftdatetoday"></span></strong></span> 
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card approved">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Approved</div>
+                            <div class="stat-number">{{ approved_count }}</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </div>
                     </div>
                 </div>
-
-                <div id="TodayBarChart"></div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card pending">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Pending</div>
+                            <div class="stat-number">{{ pending_count }}</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-clock text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card rejected">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Rejected</div>
+                            <div class="stat-number">{{ rejected_count }}</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-times-circle text-danger"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
-    
-        <!-- Tommorow Bar  Chart -->
-        <div class="col-xl-6 col-lg-7">
-            <div class="card shadow mb-4">
-                <div class="d-flex justify-content-between mb-3">
-                    <div class="shift-date">
-                        <strong>Roster Details Next Day</span> </strong>
-                    </div>
-
-                    <!-- Right side: Count -->
-                    <div class="">
-                        <strong>Date:<span id="shiftdatetommrow"></span> </strong></span> 
+        <!-- ============================================================ -->
+        <!-- SECTION 4: CHARTS ROW (Service-wise + Monthly Trend - Side by Side) -->
+        <!-- ============================================================ -->
+        <div class="row g-4 mt-2">
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-bar me-2"></i>Service-wise Application Distribution</h5>
+                    <div class="chart-wrapper">
+                        <canvas id="serviceBarChart"></canvas>
                     </div>
                 </div>
-                
-                <div id="tommorowBarChart"></div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-line me-2"></i>Monthly Application Trend <small class="text-muted" style="font-size: 0.75rem; font-weight: 400;">(Last 12 Months)</small></h5>
+                    <div class="chart-wrapper">
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
         
+        <!-- ============================================================ -->
+        <!-- SECTION 5: STATUS DISTRIBUTION (Full Width) -->
+        <!-- ============================================================ -->
+        <div class="row g-4 mt-2">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Status Distribution</h5>
+                    <div style="height: 300px; max-width: 600px; margin: 0 auto;">
+                        <canvas id="statusPieChart"></canvas>
+                    </div>
+                    <div class="status-legend-grid" id="statusLegend"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- SECTION 6: ALL APPLICATIONS TABLE -->
+        <!-- ============================================================ -->
+        <div class="row g-4 mt-2">
+            <div class="col-12">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h5><i class="fas fa-table me-2"></i>All Applications</h5>
+                        <span class="badge bg-primary">{{ table_data|length }} records</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped" id="applicationsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Request No</th>
+                                    <th>Service</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                    <th>Created By</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in table_data %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td><strong>{{ app.request_no }}</strong></td>
+                                        <td>
+                                            <span class="service-tag service-tag-{{ app.short_name }}">
+                                                {{ app.short_name }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" style="background: #385ECE;">
+                                                {{ app.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ app.created_at }}</td>
+                                        <td>{{ app.created_by }}</td>
+                                        <td>
+                                            <button class="btn-view" onclick="viewApplication('{{ app.id }}', '{{ app.service_id }}', '{{ app.db_alias }}')">
+                                                <i class="fas fa-eye me-1"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">No applications found</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="row" id="pieGraph">
-            <div class="col-xl-8 col-lg-7">
-                <div class="card shadow mb-4">
-                    <div class="d-flex justify-content-between mb-3">
-                        <div class="shift-date">
-                            <strong>Roster Details Company Wise</span> </strong>
+    <!-- ============================================================ -->
+    <!-- SECTION 7: BOOTSTRAP MODAL -->
+    <!-- ============================================================ -->
+    <div class="modal fade" id="applicationModal" tabindex="-1" aria-labelledby="applicationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="applicationModalLabel">
+                        <i class="fas fa-file-alt me-2"></i>Application Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <div class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
-    
-                        <!-- Right side: Count -->
-                        <div class="">
-                            <strong>Date:<span id="shiftdatePie"></span> </strong></span>  
-                        </div>
-                    </div>
-        
-                    <div id="chartdiv"></div>
-                    
-            </div>
-        </div>
-        <div class="col-xl-4 col-lg-7">
-            <div class="card shadow mb-4">
-                <div class="d-flex justify-content-between mb-3">
-                    <div class="shift-date">
-                        <strong>Worksite(Pie Chart)</span> </strong>
-                    </div>
-                    <div class="">
-                        <strong>Date:<span id="shiftdateDonot"></span> </strong></span> 
+                        <p class="mt-2">Loading application details...</p>
                     </div>
                 </div>
-                
-                <div id="donotchart"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script>
-    window.onload = function() {
-        const dateInput = document.getElementById('dateInput');
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-    };
-</script>
+    <!-- Enhanced Loader -->
+    <div class="loader-overlay" id="loaderOverlay">
+        <div class="loader-box">
+            <span class="loader-icon excel-bounce">📊</span>
+            <h5 id="loaderTitle">Generating Excel Report</h5>
+            <p id="loaderMessage">
+                Please wait while we prepare your data
+                <span class="loader-dots">
+                    <span>.</span><span>.</span><span>.</span>
+                </span>
+            </p>
+            <div class="loader-progress">
+                <div class="loader-progress-bar"></div>
+            </div>
+            <small class="text-muted mt-2 d-block" style="font-size: 0.75rem;" id="loaderStatus">
+                <i class="fas fa-spinner fa-spin me-1"></i>
+                Fetching data...
+            </small>
+        </div>
+    </div>
 
+    <!-- ============================================================ -->
+    <!-- SECTION 8: SCRIPTS -->
+    <!-- ============================================================ -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
-<script>
-    var chartToda, seriesToday, xAxisToday;
-
-    function initializeTodayChart() {
-        am5.ready(function() {
-            var root = am5.Root.new("TodayBarChart");
-            root.setThemes([am5themes_Animated.new(root)]);
-
-            chartToday = root.container.children.push(am5xy.XYChart.new(root, {
-                panX: true, panY: true, wheelX: "panX", wheelY: "zoomX", pinchZoomX: true, paddingLeft: 0, paddingRight: 1
-            }));
-
-            var cursor = chartToday.set("cursor", am5xy.XYCursor.new(root, {}));
-            cursor.lineY.set("visible", false);
-
-            var xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30, minorGridEnabled: true });
-            xRenderer.labels.template.setAll({
-                rotation: -90, centerY: am5.p50, centerX: am5.p100, paddingRight: 15
-            });
-
-            xAxisToday = chartToday.xAxes.push(am5xy.CategoryAxis.new(root, {
-                maxDeviation: 0.3, categoryField: "category", renderer: xRenderer, tooltip: am5.Tooltip.new(root, {})
-            }));
-
-            var yRenderer = am5xy.AxisRendererY.new(root, { strokeOpacity: 0.1 });
-            var yAxis = chartToday.yAxes.push(am5xy.ValueAxis.new(root, { maxDeviation: 0.3, renderer: yRenderer }));
-
-            seriesToday = chartToday.series.push(am5xy.ColumnSeries.new(root, {
-                name: "Series 1", xAxis: xAxisToday, yAxis: yAxis, valueYField: "value", sequencedInterpolation: true, categoryXField: "category",
-                tooltip: am5.Tooltip.new(root, { labelText: "{valueY}" })
-            }));
-
-            seriesToday.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5, strokeOpacity: 0 });
-            seriesToday.columns.template.adapters.add("fill", (fill, target) => chartToday.get("colors").getIndex(seriesToday.columns.indexOf(target)));
-            seriesToday.columns.template.adapters.add("stroke", (stroke, target) => chartToday.get("colors").getIndex(seriesToday.columns.indexOf(target)));
-            
-            // Initial data loading
-            var initialDataToday = [
-                { category: "All Employees", value: {{ today_result.0 }} },
-                { category: "Employees Affirmed", value: {{ today_result.1 }} },
-                { category: "Employees Declined", value: {{ today_result.2 }} },
-                { category: "Pending Employees", value: {{ today_result.3 }} },
-                { category: "More Than 8 Hours", value: {{ today_result.4 }} },
-                { category: "Less Than 8 Hours", value: {{ today_result.5 }} }
-            ];
-            xAxisToday.data.setAll(initialDataToday);
-            seriesToday.data.setAll(initialDataToday);
-
-            seriesToday.columns.template.events.on("click", function(ev) {
-            
-            var company_id = $('#company_name').val();
-            var site_name = $('#site_name').val();
-            var shift_date = $('#dateInput').val();
-
-            var clickedCategory = ev.target.dataItem.dataContext.category;
-            var count = ev.target.dataItem.dataContext.value;
-
-            $.ajax({
-                url: "{% url 'get_roster_data' %}",
-                method: 'GET',
-                contentType: 'application/json', 
-                data: {
-                    company_id: company_id,
-                    site_name: site_name,
-                    shift_date:shift_date,
-                    clickedCategory:clickedCategory,
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
-                },
-                success: function(response) {
-                    var content = `
-                    <div class="d-flex justify-content-between mb-3">
-                        <div class="shift-date">
-                            <strong>Shift Date: <span>${shift_date}</span> </strong>
-                        </div>
-
-                        <!-- Right side: Count -->
-                        <div class="employee-count">
-                            <strong>Employee Count:${count} </strong></span> 
-                        </div>
-                    </div>
-                    <div  class="table-container">
-                        <table>
-                            <tr>
-                                <th>Sr No</th>
-                                <th>Employee No</th>
-                                <th>Employee Name</th>
-                                <th>Company Name</th>
-                                <th>Worksite</th>
-                            </tr>
-                    `;
-                    
-                    response.data.forEach(function(item, index) {
-                        content += `
-                            <tr>
-                               <td>${item[0]}</td>
-                               <td>${item[1]}</td>
-                               <td>${item[2]}</td>
-                               <td>${item[3]}</td>
-                               <td>${item[4]}</td>
-                            </tr>
-                        `;
-                    });
-                    content += `</table></div>`;
+    <script>
+        // ================================================================
+        // DATA FROM DJANGO
+        // ================================================================
+        const statusData = {{ status_distribution|safe }};
+        const serviceData = {{ service_distribution|safe }};
+        const monthlyData = {{ monthly_data|safe }};
         
-                    // Show SweetAlert
-                    Swal.fire({
-                        title: `Details of <span>${clickedCategory}</span>`,
-                        html: content,
-                        showCloseButton: true,
-                        focusConfirm: false,
-                        confirmButtonText: 'Close',
-                        customClass: {
-                            popup: 'custom-popup' // Custom class for the popup
-                        }
-                    });
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching data:', error);
-                    Swal.fire({
-                        title: 'Error!',
-                        text: 'Could not retrieve data. Please try again.',
-                        icon: 'error',
-                        confirmButtonText: 'Close'
-                    });
-                }
-            });
-        });
-        }
-        )};
-
-</script>
-<script>
-
-    var chartTomorrow, seriesTomorrow, xAxisTomorrow;
-
-    function initializeTommorowChart() {
-        am5.ready(function() {
-            var root = am5.Root.new("tommorowBarChart");
-            root.setThemes([am5themes_Animated.new(root)]);
-
-            chartTomorrow = root.container.children.push(am5xy.XYChart.new(root, {
-                panX: true, panY: true, wheelX: "panX", wheelY: "zoomX", pinchZoomX: true, paddingLeft: 0, paddingRight: 1
-            }));
-
-            chartTomorrow.set("cursor", am5xy.XYCursor.new(root, { lineY: { visible: false } }));
-
-            var xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30, minorGridEnabled: true });
-            xRenderer.labels.template.setAll({
-                rotation: -90, centerY: am5.p50, centerX: am5.p100, paddingRight: 15
-            });
-
-            xAxisTomorrow = chartTomorrow.xAxes.push(am5xy.CategoryAxis.new(root, {
-                maxDeviation: 0.3, categoryField: "category", renderer: xRenderer
-            }));
-
-            var yAxis = chartTomorrow.yAxes.push(am5xy.ValueAxis.new(root, {
-                maxDeviation: 0.3, renderer: am5xy.AxisRendererY.new(root, { strokeOpacity: 0.1 })
-            }));
-
-            seriesTomorrow = chartTomorrow.series.push(am5xy.ColumnSeries.new(root, {
-                name: "Series 1", xAxis: xAxisTomorrow, yAxis: yAxis, valueYField: "value", categoryXField: "category",
-                tooltip: am5.Tooltip.new(root, { labelText: "{valueY}" })
-            }));
-
-            seriesTomorrow.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5, strokeOpacity: 0 });
-            seriesTomorrow.columns.template.adapters.add("fill", (fill, target) => chartTomorrow.get("colors").getIndex(seriesTomorrow.columns.indexOf(target)));
-            seriesTomorrow.columns.template.adapters.add("stroke", (stroke, target) => chartTomorrow.get("colors").getIndex(seriesTomorrow.columns.indexOf(target)));
-
-            // Initial data loading
-            var initialDataTomorrow = [
-                { category: "All Employees", value: {{ tommorow_result.0 }} },
-                { category: "Employees Affirmed", value: {{ tommorow_result.1 }} },
-                { category: "Employees Declined", value: {{ tommorow_result.2 }} },
-                { category: "Pending Employees", value: {{ tommorow_result.3 }} },
-                { category: "More Than 8 Hours", value: {{ tommorow_result.4 }} },
-                { category: "Less Than 8 Hours", value: {{ tommorow_result.5 }} }
-            ];
-            xAxisTomorrow.data.setAll(initialDataTomorrow);
-            seriesTomorrow.data.setAll(initialDataTomorrow);
-            seriesTomorrow.columns.template.events.on("click", function(ev) {
-                var company_id = $('#company_name').val();
-                var site_name = $('#site_name').val();
-                var shift_date = $('#dateInput').val();
-    
-                var clickedCategory = ev.target.dataItem.dataContext.category;
-                var count = ev.target.dataItem.dataContext.value;
-            $.ajax({
-                url: "{% url 'get_roster_data_tommorow' %}",
-                method: 'GET',
-                contentType: 'application/json', 
-                data: {
-                    company_id: company_id,
-                    site_name: site_name,
-                    shift_date:shift_date,
-                    clickedCategory:clickedCategory,
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
-                },
-                success: function(response) {
-                    var content = `
-                   <div class="d-flex justify-content-between mb-3">
-                        <div class="shift-date">
-                            <strong>Shift Date: <span>${shift_date}</span> </strong>
-                        </div>
-
-                        <!-- Right side: Count -->
-                        <div class="employee-count">
-                            <strong>Employee Count:${count} </strong></span> 
-                        </div>
-                    </div>
-                    <div  class="table-container">
-                        <table>
-                            <tr>
-                                <th>Sr No</th>
-                                <th>Employee No</th>
-                                <th>Employee Name</th>
-                                <th>Company Name</th>
-                                <th>Worksite</th>
-                            </tr>
-                    `;
-                    
-                    response.data.forEach(function(item, index) {
-                        content += `
-                            <tr>
-                               <td>${item[0]}</td>
-                               <td>${item[1]}</td>
-                               <td>${item[2]}</td>
-                               <td>${item[3]}</td>
-                               <td>${item[4]}</td>
-                            </tr>
-                        `;
-                    });
-                    content += `</table></div>`;
+        console.log("=== Dashboard Loaded ===");
+        console.log("Total Applications:", "{{ total_applications }}");
+        console.log("Status Data:", statusData);
+        console.log("Service Data:", serviceData);
+        console.log("Monthly Data:", monthlyData);
         
-                    // Show SweetAlert
-                    Swal.fire({
-                        title: `Details of <span>${clickedCategory}</span>`,
-                        html: content,
-                        showCloseButton: true,
-                        focusConfirm: false,
-                        confirmButtonText: 'Close',
-                        customClass: {
-                            popup: 'custom-popup' // Custom class for the popup
-                        }
-                    });
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching data:', error);
-                    Swal.fire({
-                        title: 'Error!',
-                        text: 'Could not retrieve data. Please try again.',
-                        icon: 'error',
-                        confirmButtonText: 'Close'
-                    });
-                }
-            });
-        });
-        }
-        )};
-
-</script>
-<script>
-    
-    function initialDonotToday(){
-        am5.ready(function() {
-            var root = am5.Root.new("donotchart");
-            root.setThemes([am5themes_Animated.new(root)]);
-
-            var chart = root.container.children.push(am5percent.PieChart.new(root, {
-                radius: am5.percent(90),
-                innerRadius: am5.percent(50),
-                layout: root.horizontalLayout
-            }));
-
-            pieSeries = chart.series.push(am5percent.PieSeries.new(root, {
-                name: "Series",
-                valueField: "count",
-                categoryField: "worksite"
-            }));
-
-            // Initial data loaded from template
-            var chartData = [
-                {% for result in fetched_results %}
-                    { worksite: "{{ result.0 }}", count: {{ result.1 }} }{% if not forloop.last %},{% endif %}
-                {% endfor %}
-            ];
-
-            pieSeries.data.setAll(chartData);
-            pieSeries.labels.template.set("visible", false);
-            pieSeries.ticks.template.set("visible", false);
-            pieSeries.slices.template.set("strokeOpacity", 0);
-            pieSeries.slices.template.set("fillGradient", am5.RadialGradient.new(root, {
-                stops: [
-                    { brighten: -0.8 }, 
-                    { brighten: -0.8 }, 
-                    { brighten: -0.5 }, 
-                    { brighten: 0 }, 
-                    { brighten: -0.5 }
-                ]
-            }));
-
-            var legend = chart.children.push(am5.Legend.new(root, {
-                centerY: am5.percent(50),
-                y: am5.percent(50),
-                layout: root.verticalLayout
-            }));
-
-            legend.labels.template.setAll({ text: "[bold]{category}[/]", fill: am5.color(0x000000) });
-            legend.valueLabels.template.setAll({ text: "{value.percent.formatNumber('#.0')}%", textAlign: "right" });
-            legend.data.setAll(pieSeries.dataItems);
-
-            pieSeries.appear(1000, 100);
-        });
-    }
-
-</script>
-
-<script>
-    function updateTodayChartData(data) {
-        am5.ready(function() {
-            var updatedData = [
-                { category: "All Employees", value: data.total_count },
-                { category: "Employees Affirmed", value: data.yes_count },
-                { category: "Employees Declined", value: data.no_count },
-                { category: "Pending Employees", value: data.pending_count },
-                { category: "More Than 8 Hours", value: data.more_than_8_hours_count },
-                { category: "Less Than 8 Hours", value: data.less_than_8_hours_count }
-            ];
-
-            if (chartToday && xAxisToday && seriesToday) {
-                xAxisToday.data.setAll(updatedData);
-                seriesToday.data.setAll(updatedData);
-                seriesToday.appear(1000);
-                chartToday.appear(1000, 100);
-            }
-        });
-    }
-</script>
-<script>
-    function updateTommorowChartData(data1) {
-        am5.ready(function() {
-            var updatedData = [
-                { category: "All Employees", value: data1.nxttotal_count },
-                { category: "Employees Affirmed", value: data1.nxtyes_count },
-                { category: "Employees Declined", value: data1.nxtno_count },
-                { category: "Pending Employees", value: data1.nxtpending_count },
-                { category: "More Than 8 Hours", value: data1.nxtmore_than_8_hours_count },
-                { category: "Less Than 8 Hours", value: data1.nxtless_than_8_hours_count }
-            ];
-
-            if (chartTomorrow && xAxisTomorrow && seriesTomorrow) {
-                xAxisTomorrow.data.setAll(updatedData);
-                seriesTomorrow.data.setAll(updatedData);
-                seriesTomorrow.appear(1000);
-                chartTomorrow.appear(1000, 100);
-            }
-        });
-    }
-</script>
-<script>
-    function updatePieChart(newData) {
-        var chartData = newData.map(function(item) {
-            return {
-                worksite: item[0],
-                count: item[1]
-            };
-        });
-
-        if (pieSeries) {
-            pieSeries.data.setAll(chartData);
-            
-            // Update the legend with the new data
-            var legend = pieSeries.chart.children.getIndex(1); // Assumes the legend is the second child
-            if (legend) {
-                legend.data.setAll(pieSeries.dataItems);
-            }
-
-            pieSeries.appear(1000, 100);
-        } else {
-            console.error("pieSeries is not defined.");
-        }
-    }
-</script>
-<script>
-    $(document).ready(function() {
-        initializeTodayChart();
-        initializeTommorowChart();
-        initialDonotToday();
-        var today = new Date();
-        var todayDate = today.toISOString().split('T')[0]; 
-        $('#shiftdatetoday').text(todayDate);
-        $('#shiftdatePie').text(todayDate);
-        $('#shiftdateDonot').text(todayDate);
-      
-        var tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        var tommorowDate = tomorrow.toISOString().split('T')[0]; 
-        $('#shiftdatetommrow').text(tommorowDate);
+        // ================================================================
+        // COLOR PALETTE
+        // ================================================================
+        const statusColorPalette = {
+            'Approved': '#2ECC71',
+            'Issue Certificate': '#27AE60',
+            'Pass': '#2ECC71',
+            'Pending': '#F39C12',
+            'New': '#FF6B6B',
+            'Acknowledged': '#4ECDC4',
+            'Scrutiny Completed': '#45B7D1',
+            'Make Payment': '#1ABC9C',
+            'Initiated': '#9B59B6',
+            'Payment Done': '#1ABC9C',
+            'Chalan Uploaded': '#27AE60',
+            'Chalan Receipt': '#3498DB',
+            'Issue Permission': '#8E44AD',
+            'Photo Uploaded': '#2C3E50',
+            'Rejected': '#E74C3C',
+            'Refused': '#C0392B',
+            'Failed': '#E74C3C',
+            'Inspection Completed': '#98D8C8',
+            'Final Inspection Completed': '#3498DB',
+            'No Status': '#95a5a6',
+            'Factory Visit Documents by Citizen': '#45B7D1',
+            'Factory Visit Document Uploaded': '#45B7D1',
+        };
         
-    });
-</script>
-<script>
-    am5.ready(function() {
-        var root = am5.Root.new("chartdiv");
-        root.setThemes([am5themes_Animated.new(root)]);
-            
-        var container = root.container.children.push(am5.Container.new(root, { width: am5.p100, height: am5.p100, layout: root.horizontalLayout }));
-        var chart = container.children.push(am5percent.PieChart.new(root, { tooltip: am5.Tooltip.new(root, {}) }));
-        var series = chart.series.push(am5percent.PieSeries.new(root, { valueField: "value", categoryField: "category", alignLabels: false }));
-            
-        series.labels.template.setAll({ textType: "circular", radius: 4 });
-        series.ticks.template.set("visible", false);
-        series.slices.template.set("toggleKey", "none");
-                
-        series.slices.template.events.on("click", function(e) { selectSlice(e.target); });
-                
-        var subChart = container.children.push(am5percent.PieChart.new(root, { radius: am5.percent(50), tooltip: am5.Tooltip.new(root, {}) }));
-        var subSeries = subChart.series.push(am5percent.PieSeries.new(root, { valueField: "value", categoryField: "category" }));
-            
-        subSeries.data.setAll([{ category: "A", value: 0 }, { category: "B", value: 0 }, { category: "C", value: 0 }, { category: "D", value: 0 }, { category: "E", value: 0 }, { category: "F", value: 0 }, { category: "G", value: 0 }]);
-        subSeries.slices.template.set("toggleKey", "none");
-            
-        var selectedSlice;
-        series.on("startAngle", updateLines);
-        container.events.on("boundschanged", function() { root.events.once("frameended", updateLines); });
-            
-        function updateLines() {
-            if (selectedSlice) {
-                var startAngle = selectedSlice.get("startAngle"), arc = selectedSlice.get("arc"), radius = selectedSlice.get("radius");
-                var x00 = radius * am5.math.cos(startAngle), y00 = radius * am5.math.sin(startAngle);
-                var x10 = radius * am5.math.cos(startAngle + arc), y10 = radius * am5.math.sin(startAngle + arc);
-                var subRadius = subSeries.slices.getIndex(0).get("radius");
-                var point00 = series.toGlobal({ x: x00, y: y00 }), point10 = series.toGlobal({ x: x10, y: y10 });
-                var point01 = subSeries.toGlobal({ x: 0, y: -subRadius }), point11 = subSeries.toGlobal({ x: 0, y: subRadius });
-                line0.set("points", [point00, point01]);
-                line1.set("points", [point10, point11]);
-                }
-            }
-            
-            var line0 = container.children.push(am5.Line.new(root, { position: "absolute", stroke: root.interfaceColors.get("text"), strokeDasharray: [2, 2] }));
-            var line1 = container.children.push(am5.Line.new(root, { position: "absolute", stroke: root.interfaceColors.get("text"), strokeDasharray: [2, 2] }));
-            
-            var results = {{ results|safe }};
-            var formattedData = formatData(results);
-            
-                series.data.setAll(formattedData);
-            
-                function formatData(data) {
-                    return data.map(worksite => ({
-                        category: worksite.worksite_name,
-                        value: worksite.percent,
-                        subData: [
-                            { category: "Yes", value: worksite.yes_count },
-                            { category: "No", value: worksite.no_count },
-                            { category: "Pending", value: worksite.pending_count }
-                        ]
-                    }));
-                }
-                
-            
-                function selectSlice(slice) {
-                    selectedSlice = slice;
-                    var dataContext = slice.dataItem.dataContext;
-                    if (dataContext) {
-                        subSeries.data.each((dataObject, i) => {
-                            var dataObj = dataContext.subData[i];
-                            if (dataObj) {
-                                if (!subSeries.dataItems[i].get("visible")) subSeries.dataItems[i].show();
-                                subSeries.data.setIndex(i, dataObj);
-                            } else {
-                                subSeries.dataItems[i].hide();
-                            }
-                        });
-                    }
-                    
-                    var middleAngle = slice.get("startAngle") + slice.get("arc") / 2;
-                    var firstAngle = series.dataItems[0].get("slice").get("startAngle");
-                    series.animate({ key: "startAngle", to: firstAngle - middleAngle, duration: 1000, easing: am5.ease.out(am5.ease.cubic) });
-                    series.animate({ key: "endAngle", to: firstAngle - middleAngle + 360, duration: 1000, easing: am5.ease.out(am5.ease.cubic) });
-                }
-            
-                container.appear(1000, 10);
-                series.events.on("datavalidated", function() { selectSlice(series.slices.getIndex(0)); });
+        const fallbackColors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+            '#2ECC71', '#E74C3C', '#3498DB', '#F1C40F', '#9B59B6',
+            '#1ABC9C', '#F39C12', '#E67E22', '#8E44AD', '#2C3E50',
+            '#16A085', '#27AE60', '#2980B9', '#7F8C8D', '#FF5733'
+        ];
         
-                // Function to update chart data
-                window.updateChartData = function(newData) {
-                    var formattedData = formatData(newData);
-                    series.data.setAll(formattedData);
+        // ================================================================
+        // BOOTSTRAP MODAL
+        // ================================================================
+        const applicationModal = new bootstrap.Modal(document.getElementById('applicationModal'));
         
-                    // If there is a selected slice, update the subSeries data
-                    if (selectedSlice) {
-                        var dataContext = selectedSlice.dataItem.dataContext;
-                        if (dataContext) {
-                            subSeries.data.each((dataObject, i) => {
-                                var dataObj = dataContext.subData[i];
-                                if (dataObj) {
-                                    if (!subSeries.dataItems[i].get("visible")) subSeries.dataItems[i].show();
-                                    subSeries.data.setIndex(i, dataObj);
-                                } else {
-                                    subSeries.dataItems[i].hide();
-                                }
-                            });
-                        }
-                    }
-                };
-            });
-</script>
-        
-<script>
-
-function updateChartData(newData) {
-                // Format the new data for the main PieChart
-    var formattedData = newData.map(worksite => ({
-        category: worksite.worksite_name,
-        value: worksite.percent,
-        subData: [
-            { category: "Yes", value: worksite.yes_count },
-            { category: "No", value: worksite.no_count },
-            { category: "Pending", value: worksite.pending_count }
-        ]
-    }));
-            
-                // Update the main series data
-    series.data.setAll(formattedData);
-                
-                // If you want to reset the subSeries data, you can do this:
-    if (selectedSlice) {
-        var dataContext = selectedSlice.dataItem.dataContext;
-            if (dataContext) {
-                subSeries.data.each((dataObject, i) => {
-                var dataObj = dataContext.subData[i];
-                    if (dataObj) {
-                        if (!subSeries.dataItems[i].get("visible")) subSeries.dataItems[i].show();
-                        subSeries.data.setIndex(i, dataObj);
-                    } else {
-                        subSeries.dataItems[i].hide();
+        // ================================================================
+        // DOCUMENT READY
+        // ================================================================
+        $(document).ready(function() {
+            // DataTable
+            if ($.fn.DataTable) {
+                $('#applicationsTable').DataTable({
+                    pageLength: 25,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    responsive: true,
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "No records found",
+                        infoFiltered: "(filtered from _MAX_ total records)"
                     }
                 });
             }
-        }
-                
-                // Optionally, you can also re-select the first slice after updating the data
-        series.events.on("datavalidated", function() {
-            selectSlice(series.slices.getIndex(0));
-        });
-            }
-
-</script>
-
-<script type="text/javascript">
-
-        $('#company_name').change(function() {
-            var selectedCompany = $(this).val();
-            if (selectedCompany) {
-                $.ajax({
-                    url: "{% url 'get_sites' %}",  
-                    type: "POST",
-                    data: {
-                        'selectedCompany': selectedCompany,
-                        'csrfmiddlewaretoken': '{{ csrf_token }}'  
-                    },
-                    success: function(response) {
-                        $('#site_name').empty();
-                       
-                        $.each(response.companywise_site_names, function(index, value) {
-                            $('#site_name').append('<option value="' + value[0] + '">' + value[1] + '</option>');
-                        });
-        
-                        $('#site_name').trigger('change'); // Trigger change to update graph
-                    },
-                    error: function(error) {
-                        console.log("Error fetching site names:", error);
-                    }
-                });
+            
+            // Status Chart
+            if (statusData && statusData.labels && statusData.labels.length > 0) {
+                initStatusChart();
             } else {
-                $('#site_name').empty();
+                document.getElementById('statusPieChart').innerHTML = 
+                    '<div class="text-center text-muted py-5">No status data available</div>';
+                document.getElementById('statusLegend').innerHTML = 
+                    '<div class="text-muted text-center">No status data available</div>';
             }
-        }); 
-        
-        $('#site_name, #dateInput').on('change', function() {
-            var company_id = $('#company_name').val();
-            var site_name = $('#site_name').val();
-            var shift_date = $('#dateInput').val();
-            $('#cubeloader').show();
-            $('#barGraph').hide();
-            $('#pieGraph').hide();
-        
-            // Ensure all fields have values before making the AJAX call
-            if (company_id && site_name && shift_date) {
-                $.ajax({
-                    url: "{% url 'updateGraph' %}",  // Django URL to update the graph
-                    type: "POST",
-                    data: {
-                        company_id: company_id,
-                        site_name: site_name,
-                        shift_date: shift_date,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'  // CSRF token for security
-                    },
-                    success: function(response) {
-                        $('#cubeloader').hide();
-                        $('#barGraph').show();
-                        $('#pieGraph').show();
-                        var tomorrowDate = new Date(shift_date);
-                        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-                        var formattedTomorrowDate = tomorrowDate.toISOString().split('T')[0];
-        
-                        if (response.data && response.data1 && response.data2 && response.data3) {
-                            updateTodayChartData(response.data);
-                            updateTommorowChartData(response.data1);
-                            updatePieChart(response.data3);
-                            updateChartData(response.data2);
-                            $('#shiftdatetoday').text(shift_date);
-                            $('#shiftdatePie').text(shift_date);
-                            $('#shiftdateDonot').text(shift_date);
-                            $('#shiftdatetommrow').text(formattedTomorrowDate);
-                        }
-                    },
-                    error: function(error) {
-                        console.log("Error fetching chart data:", error);
-                    }
-                });
+            
+            // Service Chart
+            if (serviceData && serviceData.labels && serviceData.labels.length > 0) {
+                initServiceChart();
+            } else {
+                document.getElementById('serviceBarChart').innerHTML = 
+                    '<div class="text-center text-muted py-5">No service data available</div>';
+            }
+            
+            // Monthly Trend Chart
+            if (monthlyData && monthlyData.length > 0) {
+                initMonthlyTrendChart();
+            } else {
+                document.getElementById('monthlyTrendChart').innerHTML = 
+                    '<div class="text-center text-muted py-5">No monthly data available</div>';
             }
         });
         
-</script>
+        // ================================================================
+        // STATUS CHART
+        // ================================================================
+        function initStatusChart() {
+            const ctx = document.getElementById('statusPieChart').getContext('2d');
+            
+            const colors = statusData.labels.map(label => {
+                if (statusColorPalette[label]) return statusColorPalette[label];
+                const lowerLabel = label.toLowerCase();
+                if (lowerLabel.includes('approved')) return '#2ECC71';
+                if (lowerLabel.includes('pending')) return '#F39C12';
+                if (lowerLabel.includes('rejected')) return '#E74C3C';
+                if (lowerLabel.includes('refused')) return '#C0392B';
+                if (lowerLabel.includes('new')) return '#FF6B6B';
+                if (lowerLabel.includes('acknowledged')) return '#4ECDC4';
+                if (lowerLabel.includes('scrutiny')) return '#45B7D1';
+                if (lowerLabel.includes('inspection')) return '#98D8C8';
+                if (lowerLabel.includes('certificate')) return '#27AE60';
+                if (lowerLabel.includes('initiated')) return '#9B59B6';
+                if (lowerLabel.includes('payment')) return '#1ABC9C';
+                if (lowerLabel.includes('chalan')) return '#27AE60';
+                if (lowerLabel.includes('permission')) return '#8E44AD';
+                if (lowerLabel.includes('issued')) return '#3498DB';
+                if (lowerLabel.includes('pass')) return '#2ECC71';
+                if (lowerLabel.includes('make')) return '#1ABC9C';
+                if (lowerLabel.includes('factory')) return '#45B7D1';
+                if (lowerLabel.includes('no status')) return '#95a5a6';
+                return fallbackColors[Math.floor(Math.random() * fallbackColors.length)];
+            });
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusData.labels,
+                    datasets: [{
+                        data: statusData.values,
+                        backgroundColor: colors,
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 15,
+                        hoverBorderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '55%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.85)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            cornerRadius: 10,
+                            padding: 14,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                    return `  ${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        duration: 1200,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+            
+            generateStatusLegend(colors);
+        }
+        
+        function generateStatusLegend(colors) {
+            const legendContainer = document.getElementById('statusLegend');
+            if (!legendContainer) return;
+            
+            if (!statusData || !statusData.labels || statusData.labels.length === 0) {
+                legendContainer.innerHTML = '<div class="text-muted text-center">No status data available</div>';
+                return;
+            }
+            
+            const usedColors = colors || statusData.labels.map((label, index) => {
+                return fallbackColors[index % fallbackColors.length];
+            });
+            
+            const sortedData = statusData.labels.map((label, index) => ({
+                label: label,
+                count: statusData.values[index],
+                color: usedColors[index] || '#6c757d'
+            })).sort((a, b) => b.count - a.count);
+            
+            let html = '';
+            sortedData.forEach((item) => {
+                html += `
+                    <div class="status-legend-item" style="border-left: 3px solid ${item.color};">
+                        <span class="color-dot" style="background: ${item.color};"></span>
+                        <span class="legend-label">${item.label}</span>
+                        <span class="legend-count" style="background: ${item.color};">${item.count}</span>
+                    </div>
+                `;
+            });
+            
+            legendContainer.innerHTML = html;
+        }
+        
+        // ================================================================
+        // SERVICE CHART
+        // ================================================================
+        function initServiceChart() {
+            const ctx = document.getElementById('serviceBarChart').getContext('2d');
+            
+            const colors = serviceData.colors || [
+                '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#e74c3c'
+            ];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: serviceData.labels,
+                    datasets: [{
+                        label: 'Applications',
+                        data: serviceData.values,
+                        backgroundColor: colors.map(c => c + '80'),
+                        borderColor: colors,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        barPercentage: 0.6,
+                        hoverBackgroundColor: colors,
+                        hoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.85)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            cornerRadius: 10,
+                            padding: 14,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = serviceData.values.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                    return `  Applications: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { size: 11 } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11, weight: '500' } }
+                        }
+                    },
+                    animation: { duration: 1200, easing: 'easeInOutQuart' },
+                    onClick: function(e, elements) {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const serviceId = serviceData.service_ids ? serviceData.service_ids[index] : null;
+                            if (serviceId) {
+                                window.location.href = '/dashboard/?service=' + serviceId;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ================================================================
+        // MONTHLY TREND CHART
+        // ================================================================
+        function initMonthlyTrendChart() {
+            const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            gradient.addColorStop(0, 'rgba(52, 152, 219, 0.3)');
+            gradient.addColorStop(0.5, 'rgba(52, 152, 219, 0.1)');
+            gradient.addColorStop(1, 'rgba(52, 152, 219, 0.02)');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(d => d.month),
+                    datasets: [{
+                        label: 'Applications',
+                        data: monthlyData.map(d => d.count),
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        pointHoverBorderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12, weight: '500' },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.85)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            cornerRadius: 10,
+                            padding: 14,
+                            callbacks: {
+                                label: function(context) {
+                                    return `  Applications: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { size: 11 } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    },
+                    interaction: { intersect: false, mode: 'index' },
+                    animation: { duration: 1200, easing: 'easeInOutQuart' },
+                    onClick: function(e, elements) {
+                        if (elements && elements.length > 0) {
+                            const index = elements[0].index;
+                            const month = this.data.labels[index];
+                            alert('📊 Showing applications for ' + month);
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ================================================================
+        // VIEW APPLICATION - MODAL
+        // ================================================================
+        function viewApplication(appId, serviceId, dbAlias) {
+            console.log("Viewing application:", appId, serviceId, dbAlias);
+            
+            document.getElementById('modalBody').innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading application details...</p>
+                </div>
+            `;
+            applicationModal.show();
+            
+            $.ajax({
+                url: '/common-get-application-detail/',
+                method: 'GET',
+                data: {
+                    app_id: appId,
+                    service_id: serviceId,
+                    db_alias: dbAlias
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    console.log("API Response:", response);
+                    if (response.error) {
+                        document.getElementById('modalBody').innerHTML = `
+                            <div class="alert alert-danger m-3">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                ${response.error}
+                            </div>
+                        `;
+                        return;
+                    }
+                    renderApplicationDetails(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", xhr, status, error);
+                    document.getElementById('modalBody').innerHTML = `
+                        <div class="alert alert-danger m-3">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Error loading application details. Please try again.
+                            <br><small class="text-muted">Status: ${status} - ${error}</small>
+                            <br><small class="text-muted">Response: ${xhr.responseText}</small>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        function renderApplicationDetails(data) {
+            const app = data.application;
+            const workflow = data.workflow_history || [];
+            const service = data.service || '';
+            
+            let html = `
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <span class="status-badge-lg" style="background: ${app.status_color || '#6c757d'};">
+                            <i class="fas fa-circle me-2"></i>Status: ${app.status || 'N/A'}
+                        </span>
+                        <span class="ms-3 text-muted">
+                            <i class="fas fa-calendar-alt me-1"></i>Request: ${app.request_no || 'N/A'}
+                        </span>
+                        <span class="ms-3 text-muted">
+                            <i class="fas fa-server me-1"></i>Service: ${service}
+                        </span>
+                    </div>
+                </div>
+                <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Application Information</h6>
+                <div class="detail-grid">
+            `;
+            
+            const excludeKeys = ['status', 'status_color', 'id', 'request_no'];
+            for (const [key, value] of Object.entries(app)) {
+                if (!excludeKeys.includes(key) && value && value !== '-') {
+                    if (key.toLowerCase().includes('id') || key.toLowerCase().includes('hist')) {
+                        continue;
+                    }
+                    html += `
+                        <div class="detail-item">
+                            <label>${key.replace(/_/g, ' ').toUpperCase()}</label>
+                            <span>${value}</span>
+                        </div>
+                    `;
+                }
+            }
+            html += `</div>`;
+            
+            if (workflow && workflow.length > 0) {
+                html += `
+                    <h6 class="mt-4 mb-3"><i class="fas fa-history me-2"></i>Workflow History</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped workflow-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Level</th>
+                                    <th>Status</th>
+                                    <th>Send Forward</th>
+                                    <th>Previous User</th>
+                                    <th>Created At</th>
+                                    <th>Updated At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                workflow.forEach((record, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><span class="badge bg-info">${record.level}</span></td>
+                            <td><span class="status-badge" style="background: #6c757d;">${record.status}</span></td>
+                            <td><strong>${record.send_forward}</strong></td>
+                            <td>${record.pre_user}</td>
+                            <td><small>${record.created_at}</small></td>
+                            <td><small>${record.updated_at}</small></td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table></div>`;
+            } else {
+                html += `<div class="alert alert-info mt-3">No workflow history found.</div>`;
+            }
+            
+            document.getElementById('modalBody').innerHTML = html;
+        }
 
+        function exportExcel() {
+            // Show loader
+            showLoader();
+            
+            // Get current filter values
+            var fromDate = document.getElementById('from_date')?.value || '';
+            var toDate = document.getElementById('to_date')?.value || '';
+            var service = document.getElementById('service')?.value || 'all';
+            
+            // Build URL with parameters
+            var url = '/common-export-excel/?';
+            var params = [];
+            
+            if (fromDate) {
+                params.push('from_date=' + encodeURIComponent(fromDate));
+            }
+            if (toDate) {
+                params.push('to_date=' + encodeURIComponent(toDate));
+            }
+            if (service && service !== 'all') {
+                params.push('service=' + encodeURIComponent(service));
+            }
+            
+            url += params.join('&');
+            
+            console.log('Exporting Excel with URL:', url);
+            
+            // Create a temporary anchor element to trigger download
+            var link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            
+            // Hide loader after download starts
+            setTimeout(function() {
+                hideLoader();
+            }, 3000);
+            
+            // If download doesn't start within 10 seconds, hide loader
+            setTimeout(function() {
+                hideLoader();
+            }, 10000);
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showLoader() {
+            var overlay = document.getElementById('loaderOverlay');
+            if (overlay) {
+                overlay.classList.add('active');
+                document.getElementById('loaderTitle').textContent = 'Generating Excel Report';
+                document.getElementById('loaderMessage').innerHTML = 'Please wait while we prepare your data <span class="loader-dots"><span>.</span><span>.</span><span>.</span></span>';
+                document.getElementById('loaderStatus').innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Fetching data...';
+                
+                // Update status after 2 seconds
+                setTimeout(function() {
+                    document.getElementById('loaderStatus').innerHTML = '<i class="fas fa-file-excel me-1"></i> Formatting spreadsheet...';
+                }, 2000);
+                
+                setTimeout(function() {
+                    document.getElementById('loaderStatus').innerHTML = '<i class="fas fa-check-circle me-1"></i> Almost done...';
+                }, 4000);
+            }
+        }
+
+        function hideLoader() {
+            var overlay = document.getElementById('loaderOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Also hide loader when window loses focus (download starts)
+        window.addEventListener('blur', function() {
+            hideLoader();
+        });
+        
+    </script>
 
 {% endblock %}
-

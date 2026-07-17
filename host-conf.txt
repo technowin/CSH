@@ -188,3 +188,5 @@ python manage.py migrate ProductApproval --database=5
 python manage.py migrate Masters --database=4
 git config --global user.name "YourName"
 git config --global user.email "youremail@example.com"
+
+python manage.py migrate MenuManager --database=default
