@@ -1133,6 +1133,24 @@ def service_dashboard(request):
         user_id = request.session.get('user_id', 1)
         role_id = request.session.get('role_id', 1)
         
+        # ========== MONTHLY TREND DATA ==========
+        monthly_data = []
+        today = timezone.now()
+
+        for i in range(11, -1, -1):
+            month_start = today.replace(day=1) - timedelta(days=30*i)
+            month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+            
+            month_count = applications.filter(
+                created_at__gte=month_start,
+                created_at__lt=month_end + timedelta(days=1)
+            ).count()
+            
+            monthly_data.append({
+                'month': month_start.strftime('%b %Y'),
+                'count': month_count
+            })
+        
         context = {
             'service_id': service_id,
             'service_name': service_name,
@@ -1154,6 +1172,7 @@ def service_dashboard(request):
             'role_id': role_id,
             'from_date': from_date if from_date else '',
             'to_date': to_date if to_date else '',
+            'monthly_data': json.dumps(monthly_data)
         }
         
         return render(request, 'Master/dashboard.html', context)
@@ -1292,7 +1311,10 @@ def get_application_detail(request, app_id):
         workflow_data = []
         if WorkflowHistory:
             history = WorkflowHistory.objects.using(db_alias).filter(
-                form_id=application
+                form_id=application,
+                request_no__isnull=False
+            ).exclude(
+                request_no=''
             ).order_by('-updated_at')[:20]
             
             # Get all user IDs from workflow history

@@ -246,10 +246,17 @@ urlpatterns = [
     path('aqi_monthly_create/<str:parent_id>/', aqi_monthly_create, name='aqi_monthly_create'),
     
     path('detailsdashboard/',service_dashboard, name='service_dashboard'),
-    # path('api/filter-dashboard/', filter_dashboard_data, name='filter_dashboard_data'),
     path('get-application-detail/<int:app_id>/', get_application_detail, name='get_application_detail'),
     path('export-excel/', export_to_excel, name='export_to_excel'),
     # path('import-excel/', import_from_excel, name='import_from_excel'),
+    # path('api/filter-dashboard/', filter_dashboard_data, name='filter_dashboard_data'),
+    
+    # Common Dashboard URLs
+    
+    path('dashboard/',dashboard, name='dashboard'),
+    path('common-get-application-detail/',common_get_application_detail, name='common_get_application_detail'),
+    path('common-export-excel/', common_export_excel, name='common_export_excel'),
+    # path('export-excel/',export_excel, name='export_excel'),
 ]
 
 if settings.DEBUG:

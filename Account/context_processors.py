@@ -41,9 +41,11 @@ def logged_in_user(request):
             menu_dict[item['parent_id']].append(item)
 
         menu_items = menu_dict.get(-1, []) 
-        alerts_count = callproc("stp_get_workflow_alerts", [user_id, 'count'])
-        alerts_count = alerts_count[0][0] if alerts_count else 0
-        alerts = callproc("stp_get_workflow_alerts", [user_id, 'alerts'])
+        
+        if service_db != '8': # service_db 8 is for coming from default service (common_db1)
+            alerts_count = callproc("stp_get_workflow_alerts", [user_id, 'count'])
+            alerts_count = alerts_count[0][0] if alerts_count else 0
+            alerts = callproc("stp_get_workflow_alerts", [user_id, 'alerts'])
 
     service = ''  
     

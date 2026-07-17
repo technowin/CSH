@@ -8,768 +8,862 @@
 
 {% csrf_token %}
 
-<!-- Custom styles -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-<link href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" rel="stylesheet">
 
-<style>
+    <style>
 
-    /* ========== MODAL STYLES ========== */
-    .modal-header {
-        background: linear-gradient(135deg, var(--service-color), #2c3e50);
-        color: white;
-        border-radius: 12px 12px 0 0;
-    }
-
-    .modal-header .btn-close {
-        filter: brightness(0) invert(1);
-    }
-
-    .modal-body .detail-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 12px;
-        padding: 10px 0;
-    }
-
-    .modal-body .detail-item {
-        background: #f8f9fa;
-        padding: 10px 15px;
-        border-radius: 8px;
-        border-left: 4px solid var(--service-color);
-    }
-
-    .modal-body .detail-item label {
-        font-weight: 600;
-        color: #2c3e50;
-        display: block;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 2px;
-    }
-
-    .modal-body .detail-item span {
-        font-size: 0.9rem;
-        word-break: break-word;
-    }
-
-    .modal-body .status-badge-lg {
-        padding: 6px 20px;
-        border-radius: 20px;
-        font-size: 1rem;
-        font-weight: 600;
-        display: inline-block;
-        color: white;
-    }
-
-    /* ========== WORKFLOW TABLE STYLES ========== */
-    .workflow-table {
-        font-size: 0.85rem;
-    }
-
-    .workflow-table th {
-        background: #2c3e50;
-        color: white;
-        white-space: nowrap;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 8px 10px;
-    }
-
-    .workflow-table td {
-        padding: 6px 10px;
-        vertical-align: middle;
-    }
-
-    .workflow-table .badge {
-        font-size: 0.7rem;
-        padding: 4px 10px;
-    }
-
-    .workflow-table small {
-        font-size: 0.7rem;
-        color: #6c757d;
-    }
-
-    .workflow-table tr:hover {
-        background: #f8f9fa;
-    }
-
-    .workflow-table td strong {
-        color: #2c3e50;
-    }
-    
-    :root {
-        --service-color: {{ service_color }};
-    }
-    
-    .dashboard-container {
-        padding: 20px;
-    }
-    
-    .dashboard-header {
-        background: linear-gradient(135deg, var(--service-color), #2c3e50);
-        color: white;
-        padding: 20px 25px;
-        border-radius: 15px;
-        margin-bottom: 25px;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        transition: all 0.3s;
-        border-left: 4px solid var(--service-color);
-        height: 100%;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    
-    .stat-card .stat-icon {
-        font-size: 2rem;
-        opacity: 0.2;
-    }
-    
-    .stat-card .stat-number {
-        font-size: 2.2rem;
-        font-weight: bold;
-        color: var(--service-color);
-    }
-    
-    .stat-card .stat-label {
-        color: #7f8c8d;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-    }
-    
-    .stat-card.approved .stat-number { color: #2ecc71; }
-    .stat-card.approved { border-left-color: #2ecc71; }
-    .stat-card.pending .stat-number { color: #f39c12; }
-    .stat-card.pending { border-left-color: #f39c12; }
-    .stat-card.rejected .stat-number { color: #e74c3c; }
-    .stat-card.rejected { border-left-color: #e74c3c; }
-    
-    .chart-container {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-        min-height: 350px;
-    }
-    
-    .chart-container h5 {
-        color: #2c3e50;
-        margin-bottom: 20px;
-        font-weight: 600;
-    }
-    
-    .chart-wrapper {
-        position: relative;
-        height: 350px;
-        width: 100%;
-    }
-    
-    .chart-wrapper canvas {
-        width: 100% !important;
-        height: 100% !important;
-    }
-    
-    .table-container {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    }
-    
-    .table-container .table-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    
-    .action-btn {
-        border-radius: 8px;
-        padding: 8px 20px;
-        font-weight: 500;
-        transition: all 0.3s;
-    }
-    
-    .action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    
-    /* ========== STATUS BADGE STYLES ========== */
-    .status-badge {
-        padding: 4px 14px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        display: inline-block;
-        color: white;
-        letter-spacing: 0.3px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        white-space: nowrap;
-        transition: all 0.2s;
-    }
-    
-    .status-badge:hover {
-        transform: scale(1.05);
-        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-    }
-    
-    .status-approved { background: #2ECC71 !important; color: white !important; }
-    .status-pending { background: #F39C12 !important; color: white !important; }
-    .status-rejected { background: #E74C3C !important; color: white !important; }
-    .status-refused { background: #C0392B !important; color: white !important; }
-    .status-new { background: #FF6B6B !important; color: white !important; }
-    .status-acknowledged { background: #4ECDC4 !important; color: white !important; }
-    .status-scrutiny { background: #45B7D1 !important; color: white !important; }
-    .status-inspection { background: #98D8C8 !important; color: #2c3e50 !important; }
-    .status-certificate { background: #F1C40F !important; color: #2c3e50 !important; }
-    .status-initiated { background: #9B59B6 !important; color: white !important; }
-    .status-payment { background: #1ABC9C !important; color: white !important; }
-    .status-chalan { background: #27AE60 !important; color: white !important; }
-    .status-permission { background: #8E44AD !important; color: white !important; }
-    .status-issued { background: #3498DB !important; color: white !important; }
-    .status-forward { background: #2980B9 !important; color: white !important; }
-    .status-process { background: #F39C12 !important; color: white !important; }
-    .status-failed { background: #E74C3C !important; color: white !important; }
-    .status-default { background: #6c757d !important; color: white !important; }
-    .status-na { background: #95a5a6 !important; color: white !important; }
-    
-    .filter-section {
-        background: white;
-        border-radius: 12px;
-        padding: 15px 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-    }
-    
-    .filter-section .form-label {
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: #2c3e50;
-    }
-    
-    .filter-section .btn-apply {
-        padding: 8px 30px;
-        margin-top: 6px;
-    }
-    
-    .filter-section .btn-clear {
-        padding: 8px 30px;
-        margin-top: 6px;
-        background: #e74c3c;
-        color: white;
-        border: none;
-    }
-    
-    .filter-section .btn-clear:hover {
-        background: #c0392b;
-        color: white;
-    }
-    
-    .status-legend-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 6px;
-        margin-top: 10px;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        max-height: 180px;
-        overflow-y: auto;
-    }
-    
-    .status-legend-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.75rem;
-        padding: 3px 8px;
-        border-radius: 4px;
-        background: white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    
-    .status-legend-item .color-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        display: inline-block;
-        flex-shrink: 0;
-        border: 1px solid rgba(0,0,0,0.1);
-    }
-    
-    .status-legend-item .legend-count {
-        font-weight: 600;
-        color: #2c3e50;
-        margin-left: auto;
-        background: #e9ecef;
-        padding: 0 6px;
-        border-radius: 10px;
-        font-size: 0.7rem;
-    }
-    
-    /* ========== MODAL STYLES ========== */
-    .modal-header {
-        background: linear-gradient(135deg, var(--service-color), #2c3e50);
-        color: white;
-        border-radius: 12px 12px 0 0;
-    }
-    
-    .modal-header .btn-close {
-        filter: brightness(0) invert(1);
-    }
-    
-    .modal-body .detail-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 12px;
-        padding: 10px 0;
-    }
-    
-    .modal-body .detail-item {
-        background: #f8f9fa;
-        padding: 10px 15px;
-        border-radius: 8px;
-        border-left: 4px solid var(--service-color);
-    }
-    
-    .modal-body .detail-item label {
-        font-weight: 600;
-        color: #2c3e50;
-        display: block;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 2px;
-    }
-    
-    .modal-body .detail-item span {
-        font-size: 0.95rem;
-        word-break: break-word;
-    }
-    
-    .modal-body .workflow-table {
-        font-size: 0.9rem;
-    }
-    
-    .modal-body .workflow-table th {
-        background: #2c3e50;
-        color: white;
-    }
-    
-    .modal-body .status-badge-lg {
-        padding: 6px 20px;
-        border-radius: 20px;
-        font-size: 1rem;
-        font-weight: 600;
-        display: inline-block;
-        color: white;
-    }
-    
-    .loading-spinner {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 200px;
-        flex-direction: column;
-    }
-    
-    .loading-spinner .spinner-border {
-        width: 3rem;
-        height: 3rem;
-    }
-    
-    @media (max-width: 768px) {
-        .stat-card .stat-number {
-            font-size: 1.5rem;
+        /* ========== MODAL STYLES ========== */
+        .modal-header {
+            background: linear-gradient(135deg, var(--service-color), #2c3e50);
+            color: white;
+            border-radius: 12px 12px 0 0;
         }
-        .chart-wrapper {
-            height: 250px;
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
         }
-        .filter-section .row > div {
-            margin-bottom: 10px;
-        }
-        .status-legend-grid {
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        }
+
         .modal-body .detail-grid {
-            grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+            padding: 10px 0;
         }
-    }
-</style>
 
-<!-- Dashboard Container -->
-<div class="dashboard-container">
-    
-    <!-- Header -->
-    <div class="dashboard-header">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h2><i class="fas fa-chart-line me-2"></i>Service Dashboard</h2>
-                <p class="mb-0 opacity-75">
-                    <i class="fas fa-database me-2"></i>
-                    Current Service: <strong>{{ service_name }}</strong>
-                    {% if from_date and to_date %}
-                        <span class="ms-2 badge bg-light text-dark">
-                            <i class="fas fa-calendar-alt me-1"></i>
-                            {{ from_date }} to {{ to_date }}
-                        </span>
-                    {% endif %}
-                </p>
-            </div>
-            <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <button class="btn btn-light action-btn" onclick="exportData()">
-                    <i class="fas fa-file-excel me-2"></i>Export Excel
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Date Filter Section -->
-    <div class="filter-section">
-        <form id="filterForm" method="GET" action="/detailsdashboard/">
-            <div class="row align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label"><i class="fas fa-calendar-alt me-2"></i>From Date</label>
-                    <input type="date" class="form-control" id="from_date" name="from_date" value="{{ from_date }}">
+        .modal-body .detail-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--service-color);
+        }
+
+        .modal-body .detail-item label {
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .modal-body .detail-item span {
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+
+        .modal-body .status-badge-lg {
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-block;
+            color: white;
+        }
+
+        /* ========== WORKFLOW TABLE STYLES ========== */
+        .workflow-table {
+            font-size: 0.85rem;
+        }
+
+        .workflow-table th {
+            background: #2c3e50;
+            color: white;
+            white-space: nowrap;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 10px;
+        }
+
+        .workflow-table td {
+            padding: 6px 10px;
+            vertical-align: middle;
+        }
+
+        .workflow-table .badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+        }
+
+        .workflow-table small {
+            font-size: 0.7rem;
+            color: #6c757d;
+        }
+
+        .workflow-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .workflow-table td strong {
+            color: #2c3e50;
+        }
+        
+        :root {
+            --service-color: {{ service_color }};
+        }
+        
+        .dashboard-container {
+            padding: 20px;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--service-color), #2c3e50);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            border-left: 4px solid var(--service-color);
+            height: 100%;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card .stat-icon {
+            font-size: 2rem;
+            opacity: 0.2;
+        }
+        
+        .stat-card .stat-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--service-color);
+        }
+        
+        .stat-card .stat-label {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .stat-card.approved .stat-number { color: #2ecc71; }
+        .stat-card.approved { border-left-color: #2ecc71; }
+        .stat-card.pending .stat-number { color: #f39c12; }
+        .stat-card.pending { border-left-color: #f39c12; }
+        .stat-card.rejected .stat-number { color: #e74c3c; }
+        .stat-card.rejected { border-left-color: #e74c3c; }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            min-height: 350px;
+        }
+        
+        .chart-container h5 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+        
+        .chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .table-container .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* ========== STATUS BADGE STYLES ========== */
+        .status-badge {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+            color: white;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        
+        .status-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+        
+        .status-approved { background: #2ECC71 !important; color: white !important; }
+        .status-pending { background: #F39C12 !important; color: white !important; }
+        .status-rejected { background: #E74C3C !important; color: white !important; }
+        .status-refused { background: #C0392B !important; color: white !important; }
+        .status-new { background: #FF6B6B !important; color: white !important; }
+        .status-acknowledged { background: #4ECDC4 !important; color: white !important; }
+        .status-scrutiny { background: #45B7D1 !important; color: white !important; }
+        .status-inspection { background: #98D8C8 !important; color: #2c3e50 !important; }
+        .status-certificate { background: #F1C40F !important; color: #2c3e50 !important; }
+        .status-initiated { background: #9B59B6 !important; color: white !important; }
+        .status-payment { background: #1ABC9C !important; color: white !important; }
+        .status-chalan { background: #27AE60 !important; color: white !important; }
+        .status-permission { background: #8E44AD !important; color: white !important; }
+        .status-issued { background: #3498DB !important; color: white !important; }
+        .status-forward { background: #2980B9 !important; color: white !important; }
+        .status-process { background: #F39C12 !important; color: white !important; }
+        .status-failed { background: #E74C3C !important; color: white !important; }
+        .status-default { background: #6c757d !important; color: white !important; }
+        .status-na { background: #95a5a6 !important; color: white !important; }
+        
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+        
+        .filter-section .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2c3e50;
+        }
+        
+        .filter-section .btn-apply {
+            padding: 8px 30px;
+            margin-top: 6px;
+        }
+        
+        .filter-section .btn-clear {
+            padding: 8px 30px;
+            margin-top: 6px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+        }
+        
+        .filter-section .btn-clear:hover {
+            background: #c0392b;
+            color: white;
+        }
+        
+        .status-legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 6px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        
+        .status-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .status-legend-item .color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .status-legend-item .legend-count {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-left: auto;
+            background: #e9ecef;
+            padding: 0 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+        
+        /* ========== MODAL STYLES ========== */
+        .modal-header {
+            background: linear-gradient(135deg, var(--service-color), #2c3e50);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+        
+        .modal-body .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+            padding: 10px 0;
+        }
+        
+        .modal-body .detail-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--service-color);
+        }
+        
+        .modal-body .detail-item label {
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        
+        .modal-body .detail-item span {
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+        
+        .modal-body .workflow-table {
+            font-size: 0.9rem;
+        }
+        
+        .modal-body .workflow-table th {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        .modal-body .status-badge-lg {
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-block;
+            color: white;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            flex-direction: column;
+        }
+        
+        .loading-spinner .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .stat-card .stat-number {
+                font-size: 1.5rem;
+            }
+            .chart-wrapper {
+                height: 250px;
+            }
+            .filter-section .row > div {
+                margin-bottom: 10px;
+            }
+            .status-legend-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            .modal-body .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <!-- Dashboard Container -->
+    <div class="dashboard-container">
+        
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2><i class="fas fa-chart-line me-2"></i>Service Dashboard</h2>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-database me-2"></i>
+                        Current Service: <strong>{{ service_name }}</strong>
+                        {% if from_date and to_date %}
+                            <span class="ms-2 badge bg-light text-dark">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                {{ from_date }} to {{ to_date }}
+                            </span>
+                        {% endif %}
+                    </p>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label"><i class="fas fa-calendar-alt me-2"></i>To Date</label>
-                    <input type="date" class="form-control" id="to_date" name="to_date" value="{{ to_date }}">
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary btn-apply w-100">
-                        <i class="fas fa-filter me-2"></i>Apply Filter
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <button class="btn btn-light action-btn" onclick="exportData()">
+                        <i class="fas fa-file-excel me-2"></i>Export Excel
                     </button>
                 </div>
-                <div class="col-md-3">
-                    <a href="/detailsdashboard/" class="btn btn-clear w-100">
-                        <i class="fas fa-eraser me-2"></i>Clear Filter
-                    </a>
-                </div>
             </div>
-            <div class="row mt-2">
-                <div class="col-12">
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {% if from_date and to_date %}
-                            Showing data from <strong>{{ from_date }}</strong> to <strong>{{ to_date }}</strong>
-                        {% else %}
-                            Showing all data (last 30 days by default)
-                        {% endif %}
-                    </small>
-                </div>
-            </div>
-        </form>
-    </div>
-    
-    <!-- Stats Cards -->
-    <div class="row g-4 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Total Applications</div>
-                        <div class="stat-number" id="totalApps">{{ total_applications }}</div>
+        </div>
+        
+        <!-- Date Filter Section -->
+        <div class="filter-section">
+            <form id="filterForm" method="GET" action="/detailsdashboard/">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-calendar-alt me-2"></i>From Date</label>
+                        <input type="date" class="form-control" id="from_date" name="from_date" value="{{ from_date }}">
                     </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-file-alt"></i>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-calendar-alt me-2"></i>To Date</label>
+                        <input type="date" class="form-control" id="to_date" name="to_date" value="{{ to_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary btn-apply w-100">
+                            <i class="fas fa-filter me-2"></i>Apply Filter
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/detailsdashboard/" class="btn btn-clear w-100">
+                            <i class="fas fa-eraser me-2"></i>Clear Filter
+                        </a>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {% if from_date and to_date %}
+                                Showing data from <strong>{{ from_date }}</strong> to <strong>{{ to_date }}</strong>
+                            {% else %}
+                                Showing all data (last 30 days by default)
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Total Applications</div>
+                            <div class="stat-number" id="totalApps">{{ total_applications }}</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card approved">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Approved</div>
+                            <div class="stat-number" id="approvedCount">{{ approved_count }}</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card pending">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Pending</div>
+                            <div class="stat-number" id="pendingCount">{{ pending_count }}</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-clock text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card rejected">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Rejected</div>
+                            <div class="stat-number" id="rejectedCount">{{ rejected_count }}</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-times-circle text-danger"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-xl-3 col-md-6">
-            <div class="stat-card approved">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Approved</div>
-                        <div class="stat-number" id="approvedCount">{{ approved_count }}</div>
+        <!-- Charts Row -->
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-bar me-2"></i>Daily Application Volume</h5>
+                    <div class="chart-wrapper">
+                        <canvas id="volumeChart"></canvas>
                     </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle text-success"></i>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Status Distribution</h5>
+                    <div class="chart-wrapper" style="height: 300px;">
+                        <canvas id="statusPieChart"></canvas>
+                    </div>
+                    <div class="status-legend-grid" id="statusLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== MONTHLY TREND CHART ========== -->
+        <div class="row g-4 mt-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-line me-2"></i>Monthly Application Trend <small class="text-muted" style="font-size: 0.75rem; font-weight: 400;">(Last 12 Months)</small></h5>
+                    <div style="height: 280px; max-width: 800px; margin: 0 auto;">
+                        <canvas id="monthlyTrendChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-xl-3 col-md-6">
-            <div class="stat-card pending">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Pending</div>
-                        <div class="stat-number" id="pendingCount">{{ pending_count }}</div>
+        <!-- Data Table -->
+        <div class="row g-4 mt-2">
+            <div class="col-12">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h5 class="mb-0"><i class="fas fa-table me-2"></i>All Applications</h5>
+                        <span class="badge bg-primary">{{ table_data|length }} records</span>
                     </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-clock text-warning"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6">
-            <div class="stat-card rejected">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Rejected</div>
-                        <div class="stat-number" id="rejectedCount">{{ rejected_count }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="fas fa-times-circle text-danger"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Charts Row -->
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="chart-container">
-                <h5><i class="fas fa-chart-bar me-2"></i>Daily Application Volume</h5>
-                <div class="chart-wrapper">
-                    <canvas id="volumeChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="chart-container">
-                <h5><i class="fas fa-chart-pie me-2"></i>Status Distribution</h5>
-                <div class="chart-wrapper" style="height: 300px;">
-                    <canvas id="statusPieChart"></canvas>
-                </div>
-                <div class="status-legend-grid" id="statusLegend"></div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Data Table -->
-    <div class="row g-4 mt-2">
-        <div class="col-12">
-            <div class="table-container">
-                <div class="table-header">
-                    <h5 class="mb-0"><i class="fas fa-table me-2"></i>All Applications</h5>
-                    <span class="badge bg-primary">{{ table_data|length }} records</span>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped" id="applicationsTable">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>#</th>
-                                {% for field in table_fields %}
-                                    {% if field != 'id' %}
-                                        <th>{{ field|title|cut:"_" }}</th>
-                                    {% endif %}
-                                {% endfor %}
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            {% for app in table_data %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped" id="applicationsTable">
+                            <thead class="table-dark">
                                 <tr>
-                                    <td>{{ forloop.counter }}</td>
+                                    <th>#</th>
                                     {% for field in table_fields %}
                                         {% if field != 'id' %}
-                                            <td>
-                                                {% if field == 'status' %}
-                                                    {% if app.status and app.status != 'N/A' %}
-                                                        <span class="status-badge" style="background:#395FCF;">
-                                                            {{ app.status }}
-                                                        </span>
-                                                    {% else %}
-                                                        <span class="status-badge status-na">
-                                                            N/A
-                                                        </span>
-                                                    {% endif %}
-                                                {% elif field == 'created_at' %}
-                                                    {{ app.created_at|default:'-' }}
-                                                {% else %}
-                                                    {% for key, value in app.items %}
-                                                        {% if key == field %}
-                                                            {{ value|default:'-' }}
-                                                        {% endif %}
-                                                    {% endfor %}
-                                                {% endif %}
-                                            </td>
+                                            <th>{{ field|title|cut:"_" }}</th>
                                         {% endif %}
                                     {% endfor %}
-                                    <td>
-                                        <button class="btn btn-sm btn-info" onclick="viewApplication('{{ app.id }}')">
-                                            <i class="fas fa-eye"></i> View
-                                        </button>
-                                    </td>
+                                    <th>Action</th>
                                 </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="{{ table_fields|length|add:1 }}" class="text-center">No applications found</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ========== BOOTSTRAP MODAL FOR APPLICATION DETAILS ========== -->
-<div class="modal fade" id="applicationModal" tabindex="-1" aria-labelledby="applicationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="applicationModalLabel">
-                    <i class="fas fa-file-alt me-2"></i>Application Details
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <div class="loading-spinner">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                            </thead>
+                            <tbody id="tableBody">
+                                {% for app in table_data %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        {% for field in table_fields %}
+                                            {% if field != 'id' %}
+                                                <td>
+                                                    {% if field == 'status' %}
+                                                        {% if app.status and app.status != 'N/A' %}
+                                                            <span class="status-badge" style="background:#395FCF;">
+                                                                {{ app.status }}
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="status-badge status-na">
+                                                                N/A
+                                                            </span>
+                                                        {% endif %}
+                                                    {% elif field == 'created_at' %}
+                                                        {{ app.created_at|default:'-' }}
+                                                    {% else %}
+                                                        {% for key, value in app.items %}
+                                                            {% if key == field %}
+                                                                {{ value|default:'-' }}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </td>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="viewApplication('{{ app.id }}')">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="{{ table_fields|length|add:1 }}" class="text-center">No applications found</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <p class="mt-2">Loading application details...</p>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <!-- ========== BOOTSTRAP MODAL FOR APPLICATION DETAILS ========== -->
+    <div class="modal fade" id="applicationModal" tabindex="-1" aria-labelledby="applicationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="applicationModalLabel">
+                        <i class="fas fa-file-alt me-2"></i>Application Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <div class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading application details...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script>
-    // Store data for charts
-    const statusData = {{ status_distribution|safe }};
-    const dailyData = {{ daily_data|safe }};
-    
-    console.log("Status Data:", statusData);
-    console.log("Daily Data:", dailyData);
-    
-    const statusColorPalette = [
-        '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-        '#2ECC71', '#E74C3C', '#3498DB', '#F1C40F', '#9B59B6',
-        '#1ABC9C', '#F39C12', '#E67E22', '#8E44AD', '#2C3E50'
-    ];
-    
-    let volumeChartInstance = null;
-    let pieChartInstance = null;
-    
-    // Initialize Bootstrap Modal
-    const applicationModal = new bootstrap.Modal(document.getElementById('applicationModal'));
-    
-    $(document).ready(function() {
-        if ($.fn.DataTable) {
-            $('#applicationsTable').DataTable({
-                pageLength: 25,
-                lengthMenu: [
-                    [10, 25, 50, 100, 200, -1],
-                    [10, 25, 50, 100, 200, "All"]
-                ],
-                searching: true,
-                ordering: true,
-                info: true,
-                responsive: true,
-                language: {
-                    search: "Search:",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    infoEmpty: "No records found",
-                    infoFiltered: "(filtered from _MAX_ total records)"
-                }
-            });
-        }
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        // Store data for charts
+        const statusData = {{ status_distribution|safe }};
+        const dailyData = {{ daily_data|safe }};
+        const monthlyData = {{ monthly_data|safe }};  
         
-        setTimeout(function() {
-            initCharts();
-            generateStatusLegend();
-        }, 300);
-    });
-    
-    function initCharts() {
-        // Volume Chart
-        const volumeCtx = document.getElementById('volumeChart');
-        if (volumeCtx) {
-            const ctx = volumeCtx.getContext('2d');
-            const dates = dailyData.map(item => item.date);
-            const volumes = dailyData.map(item => item.volume || 0);
-            const colors = volumes.map(v => {
-                if (v > 10) return 'rgba(46, 204, 113, 0.8)';
-                if (v > 5) return 'rgba(52, 152, 219, 0.8)';
-                if (v > 0) return 'rgba(241, 196, 15, 0.8)';
-                return 'rgba(231, 76, 60, 0.4)';
-            });
-            
-            volumeChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'Daily Applications',
-                        data: volumes,
-                        backgroundColor: colors,
-                        borderColor: colors.map(c => c.replace('0.8', '1').replace('0.4', '1')),
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
+        console.log("Status Data:", statusData);
+        console.log("Daily Data:", dailyData);
+        
+        const statusColorPalette = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+            '#2ECC71', '#E74C3C', '#3498DB', '#F1C40F', '#9B59B6',
+            '#1ABC9C', '#F39C12', '#E67E22', '#8E44AD', '#2C3E50'
+        ];
+        
+        let volumeChartInstance = null;
+        let pieChartInstance = null;
+        
+        // Initialize Bootstrap Modal
+        const applicationModal = new bootstrap.Modal(document.getElementById('applicationModal'));
+        
+        $(document).ready(function() {
+            if ($.fn.DataTable) {
+                $('#applicationsTable').DataTable({
+                    pageLength: 25,
+                    lengthMenu: [
+                        [10, 25, 50, 100, 200, -1],
+                        [10, 25, 50, 100, 200, "All"]
+                    ],
+                    searching: true,
+                    ordering: true,
+                    info: true,
                     responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `Applications: ${context.parsed.y}`;
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "No records found",
+                        infoFiltered: "(filtered from _MAX_ total records)"
+                    }
+                });
+            }
+            
+            setTimeout(function() {
+                initCharts();
+                generateStatusLegend();
+            }, 300);
+
+            // Initialize Monthly Trend Chart
+            if (monthlyData && monthlyData.length > 0) {
+                initMonthlyTrendChart();
+            } else {
+                document.getElementById('monthlyTrendChart').innerHTML = 
+                    '<div class="text-center text-muted py-5">No monthly data available</div>';
+            }
+        });
+        
+        function initCharts() {
+            // Volume Chart
+            const volumeCtx = document.getElementById('volumeChart');
+            if (volumeCtx) {
+                const ctx = volumeCtx.getContext('2d');
+                const dates = dailyData.map(item => item.date);
+                const volumes = dailyData.map(item => item.volume || 0);
+                const colors = volumes.map(v => {
+                    if (v > 10) return 'rgba(46, 204, 113, 0.8)';
+                    if (v > 5) return 'rgba(52, 152, 219, 0.8)';
+                    if (v > 0) return 'rgba(241, 196, 15, 0.8)';
+                    return 'rgba(231, 76, 60, 0.4)';
+                });
+                
+                volumeChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Daily Applications',
+                            data: volumes,
+                            backgroundColor: colors,
+                            borderColor: colors.map(c => c.replace('0.8', '1').replace('0.4', '1')),
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Applications: ${context.parsed.y}`;
+                                    }
                                 }
                             }
-                        }
-                    },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            ticks: { stepSize: 1 },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
                         },
-                        x: {
-                            ticks: { maxRotation: 45, font: { size: 10 } },
-                            grid: { display: false }
+                        scales: {
+                            y: { 
+                                beginAtZero: true, 
+                                ticks: { stepSize: 1 },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            x: {
+                                ticks: { maxRotation: 45, font: { size: 10 } },
+                                grid: { display: false }
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
+            
+            // Status Pie Chart
+            const pieCtx = document.getElementById('statusPieChart');
+            if (pieCtx && statusData && statusData.labels && statusData.labels.length > 0) {
+                const ctx = pieCtx.getContext('2d');
+                
+                const colors = statusData.labels.map((label, index) => {
+                    const lowerLabel = label.toLowerCase();
+                    if (lowerLabel.includes('approved')) return '#2ECC71';
+                    if (lowerLabel.includes('pending')) return '#F39C12';
+                    if (lowerLabel.includes('rejected')) return '#E74C3C';
+                    if (lowerLabel.includes('refused')) return '#C0392B';
+                    if (lowerLabel.includes('new')) return '#FF6B6B';
+                    if (lowerLabel.includes('acknowledged')) return '#4ECDC4';
+                    if (lowerLabel.includes('scrutiny')) return '#45B7D1';
+                    if (lowerLabel.includes('inspection')) return '#98D8C8';
+                    if (lowerLabel.includes('certificate')) return '#F1C40F';
+                    if (lowerLabel.includes('initiated')) return '#9B59B6';
+                    if (lowerLabel.includes('payment')) return '#1ABC9C';
+                    if (lowerLabel.includes('chalan')) return '#27AE60';
+                    if (lowerLabel.includes('permission')) return '#8E44AD';
+                    if (lowerLabel.includes('issued')) return '#3498DB';
+                    if (lowerLabel.includes('forward')) return '#2980B9';
+                    if (lowerLabel.includes('process')) return '#F39C12';
+                    if (lowerLabel.includes('failed')) return '#E74C3C';
+                    return statusColorPalette[index % statusColorPalette.length];
+                });
+                
+                pieChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusData.labels,
+                        datasets: [{
+                            data: statusData.values,
+                            backgroundColor: colors,
+                            borderWidth: 3,
+                            borderColor: '#ffffff',
+                            hoverOffset: 15
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '55%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleColor: '#ffffff',
+                                bodyColor: '#ffffff',
+                                cornerRadius: 8,
+                                padding: 12,
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                        return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            duration: 1000
+                        }
+                    }
+                });
+            }
         }
         
-        // Status Pie Chart
-        const pieCtx = document.getElementById('statusPieChart');
-        if (pieCtx && statusData && statusData.labels && statusData.labels.length > 0) {
-            const ctx = pieCtx.getContext('2d');
+        function generateStatusLegend() {
+            const legendContainer = document.getElementById('statusLegend');
+            if (!legendContainer) return;
+            
+            if (!statusData || !statusData.labels || statusData.labels.length === 0) {
+                legendContainer.innerHTML = '<div class="text-muted text-center">No status data available</div>';
+                return;
+            }
             
             const colors = statusData.labels.map((label, index) => {
                 const lowerLabel = label.toLowerCase();
@@ -793,270 +887,268 @@
                 return statusColorPalette[index % statusColorPalette.length];
             });
             
-            pieChartInstance = new Chart(ctx, {
-                type: 'doughnut',
+            let html = '';
+            statusData.labels.forEach((label, index) => {
+                const count = statusData.values[index] || 0;
+                const color = colors[index] || '#6c757d';
+                html += `
+                    <div class="status-legend-item">
+                        <span class="color-dot" style="background: ${color}"></span>
+                        <span>${label}</span>
+                        <span class="legend-count">${count}</span>
+                    </div>
+                `;
+            });
+            legendContainer.innerHTML = html;
+        }
+        
+        // ========== VIEW APPLICATION - BOOTSTRAP MODAL ==========
+        function viewApplication(appId) {
+            console.log("Viewing application:", appId);
+            
+            // Show loading in modal
+            document.getElementById('modalBody').innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading application details...</p>
+                </div>
+            `;
+            applicationModal.show();
+            
+            // AJAX call to get application details
+            $.ajax({
+                url: '/get-application-detail/' + appId + '/',
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    console.log("Application details response:", response);
+                    if (response.error) {
+                        document.getElementById('modalBody').innerHTML = `
+                            <div class="alert alert-danger m-3">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                ${response.error}
+                            </div>
+                        `;
+                        return;
+                    }
+                    renderApplicationDetails(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error fetching application details:", error);
+                    document.getElementById('modalBody').innerHTML = `
+                        <div class="alert alert-danger m-3">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Error loading application details. Please try again.
+                            <br><small class="text-muted">${xhr.responseText || error}</small>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        // ========== RENDER APPLICATION DETAILS IN MODAL ==========
+        function renderApplicationDetails(data) {
+            const app = data.application;
+            const workflow = data.workflow_history || [];
+            const service = data.service || '';
+            
+            let html = `
+                <!-- Status Badge -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <span class="status-badge-lg" style="background: ${app.status_color || '#6c757d'};">
+                            <i class="fas fa-circle me-2"></i>Status: ${app.status || 'N/A'}
+                        </span>
+                        <span class="ms-3 text-muted">
+                            <i class="fas fa-calendar-alt me-1"></i>Request: ${app.request_no || 'N/A'}
+                        </span>
+                        <span class="ms-3 text-muted">
+                            <i class="fas fa-server me-1"></i>Service: ${service}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Application Details Grid -->
+                <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Application Information</h6>
+                <div class="detail-grid">
+            `;
+            
+            // Show all fields except unwanted ones
+            const excludeKeys = ['status', 'status_color', 'id', 'request_no'];
+            for (const [key, value] of Object.entries(app)) {
+                if (!excludeKeys.includes(key) && value && value !== '-') {
+                    // Skip if key contains 'id' or 'hist' or 'form_id'
+                    if (key.toLowerCase().includes('id') || key.toLowerCase().includes('hist')) {
+                        continue;
+                    }
+                    html += `
+                        <div class="detail-item">
+                            <label>${key.replace(/_/g, ' ').toUpperCase()}</label>
+                            <span>${value}</span>
+                        </div>
+                    `;
+                }
+            }
+            
+            html += `</div>`;
+            
+            // ========== WORKFLOW HISTORY ==========
+            if (workflow && workflow.length > 0) {
+                html += `
+                    <h6 class="mt-4 mb-3"><i class="fas fa-history me-2"></i>Workflow History</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped workflow-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Level</th>
+                                    <th>Status</th>
+                                    <th>Send Forward</th>
+                                    <th>Previous User</th>
+                                    <th>Created At</th>
+                                    <th>Updated At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                workflow.forEach((record, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><span class="badge bg-info">${record.level}</span></td>
+                            <td>
+                                <span class="status-badge" style="background: #6c757d;">
+                                    ${record.status}
+                                </span>
+                            </td>
+                            <td><strong>${record.send_forward}</strong></td>
+                            <td>${record.pre_user}</td>
+                            <td><small>${record.created_at}</small></td>
+                            <td><small>${record.updated_at}</small></td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>No workflow history found for this application.
+                    </div>
+                `;
+            }
+            
+            document.getElementById('modalBody').innerHTML = html;
+        }
+        
+        function exportData() {
+            // Get current date filter values from the form
+            var fromDate = document.getElementById('from_date')?.value || '';
+            var toDate = document.getElementById('to_date')?.value || '';
+            
+            // Build URL with parameters
+            var url = '/export-excel/';
+            var params = [];
+            
+            if (fromDate) {
+                params.push('from_date=' + encodeURIComponent(fromDate));
+            }
+            if (toDate) {
+                params.push('to_date=' + encodeURIComponent(toDate));
+            }
+            
+            if (params.length > 0) {
+                url += '?' + params.join('&');
+            }
+            
+            console.log("Exporting with URL:", url);
+            console.log("From Date:", fromDate);
+            console.log("To Date:", toDate);
+            
+            // Open in new window or same window
+            window.location.href = url;
+        }
+
+        // ========== MONTHLY TREND CHART ==========
+        function initMonthlyTrendChart() {
+            const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            gradient.addColorStop(0, 'rgba(52, 152, 219, 0.3)');
+            gradient.addColorStop(0.5, 'rgba(52, 152, 219, 0.1)');
+            gradient.addColorStop(1, 'rgba(52, 152, 219, 0.02)');
+            
+            new Chart(ctx, {
+                type: 'line',
                 data: {
-                    labels: statusData.labels,
+                    labels: monthlyData.map(d => d.month),
                     datasets: [{
-                        data: statusData.values,
-                        backgroundColor: colors,
+                        label: 'Applications',
+                        data: monthlyData.map(d => d.count),
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(52, 152, 219, 1)',
                         borderWidth: 3,
-                        borderColor: '#ffffff',
-                        hoverOffset: 15
+                        pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        fill: true,
+                        tension: 0.4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '55%',
                     plugins: {
-                        legend: { display: false },
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12, weight: '500' },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
                         tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            backgroundColor: 'rgba(0,0,0,0.85)',
                             titleColor: '#ffffff',
                             bodyColor: '#ffffff',
-                            cornerRadius: 8,
-                            padding: 12,
+                            cornerRadius: 10,
+                            padding: 14,
                             callbacks: {
                                 label: function(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
-                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                    return `  Applications: ${context.parsed.y}`;
                                 }
                             }
                         }
                     },
-                    animation: {
-                        animateRotate: true,
-                        duration: 1000
-                    }
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { size: 11 } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    },
+                    interaction: { intersect: false, mode: 'index' },
+                    animation: { duration: 1200, easing: 'easeInOutQuart' }
                 }
             });
         }
-    }
     
-    function generateStatusLegend() {
-        const legendContainer = document.getElementById('statusLegend');
-        if (!legendContainer) return;
-        
-        if (!statusData || !statusData.labels || statusData.labels.length === 0) {
-            legendContainer.innerHTML = '<div class="text-muted text-center">No status data available</div>';
-            return;
-        }
-        
-        const colors = statusData.labels.map((label, index) => {
-            const lowerLabel = label.toLowerCase();
-            if (lowerLabel.includes('approved')) return '#2ECC71';
-            if (lowerLabel.includes('pending')) return '#F39C12';
-            if (lowerLabel.includes('rejected')) return '#E74C3C';
-            if (lowerLabel.includes('refused')) return '#C0392B';
-            if (lowerLabel.includes('new')) return '#FF6B6B';
-            if (lowerLabel.includes('acknowledged')) return '#4ECDC4';
-            if (lowerLabel.includes('scrutiny')) return '#45B7D1';
-            if (lowerLabel.includes('inspection')) return '#98D8C8';
-            if (lowerLabel.includes('certificate')) return '#F1C40F';
-            if (lowerLabel.includes('initiated')) return '#9B59B6';
-            if (lowerLabel.includes('payment')) return '#1ABC9C';
-            if (lowerLabel.includes('chalan')) return '#27AE60';
-            if (lowerLabel.includes('permission')) return '#8E44AD';
-            if (lowerLabel.includes('issued')) return '#3498DB';
-            if (lowerLabel.includes('forward')) return '#2980B9';
-            if (lowerLabel.includes('process')) return '#F39C12';
-            if (lowerLabel.includes('failed')) return '#E74C3C';
-            return statusColorPalette[index % statusColorPalette.length];
-        });
-        
-        let html = '';
-        statusData.labels.forEach((label, index) => {
-            const count = statusData.values[index] || 0;
-            const color = colors[index] || '#6c757d';
-            html += `
-                <div class="status-legend-item">
-                    <span class="color-dot" style="background: ${color}"></span>
-                    <span>${label}</span>
-                    <span class="legend-count">${count}</span>
-                </div>
-            `;
-        });
-        legendContainer.innerHTML = html;
-    }
-    
-    // ========== VIEW APPLICATION - BOOTSTRAP MODAL ==========
-    function viewApplication(appId) {
-        console.log("Viewing application:", appId);
-        
-        // Show loading in modal
-        document.getElementById('modalBody').innerHTML = `
-            <div class="loading-spinner">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Loading application details...</p>
-            </div>
-        `;
-        applicationModal.show();
-        
-        // AJAX call to get application details
-        $.ajax({
-            url: '/get-application-detail/' + appId + '/',
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            success: function(response) {
-                console.log("Application details response:", response);
-                if (response.error) {
-                    document.getElementById('modalBody').innerHTML = `
-                        <div class="alert alert-danger m-3">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            ${response.error}
-                        </div>
-                    `;
-                    return;
-                }
-                renderApplicationDetails(response);
-            },
-            error: function(xhr, status, error) {
-                console.error("Error fetching application details:", error);
-                document.getElementById('modalBody').innerHTML = `
-                    <div class="alert alert-danger m-3">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        Error loading application details. Please try again.
-                        <br><small class="text-muted">${xhr.responseText || error}</small>
-                    </div>
-                `;
-            }
-        });
-    }
-    
-    // ========== RENDER APPLICATION DETAILS IN MODAL ==========
-    function renderApplicationDetails(data) {
-        const app = data.application;
-        const workflow = data.workflow_history || [];
-        const service = data.service || '';
-        
-        let html = `
-            <!-- Status Badge -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <span class="status-badge-lg" style="background: ${app.status_color || '#6c757d'};">
-                        <i class="fas fa-circle me-2"></i>Status: ${app.status || 'N/A'}
-                    </span>
-                    <span class="ms-3 text-muted">
-                        <i class="fas fa-calendar-alt me-1"></i>Request: ${app.request_no || 'N/A'}
-                    </span>
-                    <span class="ms-3 text-muted">
-                        <i class="fas fa-server me-1"></i>Service: ${service}
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Application Details Grid -->
-            <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Application Information</h6>
-            <div class="detail-grid">
-        `;
-        
-        // Show all fields except unwanted ones
-        const excludeKeys = ['status', 'status_color', 'id', 'request_no'];
-        for (const [key, value] of Object.entries(app)) {
-            if (!excludeKeys.includes(key) && value && value !== '-') {
-                // Skip if key contains 'id' or 'hist' or 'form_id'
-                if (key.toLowerCase().includes('id') || key.toLowerCase().includes('hist')) {
-                    continue;
-                }
-                html += `
-                    <div class="detail-item">
-                        <label>${key.replace(/_/g, ' ').toUpperCase()}</label>
-                        <span>${value}</span>
-                    </div>
-                `;
-            }
-        }
-        
-        html += `</div>`;
-        
-        // ========== WORKFLOW HISTORY ==========
-        if (workflow && workflow.length > 0) {
-            html += `
-                <h6 class="mt-4 mb-3"><i class="fas fa-history me-2"></i>Workflow History</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-striped workflow-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Level</th>
-                                <th>Status</th>
-                                <th>Send Forward</th>
-                                <th>Previous User</th>
-                                <th>Created At</th>
-                                <th>Updated At</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            
-            workflow.forEach((record, index) => {
-                html += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td><span class="badge bg-info">${record.level}</span></td>
-                        <td>
-                            <span class="status-badge" style="background: #6c757d;">
-                                ${record.status}
-                            </span>
-                        </td>
-                        <td><strong>${record.send_forward}</strong></td>
-                        <td>${record.pre_user}</td>
-                        <td><small>${record.created_at}</small></td>
-                        <td><small>${record.updated_at}</small></td>
-                    </tr>
-                `;
-            });
-            
-            html += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        } else {
-            html += `
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle me-2"></i>No workflow history found for this application.
-                </div>
-            `;
-        }
-        
-        document.getElementById('modalBody').innerHTML = html;
-    }
-    
-    function exportData() {
-        // Get current date filter values from the form
-        var fromDate = document.getElementById('from_date')?.value || '';
-        var toDate = document.getElementById('to_date')?.value || '';
-        
-        // Build URL with parameters
-        var url = '/export-excel/';
-        var params = [];
-        
-        if (fromDate) {
-            params.push('from_date=' + encodeURIComponent(fromDate));
-        }
-        if (toDate) {
-            params.push('to_date=' + encodeURIComponent(toDate));
-        }
-        
-        if (params.length > 0) {
-            url += '?' + params.join('&');
-        }
-        
-        console.log("Exporting with URL:", url);
-        console.log("From Date:", fromDate);
-        console.log("To Date:", toDate);
-        
-        // Open in new window or same window
-        window.location.href = url;
-    }
-   
-</script>
+    </script>
 
 {% endblock %}
+
