@@ -11,7 +11,17 @@ class ServiceRouter:
 
     def _service_alias(self):
         try:
-            return get_current_service() or 'default'
+            # return get_current_service() or 'default'
+            
+            service = get_current_service() or 'default'
+            
+            # If service is '6', use default instead
+            if service == 6 or service == '6':
+                logger.debug("Service '6' detected, using default connection")
+                return 'default'
+            
+            return service
+                
         except Exception as e:
             logger.exception("ServiceRouter._service_alias error: %s", e)
             return 'default'
