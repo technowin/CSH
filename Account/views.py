@@ -730,7 +730,7 @@ def citizenLoginAccount(request):
             
             request.session['service'] = service
             
-            ServiceType = service_master.objects.using('default').values_list("ser_id", "ser_name")
+            ServiceType = service_master.objects.using('default').values_list("ser_id", "ser_name").exclude(ser_id=6)
 
             return render(request, 'citizenAccount/citizenLogin.html',{'service':service, "parameter":ServiceType})
 
@@ -781,7 +781,7 @@ def citizenRegisterAccount(request):
             if service_db is None or service_db.strip().lower() == "none":
                 service_db = ""
             
-            ServiceType = service_master.objects.using('default').values_list("ser_id", "ser_name")
+            ServiceType = service_master.objects.using('default').values_list("ser_id", "ser_name").exclude(ser_id=6)
             
             context['service_db'] = service_db
             context['parameter'] = ServiceType
