@@ -69,8 +69,19 @@ def matrix_flow_cr(request):
             wf_id = decrypt_parameter(wf_id) if (wf_id := request.GET.get('wf', '')) else ''
             form_id = decrypt_parameter(form_id) if (form_id := request.GET.get('af', '')) else ''
             workflow = workflow_details.objects.get(id=wf_id) 
-            matrix = service_matrix.objects.get(level=workflow.level)
-            act_comp = status_master.objects.filter(level=workflow.level,status_id=workflow.status_id).exists()
+            application = application_form.objects.get(id=form_id)
+            consumer_type = application.contractor_type
+
+            matrix = service_matrix.objects.get(
+                level=workflow.level,
+                service_type__istartswith=consumer_type.split(" ")[0]
+            )
+
+            act_comp = status_master.objects.filter(
+                level=workflow.level,
+                status_id=workflow.status_id,
+                service_type__istartswith=consumer_type.split(" ")[0]
+            ).exists()
             
             doc_ids = [16, 17]
             existing_docs = citizen_document.objects.filter( document_id__in=doc_ids, application_id=form_id).values_list('document_id', flat=True)
@@ -134,7 +145,7 @@ def matrix_flow_cr(request):
                     return redirect(f'/matrix_flow_cr?wf={encrypt_parameter(wf_id)}&af={encrypt_parameter(form_id)}&ac={ac}')
                 else: messages.error(request, 'Oops...! Something went wrong!')
                 return redirect(f'/index_cr')
-            subordinates = callproc("stp_get_subordinates",[form_id,user])
+            subordinates = callproc("stp_get_subordinates",[form_id,user,consumer_type,wf_id])
             user_list = callproc("stp_get_dropdown_values",['marked_for'])
             reject_reasons = callproc("stp_get_dropdown_values",['reject_reasons'])
             citizen_docs = citizen_document.objects.filter(application_id=form_id) 
@@ -197,22 +208,17 @@ def matrix_flow_cr(request):
             
             paymentReceipt = request.FILES.get('receipt_upload_file')
             response = None
-            status =  request.POST.get('btnclk', '')
-            # if status == '1' or status == '2':
-            #     if paymentReceipt:
-            #         response = internal_docs_upload(paymentReceipt, role_id, user, wf, ser, 'Payment Receipt')
-            #     else:
-            #         messages.warning(request, "Please upload the payment receipt.")
-            #         return redirect('matrix_flow_cr')  
-                
             ref = decrypt_parameter(matrix_ref) if (matrix_ref := request.POST.get('matrix_ref', '')) else ''
             ac = decrypt_parameter(ac) if (ac := request.POST.get('ac', '')) else ''
             status =  request.POST.get('btnclk', '')
             if status.isdigit():
                 status = int(status)
                 
-                if (status == 5) and (ref == 'scrutiny'):
+                if (status == 3 or status == 4) and (ref == 'scrutiny'):
                     doc_ids = request.POST.getlist('doc_ids')
+                    cr_file = request.FILES.get('cr_file')
+                    if cr_file:
+                        internal_resp = internal_docs_upload(cr_file,role_id,user,wf,ser,'CR File')
                     rej_res = request.POST.get('rej_res')
                     if rej_res!='' and status in [4]:
                         internal_user_comments.objects.create(
@@ -232,22 +238,74 @@ def matrix_flow_cr(request):
                         return redirect(request.META.get("HTTP_REFERER", "/"))
                         # return JsonResponse({"success": True, "message": str(r1[0][0])})
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                elif status == 3 and ref == 'chalan':
+                   
                     
-                    scru_chalan_file = request.FILES.get('scru_chalan_file')
-                    if scru_chalan_file:
-                        internal_resp = internal_docs_upload(scru_chalan_file,role_id,user,wf,ser,'Chalan')
-                        #citizen_resp = citizen_docs_upload(issue_permission_file, form_user_id, form_id, user, ser, id1)
+                    # code to update api_data
+                    
+                    if status == 4: #Rejected
                         
-                    r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
-                    if r[0][0] not in (""):
-                        messages.success(request, str(r[0][0]))
-                    else: messages.error(request, 'Oops...! Something went wrong!')
-                elif (status == 7 or status==8) and (ref == 'approval'):
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+                # elif status == 3 and ref == 'chalan':
+                    
+                #     scru_chalan_file = request.FILES.get('scru_chalan_file')
+                #     if scru_chalan_file:
+                #         internal_resp = internal_docs_upload(scru_chalan_file,role_id,user,wf,ser,'Chalan')
+                #         #citizen_resp = citizen_docs_upload(issue_permission_file, form_user_id, form_id, user, ser, id1)
+                        
+                #     r = callproc("stp_post_workflow", [wf_id,form_id,status,ref,ser,user,''])
+                #     if r[0][0] not in (""):
+                #         messages.success(request, str(r[0][0]))
+                #     else: messages.error(request, 'Oops...! Something went wrong!')
+                elif (status == 5 or status==6) and (ref == 'approval'):
                     rej_res = request.POST.get('rej_res', '').strip()
                     refusal_file = request.FILES.get('file')
 
-                    if rej_res!='' and status in [8]:
+                    if rej_res!='' and status in [6]:
                         internal_user_comments.objects.create(
                             workflow=wf,
                             comments=rej_res,
@@ -278,7 +336,8 @@ def matrix_flow_cr(request):
                         messages.error(request, "Oops...! Something went wrong!")
 
                     return redirect(request.META.get("HTTP_REFERER", "/"))
-                elif status == 9 and ref == 'registration':
+                
+                elif (status == 7 or status == 15) and ref == 'registration':
                     
                     registration_chalan_file = request.FILES.get('registration_chalan_file')
                     if registration_chalan_file:
@@ -289,7 +348,8 @@ def matrix_flow_cr(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
-                elif status == 11 and ref == 'certificate':
+
+                elif status == 9 and ref == 'certificate':
                     iss_remark = request.POST.get('iss_remark')
                     if iss_remark!='':
                         internal_user_comments.objects.create(
@@ -306,9 +366,119 @@ def matrix_flow_cr(request):
                     if r[0][0] not in (""):
                         messages.success(request, str(r[0][0]))
                     else: messages.error(request, 'Oops...! Something went wrong!')
+
+                elif (status == 13 or status == 14) and (ref == 'scrutiny1'):
+                    doc_ids = request.POST.getlist('doc_ids')
+                    cr_file = request.FILES.get('cr_file')
+                    if cr_file:
+                        internal_resp = internal_docs_upload(cr_file,role_id,user,wf,ser,'CR File')
+                    rej_res = request.POST.get('rej_res')
+                    if rej_res!='' and status in [14]:
+                        internal_user_comments.objects.create(
+                                workflow=wf, comments=rej_res,
+                                created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
+                        )  
+                    for doc_id in doc_ids:
+                        if doc_id !='':
+                            doc_id = decrypt_parameter(doc_id)
+                            correct = request.POST.get(f"correct_{doc_id}")
+                            incorrect = request.POST.get(f"incorrect_{doc_id}")
+                            rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                            r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
+                    r1 = callproc("stp_post_scrutiny", [wf_id,form_id,status,ref,ser,rej_res,user])
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        return redirect(request.META.get("HTTP_REFERER", "/"))
+                        # return JsonResponse({"success": True, "message": str(r1[0][0])})
+                    else: messages.error(request, 'Oops...! Something went wrong!')
+
+                    if status == 14: #Rejected
+                        
+                        dataAPI = api_data.objects.filter(form_id=form_id, form_user_id=form_user_id, workflow_id=wf_id).first()
+                        
+                        if dataAPI:
+                            
+                            request.session['userId'] = dataAPI.user_id
+                            request.session['trackId'] = dataAPI.track_id
+                            request.session['serviceId'] = dataAPI.service_id
+                            request.session['applicationId'] = dataAPI.application_no
+                            request.session['application_status'] = '5'
+                            request.session['remarks'] = rej_res
+                            request.session['form_id'] = dataAPI.form_id
+                            request.session['form_user_id'] = dataAPI.form_user_id
+                            request.session['workflow_id'] = dataAPI.workflow_id
+                            request.session['phone_number'] = dataAPI.mobile_no
+                            
+                            from Account.views import upd_citizen
+                            upd_citizen(request)
+                            
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Rejected"
+                        request.session["DeskRemark"]=rej_res
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                    else:
+                        # DESK DETAIL API 
+                        role_id = request.session.get('role_id')
+                        role = roles.objects.only('role_name').get(id=role_id)
+                        designation_map = {"EE": '1',"AEE": '2',"AE": '3'}
+                        from Account.desk_detail_api import upd_desk_detail
+                        request.session["ApplicationId1"]=wf.request_no
+                        request.session["DeskNumber"] = 'Desk ' + role_id  
+                        request.session["ReviewActionBy"] = role.role_name
+                        request.session["ReviewActionDetails"]="Approved"
+                        request.session["DeskRemark"]=""
+                        desk_api_res = upd_desk_detail(request)
+                        message = f"DESK DETAIL API hit successfully | Response: {desk_api_res}"
+                        Log.objects.create(log_text=message)
+
+                elif (status == 15 or status==16) and (ref == 'decision'):
+                    rej_res = request.POST.get('rej_res', '').strip()
+                    refusal_file = request.FILES.get('file')
+
+                    if rej_res!='' and status in [16]:
+                        internal_user_comments.objects.create(
+                            workflow=wf,
+                            comments=rej_res,
+                            created_at=datetime.now(),
+                            created_by=str(user),
+                            updated_at=datetime.now(),
+                            updated_by=str(user)
+                        )
+
+                    # Save refusal file if provided
+                    if refusal_file:
+                        response3 = internal_docs_upload(refusal_file, role_id, user, wf, ser, 'Refusal Document')
+                        refusal_file_resp = citizen_docs_upload(refusal_file, form_user_id, form_id, user, ser, 13)
+                        # if response3:
+                        #     return JsonResponse(response3, safe=False)
+                        # else:
+                        #     #  fallback if upload fails
+                        #     messages.error(request, "File upload failed.")
+                        #     return redirect(request.META.get("HTTP_REFERER", "/"))
+
+                    # Call approval SP after reason/file save
+                    r1 = callproc("stp_post_approval", [wf_id, form_id, status, ref, ser, rej_res, user])
+
+                    if r1[0][0] not in (""):
+                        messages.success(request, str(r1[0][0]))
+                        
+                    else:
+                        messages.error(request, "Oops...! Something went wrong!")
+
+                    return redirect(request.META.get("HTTP_REFERER", "/"))
                 else:
                     f_remark = request.POST.get('f_remark')
-                    if f_remark!='' and status in [11, 12]:
+                    if f_remark!='' and status in [4, 6]:
                         internal_user_comments.objects.create(
                                 workflow=wf, comments=f_remark,
                                 created_at=datetime.now(),created_by=str(user),updated_at=datetime.now(),updated_by=str(user)
@@ -406,49 +576,76 @@ def citizen_docs_upload(file,user,form_id,created_by,ser, doc_id1):
 
 @no_direct_access
 def citizen_index_cr(request):
+    getApplicantData = []
+    show_apply_button = False
+    countRefusedDocument = None
+
     try:
         if not request.session.get('user_id') or not request.session.get('phone_number'):
             # Set session expiry flag for middleware
             request.session['_session_expired'] = True
-            
+
             # Clear user-specific session data
             user_session_keys = ['phone_number', 'user_id', 'role_id', 'full_name']
             for key in user_session_keys:
                 if key in request.session:
                     del request.session[key]
-            
+
             messages.warning(request, "Your session has expired. Please log in again.")
             return redirect('citizenLoginAccount')
-        
+
         if request.method == "GET":
             phone_number = request.session.get("phone_number")
-            user_id = None
 
             if phone_number:
                 user = get_object_or_404(CustomUser, phone=phone_number, role_id=2)
                 user_id = user.id
+            else:
+                user_id = None
 
             new_id = 1
-            countRefusedDocument = None
             refused_id = None
             encrypted_new_id = encrypt_parameter(str(new_id))
 
-            getApplicantData = []
-            show_apply_button = False
-            
             applicationIndex = callproc("stp_getFormDetailsForTC", [user_id])
 
-            for items in applicationIndex:
-                encrypted_id = encrypt_parameter(str(items[1]))
-                getApplicantData.append({
-                    "srno": items[0],
-                    "id": encrypted_id,
-                    "request_no": items[2],
-                    "name_of_applicant": items[3],
-                    "contractor_type": items[4],
-                    "status": items[5],
-                    "comments": items[6],
-                })
+            if not applicationIndex:
+                show_apply_button = True
+            else:
+                for items in applicationIndex:
+                    encrypted_id = encrypt_parameter(str(items[1]))
+
+                    item = {
+                        "srno": items[0],
+                        "id": encrypted_id,
+                        "request_no": items[2],
+                        "name_of_applicant": items[3],
+                        "contractor_type": items[4],
+                        "status": items[5],
+                        "comments": items[6],  
+                    }
+
+                    # Override comments if application is Rejected
+                    if items[5] == "Rejected":
+                        latest_comment = internal_user_comments.objects.filter(
+                            workflow=items[1]
+                        ).order_by('-created_at').first()
+
+                        if latest_comment:
+                            item["comments"] = latest_comment.comments
+
+                    getApplicantData.append(item)
+
+            return render(
+                request,
+                "ContractRegistration/CitizenIndex.html",
+                {
+                    "data": getApplicantData,
+                    "encrypted_new_id": encrypted_new_id,
+                    "show_apply_button": show_apply_button,
+                    "countRefusedDocument": countRefusedDocument,
+                },
+            )
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
@@ -460,7 +657,6 @@ def citizen_index_cr(request):
         "ContractRegistration/CitizenIndex.html",
         {
             "data": getApplicantData,
-            "encrypted_new_id": encrypted_new_id,
             "show_apply_button": show_apply_button,
             "countRefusedDocument": countRefusedDocument,
         },
@@ -494,7 +690,7 @@ def citizen_crate_cr(request):
             message = request.session.pop("message", None)
             form_data = request.session.pop("form_data", None)
             ContractorType = parameter_master.objects.filter(
-                parameter_id__in=[23, 24, 25, 26]
+                parameter_name__in=["contractor Type"]
             ).values_list("parameter_value", "parameter_value")
 
             return render(
@@ -685,21 +881,36 @@ def citizen_edit_cr(request, row_id, new_id):
                 parameter_id__in=[23, 24, 25, 26]
             ).values_list("parameter_value", "parameter_value")
             
+            # -------------------------------
+            # FETCH UPLOADED DOCUMENTS
+            # -------------------------------
             uploaded_documents = citizen_document.objects.filter(
-                user_id=user_id, application_id=viewDetails
-            )
+                user_id=user_id,
+                application_id=viewDetails
+            ).select_related("document")
 
+            # Encrypt filepaths and keep correct_mark available
             for row in uploaded_documents:
-                encrypted_filepath = encrypt_parameter(str(row.filepath))
-                row.filepath = encrypted_filepath
+                if row.filepath:
+                    row.filepath = encrypt_parameter(str(row.filepath))
 
             uploaded_doc_ids = uploaded_documents.values_list("document_id", flat=True)
 
-            all_documents = document_master.objects.filter(doc_type=viewDetails.contractor_type)
+            # -------------------------------
+            # DOCUMENT MASTER
+            # -------------------------------
+            all_documents = document_master.objects.filter(
+                doc_type=viewDetails.contractor_type
+            )
 
-            not_uploaded_documents = all_documents.exclude(doc_id__in=uploaded_doc_ids)
+            # not_uploaded_documents = all_documents.exclude(
+            #     doc_id__in=uploaded_doc_ids
+            # )
 
-            documentList = document_master.objects.filter(is_active=1, doc_type=viewDetails.contractor_type)
+            documentList = document_master.objects.filter(
+                is_active=1,
+                doc_type=viewDetails.contractor_type
+            )
 
             for document in documentList:
                 if document.doc_subpath:
@@ -714,7 +925,7 @@ def citizen_edit_cr(request, row_id, new_id):
                     "viewDetails": viewDetails,
                     "contractorType": contractorType,
                     "uploaded_documents": uploaded_documents,
-                    "not_uploaded_documents": not_uploaded_documents,
+                    # "not_uploaded_documents": not_uploaded_documents,
                     "new_id": new_id,
                     "message": message,
                 },
@@ -906,7 +1117,7 @@ def citizen_view_cr(request, row_id, new_id):
 
             application_id = int(application.id)
             if application.status_id == 4:
-                application.status_id = 9
+                application.status_id = 10
             else:
                 application.status_id = 1
 
@@ -1033,106 +1244,106 @@ def citizen_delete_cr(request, row_id, new_id):
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), ""])
 
-def Chalan_cr(request, row_id):
-    try:
-        phone_number = request.session.get('phone_number')
-        user = CustomUser.objects.get(phone=phone_number, role_id=2)
-        request.session['full_name'] = user.full_name
+# def Chalan_cr(request, row_id):
+#     try:
+#         phone_number = request.session.get('phone_number')
+#         user = CustomUser.objects.get(phone=phone_number, role_id=2)
+#         request.session['full_name'] = user.full_name
 
-        # Decrypt row_id
-        row_id = decrypt_parameter(row_id)
-        rows = callproc("sp_get_chalan_doc", [row_id])
+#         # Decrypt row_id
+#         row_id = decrypt_parameter(row_id)
+#         rows = callproc("sp_get_chalan_doc", [row_id])
 
-        filepath = ''
-        for row in rows:
-            filepath = str(row[0]) if row[0] else ''
+#         filepath = ''
+#         for row in rows:
+#             filepath = str(row[0]) if row[0] else ''
 
-        # ✅ If no filepath in DB
-        if not filepath:
-            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+#         # ✅ If no filepath in DB
+#         if not filepath:
+#             return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
 
-        # ✅ Build full path and check
-        file_path = os.path.join(settings.MEDIA_ROOT, filepath)
-        if not os.path.exists(file_path):
-            return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
+#         # ✅ Build full path and check
+#         file_path = os.path.join(settings.MEDIA_ROOT, filepath)
+#         if not os.path.exists(file_path):
+#             return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
 
-        # ✅ Encrypt relative path before redirecting to download_doc
-        encrypted_filepath = encrypt_parameter(filepath)
-        return redirect('download_doc', encrypted_filepath)
+#         # ✅ Encrypt relative path before redirecting to download_doc
+#         encrypted_filepath = encrypt_parameter(filepath)
+#         return redirect('download_doc', encrypted_filepath)
 
-    except Exception as e:
-        tb = traceback.extract_tb(e.__traceback__)
-        fun = tb[0].name if tb else "Chalan"
-        callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
-        logger.error(f"Error downloading Chalan : {str(e)}")
-        return HttpResponse("An error occurred while trying to download the file.", status=500)
+#     except Exception as e:
+#         tb = traceback.extract_tb(e.__traceback__)
+#         fun = tb[0].name if tb else "Chalan"
+#         callproc("stp_error_log", [fun, str(e), user.id if 'user' in locals() else None])
+#         logger.error(f"Error downloading Chalan : {str(e)}")
+#         return HttpResponse("An error occurred while trying to download the file.", status=500)
 
 
-def upload_chalan_receipt_cr(request, form_id):
-    if request.method != "POST":
-        return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
+# def upload_chalan_receipt_cr(request, form_id):
+#     if request.method != "POST":
+#         return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
 
-    try:
-        app_id = decrypt_parameter(form_id)
-        application = application_form.objects.get(id=app_id)
+#     try:
+#         app_id = decrypt_parameter(form_id)
+#         application = application_form.objects.get(id=app_id)
 
-        # Prevent duplicate upload
-        if application.status_id == 4:
-            return JsonResponse({
-                "success": False,
-                "message": "Receipt has already been uploaded. You cannot upload again."
-            })
+#         # Prevent duplicate upload
+#         if application.status_id == 4:
+#             return JsonResponse({
+#                 "success": False,
+#                 "message": "Receipt has already been uploaded. You cannot upload again."
+#             })
 
-        receipt_file = request.FILES.get("receipt_file")
-        if not receipt_file:
-            return JsonResponse({"success": False, "message": "No file selected."})
+#         receipt_file = request.FILES.get("receipt_file")
+#         if not receipt_file:
+#             return JsonResponse({"success": False, "message": "No file selected."})
 
-        # Use logged-in user safely
-        phone_number = request.session['phone_number']
+#         # Use logged-in user safely
+#         phone_number = request.session['phone_number']
         
-        if phone_number:
-            user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
-            user_id = user.id
-            full_name = request.session.get("full_name", user.full_name or user.username)
-        else:
-            user_id = None 
+#         if phone_number:
+#             user = get_object_or_404(CustomUser, phone=phone_number, role_id = 2)
+#             user_id = user.id
+#             full_name = request.session.get("full_name", user.full_name or user.username)
+#         else:
+#             user_id = None 
         
     
        
 
-        # Save document (doc_id hardcoded as 24 for Challan Receipt)
-        upload_challan_wrapper(
-            receipt_file,
-            user_id,
-            app_id,
-            created_by=full_name,
-            ser='4',
-            doc_id1=35
-        )
+#         # Save document (doc_id hardcoded as 24 for Challan Receipt)
+#         upload_challan_wrapper(
+#             receipt_file,
+#             user_id,
+#             app_id,
+#             created_by=full_name,
+#             ser='4',
+#             doc_id1=35
+#         )
 
         
-        callproc("sp_update_status", [4, user_id,app_id, application.id])
+#         callproc("sp_update_status", [4, user_id,app_id, application.id])
 
-        return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
+#         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
 
-    except application_form.DoesNotExist:
-        return JsonResponse({"success": False, "message": "Application not found."}, status=404)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({"success": False, "message": f"Upload failed: {str(e)}"}, status=500)
+#     except application_form.DoesNotExist:
+#         return JsonResponse({"success": False, "message": "Application not found."}, status=404)
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()
+#         return JsonResponse({"success": False, "message": f"Upload failed: {str(e)}"}, status=500)
 
-def upload_challan_wrapper(file, user, form_id, created_by, ser, doc_id1):
-    """
-    Wrapper function for citizen_docs_upload that handles form ID conversion
-    """
-    try:
-        if isinstance(form_id, str):
-            form_id = int(form_id)
-    except (ValueError, TypeError):
-        raise ValueError("Invalid form ID format. Form ID must be a valid integer.")
+# def upload_challan_wrapper(file, user, form_id, created_by, ser, doc_id1):
+#     """
+#     Wrapper function for citizen_docs_upload that handles form ID conversion
+#     """
+#     try:
+#         if isinstance(form_id, str):
+#             form_id = int(form_id)
+#     except (ValueError, TypeError):
+#         raise ValueError("Invalid form ID format. Form ID must be a valid integer.")
 
-    return citizen_docs_upload(file, user, form_id, created_by, ser, doc_id1)
+#     return citizen_docs_upload(file, user, form_id, created_by, ser, doc_id1)
     
 def download_doc(request, filepath):
     file = decrypt_parameter(filepath)
@@ -1174,16 +1385,16 @@ def RegistrationChalan_cr(request, row_id):
         for row in rows:
             filepath = str(row[0]) if row[0] else ''
 
-        # ✅ If no filepath in DB
+        # If no filepath in DB
         if not filepath:
             return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
 
-        # ✅ Build full path and check
+        # Build full path and check
         file_path = os.path.join(settings.MEDIA_ROOT, filepath)
         if not os.path.exists(file_path):
             return redirect(f"{request.META.get('HTTP_REFERER', 'home')}?doc_status=not_uploaded")
 
-        # ✅ Encrypt relative path before redirecting to download_doc
+        # Encrypt relative path before redirecting to download_doc
         encrypted_filepath = encrypt_parameter(filepath)
         return redirect('download_doc', encrypted_filepath)
 
@@ -1203,7 +1414,7 @@ def upload_registration_receipt_cr(request, form_id):
         application = application_form.objects.get(id=app_id)
 
         # Prevent duplicate upload
-        if application.status_id == 10:
+        if application.status_id == 8:
                 return JsonResponse({
                 "success": False,
                 "message": "Receipt has already been uploaded. You cannot upload again."
@@ -1232,9 +1443,23 @@ def upload_registration_receipt_cr(request, form_id):
             ser='4',
             doc_id1=36
         )
+        application = application_form.objects.get(id=app_id)
+
+        # Determine status based on contractor type
+        if application.contractor_type and application.contractor_type.lower().startswith("civil"):
+            status_id = 8
+        else:
+            status_id =18
+
+        # Prevent duplicate upload
+        if application.status_id == status_id:
+            return JsonResponse({
+                "success": False,
+                "message": "Receipt has already been uploaded. You cannot upload again."
+            })
 
         
-        callproc("sp_update_status", [10, user_id,app_id, application.id])
+        callproc("sp_update_status", [status_id, user_id,app_id, application.id])
 
         return JsonResponse({"success": True, "message": "Receipt uploaded successfully."})
 

@@ -53,7 +53,7 @@
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="forward" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,11,12"  %} disabled {% endif %}>
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"2,3"  %} disabled {% endif %}>
                     Marked For
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="forward" style="max-height: 200px; overflow-y: auto;">
@@ -90,7 +90,7 @@
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button"
                     id="send_forward" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,11,12"  %} disabled {% endif %}>
+                    aria-expanded="false" {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,9,14,19"  %} disabled {% endif %}>
                     Send Forward
                 </button>
                 <div class="dropdown-menu animated--fade-in" aria-labelledby="send_forward" style="max-height: 200px; overflow-y: auto;">
@@ -175,9 +175,9 @@
         <div class="col-md-3">
             {% if ac != "view" and matrix.action and matrix.action != "View"  %}
                 {% if workflow.send_forward|to_int == user_id %}
-                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,11,12"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,14"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
                 {% elif workflow.status_id|in_list:"1,2" and role_id == 3 %}
-                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"3,8,9,11,12"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
+                    <button type="submit" id="Btn3" class="btn btn-primary"  {% if ac == "view" or matrix.action == "View" or workflow.status_id|in_list:"4,7,14"  %} disabled {% endif %}  data-toggle="modal" data-target="#{{matrix.reference}}" >{{matrix.action}}</button>
                 {% endif %}
             {% endif %}
         </div>
@@ -243,7 +243,29 @@
                     <h3 class="modal-title" style="color:black;font-weight:bold">Scrutiny 
                          &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
                          &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h3>
-                    
+                    <!-- Reject Reason Section -->
+                    <div id="rejectReasonSection" class="ml-auto" style="display: none; flex: 1; justify-content: flex-end;">
+                        <div class="d-flex align-items-center">
+                          <!-- Dropdown for Reject Reason -->
+                          <div class="mr-2">
+                            <label for="rejectReason" class="">Reject Reason:</label>
+
+                            <select id="rejectReason" name="rejectReason" class="form-control" style="border-color: black; border-radius: 10px; "  required>
+                              <option value="" selected disabled>Select reason</option>
+                              {% for item in reject_reasons %}
+                                 <option value="{{ item.0 }}">{{ item.1 }}</option>
+                              {% endfor %}
+                            </select>
+                            <span class="text-danger" id="rejectError" style="display: none;">Please select a reject reason.</span>
+                          </div>
+                          &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                          <!-- Textarea for Editing Selected Reject Reason -->
+                          <div id="editRejectReasonSection" class="d-none">
+                            <label for="editRejectReason" class="">Edit Reason:</label>
+                            <textarea id="editRejectReason" name="rej_res" rows="2" cols="30" style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1"></textarea>
+                          </div>
+                        </div>
+                    </div> 
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body" style="font:size:16px;">
@@ -267,35 +289,41 @@
                                     <td>{{ doc.doc_name }}</td>
                                     <td> 
                                         {% if doc.file_path %}
-                                            <a  href="{% url 'download_doc' doc.file_path %}" style=" font-size: 15px" download >
-                                            <img src={% static 'images/download2.png' %}  width="48" height = "48" title="{{doc.file_name}}" target="_blank"></a>
+                                        <a href="{% url 'download_doc' doc.file_path %}" style="font-size:15px" download>
+                                            <img src={% static 'images/download2.png' %} width="48" height="48" title="{{doc.file_name}}" target="_blank">
+                                        </a>
                                         {% endif %}
                                     </td>
+
                                     <td>
                                         {% if doc.id %}
-                                            <div class="mt-1 checkbox-wrapper">
-                                                <input id="correct_{{ forloop.counter }}" name="correct_{{ doc.id }}" class="toggle-checkbox" type="checkbox" {% if doc.correct == "1" %}checked{% endif %}>
-                                                <label for="correct_{{ forloop.counter }}">
-                                                  <div class="tick_mark"></div>
-                                                </label>
-                                            </div>
+                                        <div class="mt-1 checkbox-wrapper">
+                                            <input id="correct_{{ forloop.counter }}" name="correct_{{ doc.id }}" class="toggle-checkbox" type="checkbox" {% if doc.correct == "1" %}checked{% endif %}>
+                                            <label for="correct_{{ forloop.counter }}">
+                                                <div class="tick_mark"></div>
+                                            </label>
+                                        </div>
                                         {% endif %}
                                     </td>
+
                                     <td>
                                         {% if doc.id %}
-                                            <div class="mt-1 reject-checkbox">
-                                              <div class="text-center">
+                                        <div class="mt-1 reject-checkbox">
+                                            <div class="text-center">
                                                 <div class="checkbox-wrapper">
-                                                  <input name="incorrect_{{ doc.id }}" class="form-check-label custom-radio-label toggle-checkbox" id="incorrect_{{ forloop.counter }}" type="checkbox" {% if doc.correct == "0" %}checked{% endif %} />
-                                                  <label for="incorrect_{{ forloop.counter }}"><div class="tick_mark"><div class="cross"></div></div></label>
+                                                    <input name="incorrect_{{ doc.id }}" class="form-check-label custom-radio-label toggle-checkbox" id="incorrect_{{ forloop.counter }}" type="checkbox" {% if doc.correct == "0" %}checked{% endif %}/>
+                                                    <label for="incorrect_{{ forloop.counter }}">
+                                                        <div class="tick_mark"><div class="cross"></div></div>
+                                                    </label>
                                                 </div>
-                                              </div>
                                             </div>
+                                        </div>
                                         {% endif %}
                                     </td>
+
                                     <td>
                                         {% if doc.id %}
-                                            <textarea rows="3" cols="10" name="reject_comment_{{ doc.id }}" value="{{doc.comment}}" placeholder="Write your comments here..." class="form-control" style="height:30%; border-color: black; border-radius: 10px; ">{{doc.comment}}</textarea>
+                                        <textarea rows="3" cols="10" name="reject_comment_{{ doc.id }}" placeholder="Write your comments here..." class="form-control" style="height:30%; border-color:black; border-radius:10px;">{{doc.comment}}</textarea>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -303,11 +331,19 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- CR Upload Section -->
+                    <div class="mt-3">
+                        <label style="font-weight:bold;">Upload CR</label>
+                        <input type="file" name="cr_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        <small class="text-muted">Allowed formats: PDF, JPG, PNG</small>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="scru_c" onclick ="btn_confirm(this.id,'btnclkid')">Submit </button>
-                    {% comment %} <button type="button" class="btn btn-danger" id="scru_r" onclick ="btn_confirm(this.id,'btnclkid')">Reject </button> {% endcomment %}
+                    <button type="button" class="btn btn-danger" id="scru_r" onclick ="btn_confirm(this.id,'btnclkid')">Reject </button>
                 </div>
             
             {% elif matrix.reference == "approval" %}
@@ -330,44 +366,23 @@
                 </div>
 
 
-            {% elif matrix.reference == "inspection" %} 
+            {% elif matrix.reference == "decision" %}
                 <div class="modal-header">
-                    <h3 class="modal-title" style="color:black;font-weight:bold" >Inspection</h3>
+                    <h3 class="modal-title" style="color:black;font-weight:bold">Approve or Reject</h3>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
-                <div class="modal-body" style="font-weight:bold;font:size:20px;">
-                    <div class="col-md-12 row">
-                        <div class="col-md-6 formupl">
-                            <a type="button" class="btn btn-primary" href="{% url 'download_doc' down_chklst %}" id="dochk" target="_blank">Download Checklist</a>
-                            <hr>
-                            <span class="formupl-title">Upload Checklist</span>
-                            <p class="formupl-paragraph">
-                                Upload your file
-                              </p>
-                             <label for="file-input1" class="drop-container">
-                            <span class="drop-title">Drop files here</span>
-                            or
-                            <input type="file" id="file-input1" name="cheklist_upl_file" required >
-                          </label>
-                        </div>
-                        <div class="col-md-6 formupl">
-                            <a type="button" class="btn btn-primary" id="doinsp" href="{% url 'download_doc' down_insp %}" target="_blank">Download Inspection </a>
-                            <hr>
-                            <span class="formupl-title">Upload Inspection</span>
-                            <p class="formupl-paragraph">
-                                Upload your file
-                              </p>
-                             <label for="file-input2" class="drop-container">
-                            <span class="drop-title">Drop files here</span>
-                            or
-                            <input type="file" id="file-input2" name="inspection_upl_file" required >
-                          </label>
-                        </div>
-                    </div>
+                <div class="modal-body" style="font-weight:bold; font-size:20px;">
+                    Are you sure you want to proceed? This action cannot be undone.
+                    
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="insp" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
+                    <button type="submit" class="btn btn-primary" id="app1" onclick="btn_confirm(this.id,'btnclkid')">Approve</button>
+                    <!-- Reject Button -->
+                    <button type="button" class="btn btn-danger" id="ref1" data-toggle="modal" data-target="#rejectModal1">Reject</button>
+
+                    {% comment %} <button type="button" class="btn btn-danger" id="ref" onclick="btn_confirm(this.id,'btnclkid')">Reject</button>  {% endcomment %}
                 </div>
             
             
@@ -426,7 +441,115 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="ceriss" onclick ="btn_confirm(this.id,'btnclkid')" >Submit</button>
                 </div>
+            {% elif matrix.reference == "scrutiny1" %}
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color:black;font-weight:bold">Scrutiny 
+                         &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                         &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h3>
+                    <!-- Reject Reason Section -->
+                    <div id="rejectReasonSection" class="ml-auto" style="display: none; flex: 1; justify-content: flex-end;">
+                        <div class="d-flex align-items-center">
+                          <!-- Dropdown for Reject Reason -->
+                          <div class="mr-2">
+                            <label for="rejectReason" class="">Reject Reason:</label>
+
+                            <select id="rejectReason" name="rejectReason" class="form-control" style="border-color: black; border-radius: 10px; "  required>
+                              <option value="" selected disabled>Select reason</option>
+                              {% for item in reject_reasons %}
+                                 <option value="{{ item.0 }}">{{ item.1 }}</option>
+                              {% endfor %}
+                            </select>
+                            <span class="text-danger" id="rejectError" style="display: none;">Please select a reject reason.</span>
+                          </div>
+                          &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                          <!-- Textarea for Editing Selected Reject Reason -->
+                          <div id="editRejectReasonSection" class="d-none">
+                            <label for="editRejectReason" class="">Edit Reason:</label>
+                            <textarea id="editRejectReason" name="rej_res" rows="2" cols="30" style="height:30%; border-color: black; border-radius: 10px; " class="form-control" rows="1"></textarea>
+                          </div>
+                        </div>
+                    </div> 
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="font:size:16px;">
+                    <div class="table-container">
+                        <table class="table table-bordered" id="user_docs_id1">
+                            <thead>
+                                <tr> 
+                                    <th style="font-weight:bold;">Sr.No.</th>
+                                    <th style="font-weight:bold;width:100px;">Document</th>
+                                    <th style="font-weight:bold;">Download</th>
+                                    <th style="font-weight:bold;">Correct</th>
+                                    <th style="font-weight:bold;">Incorrect</th>
+                                    <th style="font-weight:bold;width:30px;">Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in docs %}
+                                <tr>
+                                    <input type="hidden" id="doc_id" name="doc_ids" value="{% if doc.id %}{{ doc.id|enc }}{% endif %}"/>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ doc.doc_name }}</td>
+                                    <td> 
+                                        {% if doc.file_path %}
+                                        <a href="{% url 'download_doc' doc.file_path %}" style="font-size:15px" download>
+                                            <img src={% static 'images/download2.png' %} width="48" height="48" title="{{doc.file_name}}" target="_blank">
+                                        </a>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if doc.id %}
+                                        <div class="mt-1 checkbox-wrapper">
+                                            <input id="correct_{{ forloop.counter }}" name="correct_{{ doc.id }}" class="toggle-checkbox" type="checkbox" {% if doc.correct == "1" %}checked{% endif %}>
+                                            <label for="correct_{{ forloop.counter }}">
+                                                <div class="tick_mark"></div>
+                                            </label>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if doc.id %}
+                                        <div class="mt-1 reject-checkbox">
+                                            <div class="text-center">
+                                                <div class="checkbox-wrapper">
+                                                    <input name="incorrect_{{ doc.id }}" class="form-check-label custom-radio-label toggle-checkbox" id="incorrect_{{ forloop.counter }}" type="checkbox" {% if doc.correct == "0" %}checked{% endif %}/>
+                                                    <label for="incorrect_{{ forloop.counter }}">
+                                                        <div class="tick_mark"><div class="cross"></div></div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if doc.id %}
+                                        <textarea rows="3" cols="10" name="reject_comment_{{ doc.id }}" placeholder="Write your comments here..." class="form-control" style="height:30%; border-color:black; border-radius:10px;">{{doc.comment}}</textarea>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- CR Upload Section -->
+                    <div class="mt-3">
+                        <label style="font-weight:bold;">Upload CR</label>
+                        <input type="file" name="cr_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        <small class="text-muted">Allowed formats: PDF, JPG, PNG</small>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="scru_c_elec" onclick ="btn_confirm(this.id,'btnclkid')">Submit </button>
+                    <button type="button" class="btn btn-danger" id="scru_r_elec" onclick ="btn_confirm(this.id,'btnclkid')">Reject </button>
+                </div>
             {% endif %}
+            
       
           </div>
         </div>
@@ -541,16 +664,54 @@
             <textarea class="form-control" name="rej_res" id="reason" required></textarea>
           </div>
 
-          <div class="form-group">
+          {% comment %} <div class="form-group">
             <label for="file">Upload Refusal Document (optional)</label>
             <input type="file" class="form-control" name="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-          </div>
+          </div> {% endcomment %}
 
           <!-- Hidden fields for workflow info -->
-          <input type="hidden" name="btnclk" value="8">   <!-- reject -->
+          <input type="hidden" name="btnclk" value="6">   <!-- reject -->
           <input type="hidden" name="wf_id" value="{{ workflow.id|to_str|enc}}">
           <input type="hidden" name="form_id" value="{{ form_id }}">
-          <input type="hidden" name="ser" value="5">
+          <input type="hidden" name="ser" value="4">
+           <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
+          <input type="hidden" name="matrix_ref" value="{% if matrix.reference %}{{ matrix.reference|enc }}{% endif %}" > <!-- since your view checks ref -->
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" >Submit</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="rejectModal1" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+
+      <!-- enctype is important for file upload -->
+      <form method="POST" action="{% url 'matrix_flow_cr' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Reject Application</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="reason">Reason for Rejection</label>
+            <textarea class="form-control" name="rej_res" id="reason" required></textarea>
+          </div>
+
+
+          <!-- Hidden fields for workflow info -->
+          <input type="hidden" name="btnclk" value="16">   <!-- reject -->
+          <input type="hidden" name="wf_id" value="{{ workflow.id|to_str|enc}}">
+          <input type="hidden" name="form_id" value="{{ form_id }}">
+          <input type="hidden" name="ser" value="4">
            <input type="hidden" id="ach" name="ac" value="{{ ac|enc }}">
           <input type="hidden" name="matrix_ref" value="{% if matrix.reference %}{{ matrix.reference|enc }}{% endif %}" > <!-- since your view checks ref -->
         </div>
@@ -589,23 +750,12 @@
         });
     });      
 </script>
-{% comment %} <script>
-    function btn_confirm(chk, set) {
-        debugger;
-        const values = {
-            "ack": 2,"scru_c": 3,"scru_r": 4,"dochk": 'dochk',"doinsp": 'doinsp',"insp": 5, "app": 6,"ref": 7, "ceriss": 8
-        };
-        
-        if (values.hasOwnProperty(chk)) {
-            $("#" + set).val(values[chk]);
-        }
-    }
-</script> {% endcomment %}
+
 <script>
     function btn_confirm(chk, set) {
         debugger;
         const values = {
-            "ack": 2,"chal": 3,"scru_c": 5,"scru_s": 6,"dochk": 'dochk',"doinsp": 'doinsp',"insp": 5, "app": 7,"ref": 8,"reg": 9 ,"ceriss": 11
+            "ack": 2,"scru_c": 3,"scru_r": 4,"scru_c_elec": 13,"scru_r_elec": 14,"dochk": 'dochk',"doinsp": 'doinsp',"insp": 5, "app": 5,"ref": 6,"app1": 15,"ref1": 16,"reg": 7,"ceriss": 9
         };
         
         if (values.hasOwnProperty(chk)) {
@@ -614,37 +764,50 @@
     }
 </script>
 <script>
-    $(document).ready(function () {
-        $('#scru_r').click(function () {
-            debugger;
-          $('#rejectReasonSection').show();
-          $('#rejectReason').on('change', function () {
+$(document).ready(function () {
+
+    // Handle Reject buttons (scru_r & scru_r_elec)
+    $('#scru_r, #scru_r_elec, #ref_elec, #ref_elec1').click(function () {
+
+        $('#rejectReasonSection').show();
+
+        $('#rejectReason').off('change').on('change', function () {
             var selectedReason = $(this).val();
+
             if (selectedReason) {
-              $('#editRejectReasonSection').removeClass('d-none').show();
-              $('#editRejectReason').val(selectedReason);
-              $('#scru_r').attr('type', 'submit');
-              $('#rejectError').hide(); 
+                $('#editRejectReasonSection').removeClass('d-none').show();
+                $('#editRejectReason').val(selectedReason);
+
+                $('#scru_r, #scru_r_elec, #ref_elec, #ref_elec1').attr('type', 'submit');
+                $('#rejectError').hide();
             } else {
-              $('#editRejectReasonSection').addClass('d-none').hide();
-              $('#scru_r').attr('type', 'button');
-            }
-          });
-          $('#rejectReason').prop('required', true);
-        });
-        $('#scru_r').click(function (e) {
-            var selectedReason = $('#rejectReason').val();
-            if ($('#rejectReasonSection').is(':visible') && !selectedReason) {
-              e.preventDefault(); 
-              $('#rejectError').show(); 
+                $('#editRejectReasonSection').addClass('d-none').hide();
+
+                $('#scru_r, #scru_r_elec, #ref_elec,#ref_elec1').attr('type', 'button');
             }
         });
-         $('#scru_c').click(function () {
-            $('#rejectReason').prop('required', false);
-            $('#rejectReasonSection').hide();
-            $('#model_form').submit();
-        });
-      });
+
+        $('#rejectReason').prop('required', true);
+    });
+
+    // Validation before submit (for both reject buttons)
+    $('#scru_r, #scru_r_elec, #ref_elec, #ref_elec1').click(function (e) {
+        var selectedReason = $('#rejectReason').val();
+
+        if ($('#rejectReasonSection').is(':visible') && !selectedReason) {
+            e.preventDefault();
+            $('#rejectError').show();
+        }
+    });
+
+    // Handle Complete buttons (scru_c & scru_c_elec)
+    $('#scru_c, #scru_c_elec, #app_elec, #app_elec1').click(function () {
+        $('#rejectReason').prop('required', false);
+        $('#rejectReasonSection').hide();
+        $('#model_form').submit();
+    });
+
+});
 </script>
 <script>
     function sweet_popup(id,type) {
@@ -1033,7 +1196,7 @@
         formData.append("wf_id", wfh_id);
         formData.append("form_id", formh_id);
 
-        fetch("{% url 'matrix_flow_pa' %}", {
+        fetch("{% url 'matrix_flow_cr' %}", {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrftoken

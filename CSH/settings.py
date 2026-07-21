@@ -211,7 +211,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://13.202.157.7',
     'http://push3.aclgateway.com',
     'http://3.7.229.137',
-    'http://15.206.19.108',
+    "http://15.206.19.108:8050",
     'http://rtsengser.cidcoindia.com',
     'http://localhost',
     'http://127.0.0.1',

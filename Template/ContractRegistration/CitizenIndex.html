@@ -118,8 +118,8 @@
                                 </button>
                             {% endif %}
 
-                            {% if row.status == 'Registration Fee Uploaded'  %}
-                                <a class="download-link" href="{% url 'RegistrationChalan_cr' row.id %}">
+                            {% if row.status == 'Make Payment'  %}
+                                <a class="download-link" href="{% url 'RegistrationChalan_cr' row.id %}" target="_blank">
                                     <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="download-text">Download Registration Chalan</span>
                                 </a> 
@@ -137,7 +137,7 @@
 
                             {% if row.status == 'Issue Certificate' %}
                                 
-                                <a class="download-link" href="{% url 'downloadIssuedCertificate_cr' row.id %}">
+                                <a class="download-link" href="{% url 'downloadIssuedCertificate_cr' row.id %}" target="_blank">
                                     <i class="fa-solid fa-download fa-fade" style="font-size: 30px; color: #FF5733; margin-left: 15px;"></i>
                                     <span class="download-text">Download Certificate</span>
                                 </a> 
@@ -243,7 +243,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
   
-    {{% if messages %}
+    {% if messages %}
         {% for message in messages %}
             <script>
             Swal.fire({
