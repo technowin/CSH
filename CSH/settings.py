@@ -121,7 +121,7 @@ DATABASES = {
         'NAME': 'common_db1',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '15.206.19.108',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -132,7 +132,7 @@ DATABASES = {
         'NAME': 'drainage_connection_db1',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '15.206.19.108',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     },
     '2': {
@@ -140,7 +140,7 @@ DATABASES = {
         'NAME': 'tree_cutting_db1',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '15.206.19.108',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     },
     '3': {
@@ -148,7 +148,7 @@ DATABASES = {
         'NAME': 'tree_trimming_db1',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '15.206.19.108',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     },
     '4': {
@@ -156,7 +156,7 @@ DATABASES = {
         'NAME': 'contract_registration_db',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '15.206.19.108',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     },
     '5': {
@@ -164,7 +164,7 @@ DATABASES = {
         'NAME': 'product_approval_db',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '15.206.19.108',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     },
     '6': {
@@ -172,7 +172,7 @@ DATABASES = {
         'NAME': 'aqi_db',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '15.206.19.108',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     },
 }
