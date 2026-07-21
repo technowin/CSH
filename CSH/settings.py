@@ -17,8 +17,8 @@ SECRET_KEY = 'django-insecure-$vute#e^tqlu5ehd!)vv5m3x!z5^7p%jb9hm9272-!6%0ouz*r
 SECRET_KEY1 = '5pQsZXhU8vKyv7GxThldGn_JLK9UXVYyZD3GwQxsztY='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True  # Set to True for debugging, then change to False for production
-DEBUG = False  # For production
+DEBUG = True  # Set to True for debugging, then change to False for production
+# DEBUG = False  # For production
 
 # ==================== APPLICATION DEFINITION ====================
 INSTALLED_APPS = [
@@ -121,7 +121,7 @@ DATABASES = {
         'NAME': 'common_db1',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '127.0.0.1',
+        'HOST': '15.206.19.108',
         'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -132,7 +132,7 @@ DATABASES = {
         'NAME': 'drainage_connection_db1',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '127.0.0.1',
+        'HOST': '15.206.19.108',
         'PORT': '3306',
     },
     '2': {
@@ -140,7 +140,7 @@ DATABASES = {
         'NAME': 'tree_cutting_db1',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '127.0.0.1',
+        'HOST': '15.206.19.108',
         'PORT': '3306',
     },
     '3': {
@@ -148,7 +148,7 @@ DATABASES = {
         'NAME': 'tree_trimming_db1',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '127.0.0.1',
+        'HOST': '15.206.19.108',
         'PORT': '3306',
     },
     '4': {
@@ -156,7 +156,7 @@ DATABASES = {
         'NAME': 'contract_registration_db',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '127.0.0.1',
+        'HOST': '15.206.19.108',
         'PORT': '3306',
     },
     '5': {
@@ -164,7 +164,7 @@ DATABASES = {
         'NAME': 'product_approval_db',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '127.0.0.1',
+        'HOST': '15.206.19.108',
         'PORT': '3306',
     },
     '6': {
@@ -172,7 +172,7 @@ DATABASES = {
         'NAME': 'aqi_db',
         'USER': 'root',
         'PASSWORD': 'Techno-cidco_MH-047319',
-        'HOST': '127.0.0.1',
+        'HOST': '15.206.19.108',
         'PORT': '3306',
     },
 }
@@ -346,23 +346,23 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            # 'filename': os.path.join(BASE_DIR, 'D:/Python Project/CSH Logs', 'django.log'),  
-            'filename': os.path.join(BASE_DIR, '/home/ubuntu/CSH Logs', 'django.log'),  
-            # 'filename': os.path.join(BASE_DIR, '/home/services/CSH Logs', 'django.log'),  
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'WARNING',
-            'propagate': True,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'file': {
+#             'level': 'WARNING',
+#             'class': 'logging.FileHandler',
+#             # 'filename': os.path.join(BASE_DIR, 'D:/Python Project/CSH Logs', 'django.log'),  
+#             'filename': os.path.join(BASE_DIR, '/home/ubuntu/CSH Logs', 'django.log'),  
+#             # 'filename': os.path.join(BASE_DIR, '/home/services/CSH Logs', 'django.log'),  
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['file'],
+#             'level': 'WARNING',
+#             'propagate': True,
+#         },
+#     },
+# }
