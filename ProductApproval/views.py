@@ -849,52 +849,49 @@ def matrix_flow_pa(request):
                         document_id=doc_id,
                         application_id=form_id
                     ).first()
+                    # officer marksheet upload
+                    docs_marks_file = request.FILES.get('docs_marks_file')
 
-                    if existing_doc:
+                    if docs_marks_file:
+                        internal_resp = internal_docs_upload(
+                            docs_marks_file,
+                            role_id,
+                            user,
+                            wf,
+                            ser,
+                            'Factory Visit Marksheet')
 
-                        # officer marksheet upload
-                        docs_marks_file = request.FILES.get('docs_marks_file')
+                    # accept / reject values
+                    correct = request.POST.get(f"correct_{doc_id}")
+                    incorrect = request.POST.get(f"incorrect_{doc_id}")
+                    rej_com = request.POST.get(f"reject_comment_{doc_id}")
+                    r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
 
-                        if docs_marks_file:
-                            internal_resp = internal_docs_upload(
-                                docs_marks_file,
-                                role_id,
-                                user,
-                                wf,
-                                ser,
-                                'Factory Visit Marksheet'
-                            )
+                    # rejection reason
+                    rej_res = request.POST.get('rej_res')
 
-                        # accept / reject values
-                        correct = request.POST.get(f"correct_{doc_id}")
-                        incorrect = request.POST.get(f"incorrect_{doc_id}")
-                        rej_com = request.POST.get(f"reject_comment_{doc_id}")
-                        r = callproc("stp_post_citizen_scrutiny", [doc_id,correct,incorrect,rej_com,user])
-
-                        # rejection reason
-                        rej_res = request.POST.get('rej_res')
-
-                        if rej_res != '' and status in [35]:
-                            internal_user_comments.objects.create(
-                                workflow=wf,
-                                comments=rej_res,
-                                created_at=datetime.now(),
-                                created_by=str(user),
-                                updated_at=datetime.now(),
-                                updated_by=str(user)
-                            )
+                    if rej_res != '' and status in [35]:
+                        internal_user_comments.objects.create(
+                        workflow=wf,
+                        comments=rej_res,
+                        created_at=datetime.now(),
+                        created_by=str(user),
+                        updated_at=datetime.now(),
+                        updated_by=str(user)
+                    )
 
                         # update workflow
-                        r1 = callproc(
-                            "stp_post_visit_marks",
-                            [wf_id, form_id, status, ref, ser, rej_res, user]
-                        )
+                    r1 = callproc("stp_post_visit_marks",[wf_id, form_id, status, ref, ser, rej_res, user])
 
-                        if r1[0][0] not in (""):
+                    if r1[0][0] not in (""):
                             messages.success(request, str(r1[0][0]))
                             return redirect(request.META.get("HTTP_REFERER", "/"))
-                        else:
+                    else:
                             messages.error(request, 'Oops...! Something went wrong!')
+
+                   
+
+                        
 
                 elif (status == 36 or status==37) and (ref == 'decisionn'):
                     rej_res = request.POST.get('rej_res', '').strip()
