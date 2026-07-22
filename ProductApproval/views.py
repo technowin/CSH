@@ -502,7 +502,7 @@ def matrix_flow_pa(request):
                         application_id=form_id
                     ).first()
 
-                    if existing_doc:
+                    if not existing_doc:
 
                         # officer marksheet upload
                         docs_marks_file = request.FILES.get('docs_marks_file')
