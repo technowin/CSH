@@ -186,18 +186,52 @@ def Login(request):
         messages.error(request, 'An error occurred during login')
         return redirect('Login')
 
+# def services(request):
+#     try:
+#         if request.method =="GET":
+#             service = callproc("stp_get_user_services",[request.user.id])
+#             return render(request,'Account/services.html',{'service':service}) 
+#         if request.method == "POST":
+#             service_db = request.POST.get('service')
+#             request.session['service_db'] = service_db
+            
+#             request.session['admin_flow_completed'] = True
+            
+#             # return redirect('index') 
+#             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
+#             redirect_to = servicefetch.internal_page
+#             return redirect(redirect_to)
+#     except Exception as e:
+#         tb = traceback.extract_tb(e.__traceback__)
+#         fun = tb[0].name
+#         callproc("stp_error_log", [fun, str(e), request.user.id])
+#         messages.error(request, 'Oops...! Something went wrong!')
+
 def services(request):
     try:
-        if request.method =="GET":
-            service = callproc("stp_get_user_services",[request.user.id])
-            return render(request,'Account/services.html',{'service':service}) 
+        if request.method == "GET":
+            service = callproc("stp_get_user_services", [request.user.id])
+            return render(request, 'Account/services.html', {'service': service}) 
         if request.method == "POST":
             service_db = request.POST.get('service')
+            # Check if user is active in that service's database
+            try:
+                # Use the service database to get the user
+                user_in_service = CustomUser.objects.using(service_db).get(id=request.user.id)
+                if not user_in_service.is_active:
+                    messages.error(request, 'Your account is deactivated for this service. Please contact administrator.')
+                    return redirect('Login')
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'Your account is not set up for this service. Please contact administrator.')
+                return redirect('services')
+            except Exception as e:
+                messages.error(request, f'Error accessing service: {str(e)}')
+                return redirect('services')
+
+            # If active, proceed
             request.session['service_db'] = service_db
-            
             request.session['admin_flow_completed'] = True
             
-            # return redirect('index') 
             servicefetch = service_master.objects.using('default').get(ser_id=service_db)
             redirect_to = servicefetch.internal_page
             return redirect(redirect_to)
@@ -206,6 +240,7 @@ def services(request):
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), request.user.id])
         messages.error(request, 'Oops...! Something went wrong!')
+        return redirect('services')  # Ensure redirect on error
 
 def citizen_api(request):
     try:
