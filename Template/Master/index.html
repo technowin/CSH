@@ -1,25 +1,164 @@
-{% extends "Shared/Layout.html" %} {% block username %}{{username}}{% endblock %}
+{% extends "Shared/Layout.html" %} 
+{% block username %}{{username}}{% endblock %}
 {% block content %}
 {% load static %}
 {% csrf_token %}
 
- <!-- Custom styles for this html-->
- <link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
- <link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
- <link href="{% static 'css/uploadExcel.css' %}" rel="stylesheet" type="text/css" >
- <link href="{% static 'css/uploadModal.css' %}" rel="stylesheet" type="text/css" >
- <link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
+<!-- Custom styles for this html-->
+<link href="{% static 'css/masters.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/table.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/uploadExcel.css' %}" rel="stylesheet" type="text/css" >
+<link href="{% static 'css/uploadModal.css' %}" rel="stylesheet" type="text/css" >
+<link rel="stylesheet" type="text/css" href="{% static 'css/tooltips.css' %}" />
 
- <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
- <!-- Include DataTables CSS -->
- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
- <!-- Include DataTables JS -->
- <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+<!-- Include DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+<!-- Include DataTables JS -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
- <!-- Begin Page Content -->
+<style>
+    /* Toggle Switch Styles */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        margin: 0 5px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .3s;
+        border-radius: 26px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: #28a745;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+
+    .toggle-switch input:disabled + .toggle-slider {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .toggle-switch input:focus + .toggle-slider {
+        box-shadow: 0 0 1px #28a745;
+    }
+
+    /* Status labels */
+    .toggle-label {
+        font-size: 12px;
+        font-weight: 500;
+        margin: 0 3px;
+    }
+
+    .toggle-label.active {
+        color: #28a745;
+    }
+
+    .toggle-label.inactive {
+        color: #dc3545;
+    }
+
+    /* Inactive row style */
+    .inactive-row {
+        opacity: 0.7;
+        background-color: #f8f9fa;
+    }
+
+    /* Edit button */
+    .edit-svgIcon {
+        width: 20px;
+        height: 20px;
+        fill: #4e73df;
+        transition: fill 0.2s;
+    }
+
+    .edit-button:hover .edit-svgIcon {
+        fill: #2e59d9;
+    }
+
+    /* Table styling */
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* Status Badges */
+    .badge-success {
+        background-color: #28a745 !important;
+        color: white !important;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .badge-danger {
+        background-color: #dc3545 !important;
+        color: white !important;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    /* Loading spinner for toggle */
+    .toggle-loading {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #28a745;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-left: 5px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Action column */
+    .action-cell {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+</style>
+
+<!-- Begin Page Content -->
 
 {% if type == 'i' %}
 
@@ -32,12 +171,12 @@
                        <h3> <strong style="color: #4e73df;"> <u>{{name}}</u> </strong></h3>
                    </div>
                  
-                    <div class="col-sm-2">
-                      <form method="GET" action="{% if entity == 'user' %}/register_new_user{% endif %}">
-                          <input type="hidden" name="{% if entity == 'user' %}id{% endif %}" value="0">
-                          <button type="submit"  class="btn btn-md btn-primary">Create</button>
-                        </form>
-                    </div>
+                   <div class="col-sm-2">
+                     <form method="GET" action="{% if entity == 'user' %}/register_new_user{% endif %}">
+                         <input type="hidden" name="{% if entity == 'user' %}id{% endif %}" value="0">
+                         <button type="submit"  class="btn btn-md btn-primary">Create</button>
+                       </form>
+                   </div>
                </div>  
                <div class="card-body">
                 <div class="table-responsive">
@@ -57,30 +196,52 @@
                               {% endif %}
                           {% endfor %}
                       </tr>
-                      
                        </thead>
                        <tbody>
                         {% for row in data %}
-                            <tr style="color:black">
+                            {# row.0 = id, row.1 = full_name, row.2 = email, row.3 = phone, row.4 = role, row.5 = status (Active/Inactive) #}
+                            <tr style="color:black" class="{% if row.5 == 'Inactive' %}inactive-row{% endif %}">
                                 <td>{{ forloop.counter }}</td>
-                                {% for cell in row %}
-                                    {% if not forloop.first %}
-                                        <td>
-                                            {% if cell|length > 60 %}
-                                                <!-- <textarea rows="4" readonly>{{ cell }}</textarea>  -->
-                                                {{ cell }}
-                                            {% else %}
-                                                {{ cell }}
-                                            {% endif %}
-                                        </td>
-                                    {% endif %}
-                                {% endfor %}
+                                <td>{{ row.1 }}</td>
+                                <td>{{ row.2 }}</td>
+                                <td>{{ row.3 }}</td>
+                                <td>{{ row.4 }}</td>
                                 <td>
-                                  <a href="{% if entity == 'user' %}/register_new_user?id={{ row.0 }}{% endif %}" class="edit-button">
-                                    <svg class="edit-svgIcon" viewBox="0 0 512 512">
-                                        <path d="M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z"></path>
-                                    </svg>
-                                  </a>
+                                    {% if row.5 == 'Active' %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check-circle"></i> Active
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-danger">
+                                            <i class="fas fa-times-circle"></i> Inactive
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-cell">
+                                        <!-- Edit Button -->
+                                        <a href="{% if entity == 'user' %}/register_new_user?id={{ row.0 }}{% endif %}" class="edit-button" title="Edit User">
+                                            <svg class="edit-svgIcon" viewBox="0 0 512 512" style="width: 20px; height: 20px;">
+                                                <path d="M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z"></path>
+                                            </svg>
+                                        </a>
+
+                                        <!-- Toggle Switch -->
+                                        <div style="display: flex; align-items: center; gap: 5px;">
+                                            {% comment %} <span class="toggle-label {% if row.5 == 'Inactive' %}inactive{% else %}active{% endif %}">
+                                                {% if row.5 == 'Active' %}Active{% else %}Inactive{% endif %}
+                                            </span> {% endcomment %}
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" 
+                                                       class="user-toggle" 
+                                                       data-user-id="{{ row.0 }}" 
+                                                       data-user-name="{{ row.1 }}"
+                                                       data-service-db="default"
+                                                       {% if row.5 == 'Active' %}checked{% endif %}>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -129,49 +290,116 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-      $("#dataTable").DataTable({
-        //order: [[0, 'desc']],
-        "ordering": false,
-        initComplete: function () {
-          this.api()
-            .columns()
-            .every(function () {
-              var column = this;
-              var select = $(
-                '<select style="width:100%;border-radius: 10px;background-color:whitesmoke ;color: black;"><option value="">All</option></select>'
-              )
-                .appendTo($(column.header()).empty())
-                .on("change", function () {
-                  var val = $.fn.dataTable.util.escapeRegex($(this).val());
-                  column.search(val ? "^" + val + "$" : "", true, false).draw();
-                });
-              column
-                .data()
-                .unique()
-                .sort()
-                .each(function (d, j) {
-                  var ce = d;
-                  if (
-                    ce.includes("<a") ||
-                    ce.includes("span") ||
-                    ce.includes("<input") ||
-                    ce.includes("select") ||
-                    ce.includes("textarea")
-                  ) {
-                  } else {
-                    select.append('<option value="' + d + '">' + d + "</option>");
-                  }
-                });
+        // Initialize DataTable
+        $("#dataTable").DataTable({
+            "ordering": false,
+            "pageLength": 10,
+            "lengthMenu": [
+                [5, 10, 25, 50, 100, 200, 300, 400, 500, -1],
+                [5, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
+            ],
+            initComplete: function () {
+                this.api()
+                    .columns()
+                    .every(function () {
+                        var column = this;
+                        var select = $(
+                            '<select style="width:100%;border-radius: 10px;background-color:whitesmoke ;color: black;"><option value="">All</option></select>'
+                        )
+                        .appendTo($(column.header()).empty())
+                        .on("change", function () {
+                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                            column.search(val ? "^" + val + "$" : "", true, false).draw();
+                        });
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                var ce = d;
+                                if (
+                                    ce.includes("<a") ||
+                                    ce.includes("span") ||
+                                    ce.includes("<input") ||
+                                    ce.includes("select") ||
+                                    ce.includes("textarea")
+                                ) {
+                                } else {
+                                    select.append('<option value="' + d + '">' + d + "</option>");
+                                }
+                            });
+                    });
+            }
+        });
+
+        // Handle toggle switch change
+        $(document).on('change', '.user-toggle', function() {
+            var toggle = $(this);
+            var userId = toggle.data('user-id');
+            var userName = toggle.data('user-name');
+            var serviceDb = toggle.data('service-db');
+            var isChecked = toggle.prop('checked');
+            var action = isChecked ? 'activate' : 'deactivate';
+            
+            // Show confirmation dialog
+            var title = isChecked ? 'Activate User?' : 'Deactivate User?';
+            var text = isChecked ? 
+                `Are you sure you want to activate ${userName}? This user will be able to login.` :
+                `Are you sure you want to deactivate ${userName}? This user will not be able to login.`;
+            var icon = isChecked ? 'info' : 'warning';
+            var confirmButtonColor = isChecked ? '#28a745' : '#d33';
+            
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                showCancelButton: true,
+                confirmButtonColor: confirmButtonColor,
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: isChecked ? 'Yes, activate!' : 'Yes, deactivate!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading state
+                    toggle.prop('disabled', true);
+                    toggle.parent().append('<span class="toggle-loading"></span>');
+                    
+                    // Make AJAX request
+                    $.ajax({
+                        url: '/register_new_user',
+                        method: 'POST',
+                        data: {
+                            action: action,
+                            user_id: userId,
+                            service_db: serviceDb,
+                            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+                        },
+                        success: function(response) {
+                            // Reload page to reflect changes
+                            location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            // Revert toggle state
+                            toggle.prop('checked', !isChecked);
+                            toggle.prop('disabled', false);
+                            $('.toggle-loading').remove();
+                            
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Failed to update user status. Please try again.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    });
+                } else {
+                    // Revert toggle state if cancelled
+                    toggle.prop('checked', !isChecked);
+                }
             });
-        },
-        pageLength: 10,
-        lengthMenu: [
-          [5, 10, 25, 50, 100, 200, 300, 400, 500, -1],
-          [5, 10, 25, 50, 100, 200, 300, 400, 500, "All"],
-        ],
-      });
+        });
     });
-  </script>
+</script>
+
 <!-- End of Main Content -->
 {% endblock %}
-
