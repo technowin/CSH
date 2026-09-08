@@ -630,7 +630,7 @@ def register_new_user(request):
                         if user_service and user_service.service_id:
                             service_db = str(user_service.service_id)
                             # Update in service database
-                            user.save(using=service_db)
+                            user.save()
                             print(f"User updated in service DB: {service_db}")
                     except Exception as e:
                         print(f"Error updating in service DB: {e}")
@@ -788,7 +788,7 @@ def register_new_user(request):
                                 service_user.role_id = role_id
                                 service_user.username = email
                                 service_user.is_active = user.is_active
-                                service_user.save(using=service_db)
+                                service_user.save()
                                 print(f"User updated in service DB: {service_db}")
                             else:
                                 print(f"User created in service DB: {service_db}")
@@ -816,7 +816,7 @@ def register_new_user(request):
                                         service_user.role_id = role_id
                                         service_user.username = email
                                         service_user.is_active = user.is_active
-                                        service_user.save(using=service_db_name)
+                                        service_user.save()
                                     print(f"User updated in service DB: {service_db_name}")
                                 except Exception as e:
                                     print(f"Error updating in service DB {service_db_name}: {e}")
