@@ -300,6 +300,87 @@ def get_service_name(service_id):
     return service_names.get(str(service_id), 'Unknown Service')
 
 # ========== MAIN DASHBOARD VIEW ==========
+def get_status_mapping(service_id, StatusMaster, db_alias):
+    """
+    Get approved, rejected, and pending status IDs for each service
+    """
+    approved_status_ids = []
+    rejected_status_ids = []
+    pending_status_ids = []
+    
+    try:
+        # Get all statuses
+        all_statuses = StatusMaster.objects.using(db_alias).all()
+        
+        # Define patterns for each service
+        if service_id == '1':  # Drainage Connection
+            # Approved: Approved (6, 8), Issue Certificate (11)
+            # Rejected: Rejected (4, 9), Refused (7)
+            # Pending: All others including NULL
+            approved_patterns = ['approved', 'issue certificate']
+            rejected_patterns = ['rejected', 'refused']
+            
+        elif service_id == '2':  # Tree Cutting
+            # Approved: Committee Approval (8), Approval (11), Issue Certificate (13)
+            # Rejected: Rejected (4), Committee Refusal (9), Refused (12)
+            # Pending: All others including NULL
+            approved_patterns = ['committee approval', 'approval', 'issue certificate']
+            rejected_patterns = ['rejected', 'committee refusal', 'refused']
+            
+        elif service_id == '3':  # Tree Trimming
+            # Approved: Approval (6), Issue Certificate (8)
+            # Rejected: Rejected (4), Refused (7)
+            # Pending: All others including NULL
+            approved_patterns = ['approval', 'issue certificate']
+            rejected_patterns = ['rejected', 'refused']
+            
+        elif service_id == '4':  # Contract Registration
+            # Approved: Approve (7), Issue Certificate (11)
+            # Rejected: Reject (8)
+            # Pending: All others including NULL
+            approved_patterns = ['approve', 'issue certificate']
+            rejected_patterns = ['reject']
+            
+        elif service_id == '5':  # Product Approval
+            # Approved: Approved (8, 15, 28, 30, 36), Issue Certificate (19, 40), Pass (12, 34)
+            # Rejected: Rejected (6, 9, 16, 27, 29, 31, 37), Fail (13, 35)
+            # Pending: All others including NULL
+            approved_patterns = ['approved', 'issue certificate', 'pass', 'issue certificate']
+            rejected_patterns = ['rejected', 'fail']
+            
+        else:
+            # Default fallback for any unknown service
+            approved_patterns = ['approved', 'issue certificate', 'approval']
+            rejected_patterns = ['rejected', 'refused']
+        
+        # Categorize statuses based on patterns
+        for status in all_statuses:
+            status_name = status.status_name.lower() if status.status_name else ''
+            
+            # Check if status is Approved
+            is_approved = any(pattern in status_name for pattern in approved_patterns)
+            if is_approved:
+                approved_status_ids.append(status.status_id)
+                continue
+            
+            # Check if status is Rejected
+            is_rejected = any(pattern in status_name for pattern in rejected_patterns)
+            if is_rejected:
+                rejected_status_ids.append(status.status_id)
+                continue
+            
+            # All other statuses are Pending
+            pending_status_ids.append(status.status_id)
+        
+        print(f"Service {service_id} - Approved IDs: {approved_status_ids}")
+        print(f"Service {service_id} - Rejected IDs: {rejected_status_ids}")
+        print(f"Service {service_id} - Pending IDs: {pending_status_ids}")
+        
+    except Exception as e:
+        print(f"Error in get_status_mapping: {e}")
+    
+    return approved_status_ids, rejected_status_ids, pending_status_ids
+
 
 @no_direct_access
 @login_required
@@ -340,14 +421,7 @@ def dashboard(request):
         service_stats = {}
         
         # ========== COLLECT ALL APPLICATIONS DATA ==========
-        applications_data = []  # <-- This is where we store all applications
-        
-        # Status categories for matching
-        status_categories = {
-            'approved': ['approved', 'approve', 'approval', 'issued', 'issue', 'certificate', 'certified', 'final', 'completed'],
-            'pending': ['pending', 'pend', 'process', 'progress', 'forward', 'submitted', 'initiated', 'new', 'acknowledged', 'scrutiny', 'inspection', 'chalan', 'payment', 'permission'],
-            'rejected': ['rejected', 'reject', 'refused', 'refuse', 'failed', 'cancelled', 'cancel']
-        }
+        applications_data = []
         
         # ========== PROCESS EACH SERVICE ==========
         for service in services:
@@ -428,17 +502,63 @@ def dashboard(request):
                 print(f"  Total applications: {count}")
                 total_applications += count
                 
-                # ========== COUNT STATUSES AND BUILD APPLICATIONS_DATA ==========
+                # ========== COUNT STATUSES USING STATUS_ID (LIKE SERVICE DASHBOARD) ==========
                 approved = 0
                 pending = 0
                 rejected = 0
                 
+                # Define status categories for this service (using the same logic as service dashboard)
+                approved_status_ids, rejected_status_ids, pending_status_ids = get_status_mapping(
+                    ser_id, StatusMaster, db_alias
+                )
+                
+                print(f"  Approved Status IDs: {approved_status_ids}")
+                print(f"  Rejected Status IDs: {rejected_status_ids}")
+                print(f"  Pending Status IDs: {pending_status_ids}")
+                
+                # Count NULL statuses as Pending
+                null_status_count = applications.filter(status__isnull=True).count()
+                pending += null_status_count
+                pending_count += null_status_count
+                print(f"  NULL statuses: {null_status_count}")
+                
+                # Count by status ID
+                for status_id in approved_status_ids:
+                    try:
+                        status_obj = StatusMaster.objects.using(db_alias).filter(status_id=status_id).first()
+                        if status_obj:
+                            count_val = applications.filter(status=status_obj).count()
+                            approved += count_val
+                            approved_count += count_val
+                    except Exception as e:
+                        print(f"  Error counting approved status {status_id}: {e}")
+                
+                for status_id in rejected_status_ids:
+                    try:
+                        status_obj = StatusMaster.objects.using(db_alias).filter(status_id=status_id).first()
+                        if status_obj:
+                            count_val = applications.filter(status=status_obj).count()
+                            rejected += count_val
+                            rejected_count += count_val
+                    except Exception as e:
+                        print(f"  Error counting rejected status {status_id}: {e}")
+                
+                for status_id in pending_status_ids:
+                    try:
+                        status_obj = StatusMaster.objects.using(db_alias).filter(status_id=status_id).first()
+                        if status_obj:
+                            count_val = applications.filter(status=status_obj).count()
+                            pending += count_val
+                            pending_count += count_val
+                    except Exception as e:
+                        print(f"  Error counting pending status {status_id}: {e}")
+                
+                # ========== BUILD APPLICATIONS_DATA ==========
                 for app in applications:
-                    # Get user names
+                    # Get created_by name
                     created_by_name = '-'
                     if app.created_by:
                         try:
-                            # Try to get user name if stored as ID
                             from Account.models import CustomUser
                             user = CustomUser.objects.using('default').filter(id=app.created_by).first()
                             if user:
@@ -448,17 +568,15 @@ def dashboard(request):
                         except:
                             created_by_name = str(app.created_by)
                     
-                    # Get status
+                    # Get status using status_id (like service dashboard)
                     status_name = 'No Status'
                     status_color = '#95a5a6'
-                    status_id = None
                     
                     try:
                         if app.status_id and app.status_id in status_map:
                             status_obj = status_map[app.status_id]
-                            status_name = status_obj.status_name
+                            status_name = status_obj.status_name if status_obj.status_name else 'No Status'
                             status_color = status_obj.status_color or '#6c757d'
-                            status_id = app.status_id
                     except Exception as e:
                         print(f"  ⚠️ Error getting status for app {app.id}: {e}")
                     
@@ -476,32 +594,11 @@ def dashboard(request):
                         'db_alias': db_alias,
                     })
                     
-                    # Count for pie chart
-                    status_distribution[status_name] = status_distribution.get(status_name, 0) + 1
-                    
-                    # Store color
-                    if status_color and status_color != '#95a5a6':
+                    # Count for pie chart (status distribution)
+                    if status_name not in status_distribution:
+                        status_distribution[status_name] = 0
                         status_colors[status_name] = status_color
-                    elif 'approved' in status_name.lower():
-                        status_colors[status_name] = '#2ECC71'
-                    elif 'pending' in status_name.lower():
-                        status_colors[status_name] = '#F39C12'
-                    elif 'rejected' in status_name.lower():
-                        status_colors[status_name] = '#E74C3C'
-                    else:
-                        status_colors[status_name] = '#6c757d'
-                    
-                    # Count for stats cards
-                    status_lower = status_name.lower()
-                    if any(word in status_lower for word in status_categories['approved']):
-                        approved += 1
-                        approved_count += 1
-                    elif any(word in status_lower for word in status_categories['rejected']):
-                        rejected += 1
-                        rejected_count += 1
-                    elif any(word in status_lower for word in status_categories['pending']):
-                        pending += 1
-                        pending_count += 1
+                    status_distribution[status_name] += 1
                 
                 service_stats[ser_name] = {
                     'total': count,
@@ -536,7 +633,7 @@ def dashboard(request):
         
         # ========== TABLE DATA ==========
         table_data = []
-        for app in applications_data:  # Limit to 100 for performance
+        for app in applications_data:
             table_data.append({
                 'id': app['id'],
                 'request_no': app['request_no'],
@@ -593,7 +690,6 @@ def dashboard(request):
             month_count = 0
             for app in applications_data:
                 if app['created_at']:
-                    # Check if app created_at is in this month
                     if app['created_at'] >= month_start and app['created_at'] <= month_end + timedelta(days=1):
                         month_count += 1
             
@@ -639,7 +735,7 @@ def dashboard(request):
         print(traceback.format_exc())
         messages.error(request, 'Oops...! Something went wrong!')
         return render(request, 'Dashboard/index.html', {'error': str(e)})
-    
+ 
 # ========== GET APPLICATION DETAIL FOR MODAL ==========
 def common_get_application_detail(request):
     """

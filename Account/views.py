@@ -216,11 +216,12 @@ def services(request):
             service_db = request.POST.get('service')
             # Check if user is active in that service's database
             try:
-                # Use the service database to get the user
-                user_in_service = CustomUser.objects.using(service_db).get(id=request.user.id)
-                if not user_in_service.is_active:
-                    messages.error(request, 'Your account is deactivated for this service. Please contact administrator.')
-                    return redirect('Login')
+                if service_db != '6':  # Skip check for service_id 6
+                    # Use the service database to get the user
+                    user_in_service = CustomUser.objects.using(service_db).get(id=request.user.id)
+                    if not user_in_service.is_active:
+                        messages.error(request, 'Your account is deactivated for this service. Please contact administrator.')
+                        return redirect('Login')
             except CustomUser.DoesNotExist:
                 messages.error(request, 'Your account is not set up for this service. Please contact administrator.')
                 return redirect('services')
