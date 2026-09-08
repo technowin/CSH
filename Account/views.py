@@ -574,7 +574,7 @@ def logoutView(request):
 
 def register_new_user(request):
     try:
-        if request.method=="GET":
+        if request.method == "GET":
             
             id = request.GET.get('id', '0')
             roles = callproc("stp_get_dropdown_values",['roles'])
@@ -595,6 +595,7 @@ def register_new_user(request):
             else:
                 context = {'id':id,'roles': roles,'department':department,'service':service,'user_list':user_list}
             return render(request,'Account/register_new_user.html',context)
+            
         if request.method == "POST" and 'action' in request.POST:
             action = request.POST.get('action')
             user_id = request.POST.get('user_id')
@@ -608,53 +609,58 @@ def register_new_user(request):
                         except:
                             pass
                     
+                    # Get user from default database
                     user = CustomUser.objects.get(id=user_id)
                     
                     if action == 'activate':
-                        user.is_active = True  # Sets to 1
+                        user.is_active = True
                         messages.success(request, f"User {user.full_name} activated successfully!")
                     else:  # deactivate
-                        user.is_active = False  # Sets to 0
+                        user.is_active = False
                         messages.success(request, f"User {user.full_name} deactivated successfully!")
                     
-                    user.save()
+                    # Save in default database
+                    user.save(using='default')
                     
-                    # Update in service database if needed
-                    service_db = request.POST.get('service_db', 'default')
-                    if service_db != 'default' and service_db != '':
-                        try:
-                            with transaction.atomic(using=service_db):
-                                user.save(using=service_db)
-                        except Exception as e:
-                            print(f"Error updating in service DB: {e}")
-                            
+                    # Also update in service database
+                    try:
+                        # Get the service mapping for this user
+                        user_service = user_dept_services.objects.using('default').filter(user_id=user_id).first()
+                        if user_service and user_service.service_id:
+                            service_db = str(user_service.service_id)
+                            # Update in service database
+                            user.save(using=service_db)
+                            print(f"User updated in service DB: {service_db}")
+                    except Exception as e:
+                        print(f"Error updating in service DB: {e}")
+                        
                 except CustomUser.DoesNotExist:
                     messages.error(request, "User not found!")
                 except Exception as e:
                     messages.error(request, f"Error updating user status: {str(e)}")
                 
                 return redirect('/masters?entity=user&type=i')
-       
 
         if request.method == "POST":
             id = request.POST.get('id', '')
             try:  
-                if id == '0':                
+                if id == '0':  # CREATE NEW USER
                     firstname = request.POST.get('firstname')
                     lastname = request.POST.get('lastname')
                     email = request.POST.get('email')
                     password = request.POST.get('password') 
                     phone = request.POST.get('mobileNumber')
                     role_id = request.POST.get('role_id')
-                    # superior_id = request.POST.get('superior_id')
                     department = request.POST.get('department')
                     service_db = request.POST.get('service', 'default')
                     full_name = f"{firstname} {lastname}"
+                    
                     if role_id and role_id != '2':
                         phone = email
-                    # superior_id=superior_id
-                    existing_user = CustomUser.objects.using('default').filter(email=email, phone=phone, role_id=role_id).exists()
-                    exist_inservice = CustomUser.objects.using(service_db).filter(email=email, phone=phone, role_id=role_id).exists()
+                    
+                    existing_user = CustomUser.objects.using('default').filter(email=email, phone=phone, role_id=role_id, is_active=True).exists()
+                    exist_inservice = CustomUser.objects.using(service_db).filter(email=email, phone=phone, role_id=role_id, is_active=True).exists()
+                    
                     if exist_inservice:
                         messages.error(request, "A user with the same email, phone, and role already exists.")
                         return redirect('/register_new_user?id=0')
@@ -666,9 +672,11 @@ def register_new_user(request):
                         )
                         user.username = user.email
                         user.is_active = True 
+                        
                         try:
                             validate_password(password, user=user)
                             user.set_password(password)
+                            
                             if existing_user:
                                 user = CustomUser.objects.using('default').get(email=email, phone=phone, role_id=role_id)
                                 user_id = user.id
@@ -680,10 +688,12 @@ def register_new_user(request):
                                         passwordText=password
                                     )
                                 user_id = user.id
+                            
                             if department:
                                 user_dept_services.objects.using('default').get_or_create(
                                     user_id=user_id,department_id=int(department),service_id=int(service_db)
                                 )
+                            
                             if service_db:
                                 user.id = user_id
                                 with transaction.atomic(using=service_db):
@@ -692,54 +702,123 @@ def register_new_user(request):
                                         user_id=user.id,
                                         passwordText=password
                                     )
+                            
                             assigned_menus = RoleMenuMaster.objects.using(service_db).filter(role_id=role_id)
                             for menu in assigned_menus:
                                 UserMenuDetails.objects.using(service_db).create(
                                     user_id=user.id,
                                     menu_id=menu.menu_id,
                                     role_id=role_id
-                            )
+                                )
 
                             messages.success(request, "User registered successfully!")
 
                         except ValidationError as e:
                             messages.error(request, ' '.join(e.messages))
                     
-                else:
+                else:  # UPDATE EXISTING USER
+                    # Decrypt the ID if it's encrypted
+                    try:
+                        user_id = decrypt_parameter(id)
+                    except:
+                        user_id = id
+                    
                     firstname = request.POST.get('firstname')
                     lastname = request.POST.get('lastname')
                     email = request.POST.get('email')
                     full_name = f"{firstname} {lastname}"
                     phone = request.POST.get('mobileNumber')
                     role_id = request.POST.get('role_id')
-                    # superior_id = request.POST.get('superior_id')
+                    department = request.POST.get('department')
+                    service_db = request.POST.get('service', 'default')
+                    
                     if role_id and role_id != '2':
                         phone = email
 
-                    user = CustomUser.objects.get(id=id)
+                    # ========== UPDATE IN DEFAULT DATABASE ==========
+                    user = CustomUser.objects.get(id=user_id)
                     user.full_name = full_name
                     user.email = email
                     user.phone = phone
                     user.role_id = role_id
-                    # user.superior_id = superior_id
-                    user.save()
+                    user.save(using='default')
+                    
+                    # ========== UPDATE DEPARTMENT AND SERVICE MAPPING ==========
                     from django.utils import timezone
-                    department = request.POST.get('department')
-                    service_db = request.POST.get('service', 'default')
                     if department:
                         obj, created = user_dept_services.objects.using('default').update_or_create(
-                            user_id=id,
-                            department_id=department,
-                            service_id=service_db,
+                            user_id=user_id,
                             defaults={
+                                'department_id': department,
+                                'service_id': service_db,
                                 'updated_at': timezone.now(),
-                                'updated_by': id,
+                                'updated_by': user_id,
                             }
                         )
+                    
+                    # ========== UPDATE IN SERVICE DATABASE ==========
+                    try:
+                        if service_db and service_db != 'default':
+                            # Get or create user in service database
+                            service_user, created = CustomUser.objects.using(service_db).get_or_create(
+                                id=user_id,  # user_id is defined above
+                                defaults={
+                                    'full_name': full_name,
+                                    'email': email,
+                                    'phone': phone,
+                                    'role_id': role_id,
+                                    'username': email,
+                                    'is_active': user.is_active,
+                                }
+                            )
+                            
+                            if not created:
+                                # Update existing user in service database
+                                service_user.full_name = full_name
+                                service_user.email = email
+                                service_user.phone = phone
+                                service_user.role_id = role_id
+                                service_user.username = email
+                                service_user.is_active = user.is_active
+                                service_user.save(using=service_db)
+                                print(f"User updated in service DB: {service_db}")
+                            else:
+                                print(f"User created in service DB: {service_db}")
+                        else:
+                            # If no service selected in POST, check from mapping table
+                            user_services = user_dept_services.objects.using('default').filter(user_id=user_id)
+                            for user_service in user_services:
+                                service_db_name = str(user_service.service_id)
+                                try:
+                                    service_user, created = CustomUser.objects.using(service_db_name).get_or_create(
+                                        id=user_id,
+                                        defaults={
+                                            'full_name': full_name,
+                                            'email': email,
+                                            'phone': phone,
+                                            'role_id': role_id,
+                                            'username': email,
+                                            'is_active': user.is_active,
+                                        }
+                                    )
+                                    if not created:
+                                        service_user.full_name = full_name
+                                        service_user.email = email
+                                        service_user.phone = phone
+                                        service_user.role_id = role_id
+                                        service_user.username = email
+                                        service_user.is_active = user.is_active
+                                        service_user.save(using=service_db_name)
+                                    print(f"User updated in service DB: {service_db_name}")
+                                except Exception as e:
+                                    print(f"Error updating in service DB {service_db_name}: {e}")
+                    except Exception as e:
+                        print(f"Error updating in service DB: {e}")
+                        messages.warning(request, f"User updated in default DB but error in service DB: {str(e)}")
 
                     messages.success(request, "User details updated successfully!")
+                    
                 return redirect('/masters?entity=user&type=i')
-
 
             except Exception as e:
                 tb = traceback.extract_tb(e.__traceback__)
@@ -754,6 +833,7 @@ def register_new_user(request):
         fun = tb[0].name
         callproc("stp_error_log", [fun, str(e), request.user.id])
         messages.error(request, 'Oops...! Something went wrong!')
+        return redirect('/masters?entity=user&type=i')
 
 def forgot_password(request):
     try:
