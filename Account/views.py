@@ -746,16 +746,23 @@ def register_new_user(request):
                     
                     # ========== UPDATE DEPARTMENT AND SERVICE MAPPING ==========
                     from django.utils import timezone
+
                     if department:
-                        obj, created = user_dept_services.objects.using('default').update_or_create(
-                            user_id=user_id,
-                            defaults={
-                                'department_id': department,
-                                'service_id': service_db,
-                                'updated_at': timezone.now(),
-                                'updated_by': user_id,
-                            }
-                        )
+                        try:
+                            # Use all three fields to identify the unique record
+                            obj, created = user_dept_services.objects.using('default').update_or_create(
+                                user_id=user_id,
+                                department_id=department,
+                                service_id=service_db,
+                                defaults={
+                                    'updated_at': timezone.now(),
+                                    'updated_by': user_id,
+                                }
+                            )
+                            print(f"Department-Service mapping updated for user {user_id}")
+                            
+                        except Exception as e:
+                            print(f"Error updating user_dept_services: {e}")
                     
                     # ========== UPDATE IN SERVICE DATABASE ==========
                     try:
