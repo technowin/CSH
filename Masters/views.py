@@ -937,6 +937,87 @@ def get_service_color(service_id):
         return '#2c3e50'
 
 # ========== MAIN DASHBOARD VIEW ==========
+def get_status_mapping(service_id, StatusMaster, db_alias):
+    """
+    Get approved, rejected, and pending status IDs for each service
+    """
+    approved_status_ids = []
+    rejected_status_ids = []
+    pending_status_ids = []
+    
+    try:
+        # Get all statuses
+        all_statuses = StatusMaster.objects.using(db_alias).all()
+        
+        # Define patterns for each service
+        if service_id == '1':  # Drainage Connection
+            # Approved: Approved (6, 8), Issue Certificate (11)
+            # Rejected: Rejected (4, 9), Refused (7)
+            # Pending: All others including NULL
+            approved_patterns = ['approved', 'issue certificate']
+            rejected_patterns = ['rejected', 'refused']
+            
+        elif service_id == '2':  # Tree Cutting
+            # Approved: Committee Approval (8), Approval (11), Issue Certificate (13)
+            # Rejected: Rejected (4), Committee Refusal (9), Refused (12)
+            # Pending: All others including NULL
+            approved_patterns = ['committee approval', 'approval', 'issue certificate']
+            rejected_patterns = ['rejected', 'committee refusal', 'refused']
+            
+        elif service_id == '3':  # Tree Trimming
+            # Approved: Approval (6), Issue Certificate (8)
+            # Rejected: Rejected (4), Refused (7)
+            # Pending: All others including NULL
+            approved_patterns = ['approval', 'issue certificate']
+            rejected_patterns = ['rejected', 'refused']
+            
+        elif service_id == '4':  # Contract Registration
+            # Approved: Approve (7), Issue Certificate (11)
+            # Rejected: Reject (8)
+            # Pending: All others including NULL
+            approved_patterns = ['approve', 'issue certificate']
+            rejected_patterns = ['reject']
+            
+        elif service_id == '5':  # Product Approval
+            # Approved: Approved (8, 15, 28, 30, 36), Issue Certificate (19, 40), Pass (12, 34)
+            # Rejected: Rejected (6, 9, 16, 27, 29, 31, 37), Fail (13, 35)
+            # Pending: All others including NULL
+            approved_patterns = ['approved', 'issue certificate', 'pass', 'issue certificate']
+            rejected_patterns = ['rejected', 'fail']
+            
+        else:
+            # Default fallback for any unknown service
+            approved_patterns = ['approved', 'issue certificate', 'approval']
+            rejected_patterns = ['rejected', 'refused']
+        
+        # Categorize statuses based on patterns
+        for status in all_statuses:
+            status_name = status.status_name.lower() if status.status_name else ''
+            
+            # Check if status is Approved
+            is_approved = any(pattern in status_name for pattern in approved_patterns)
+            if is_approved:
+                approved_status_ids.append(status.status_id)
+                continue
+            
+            # Check if status is Rejected
+            is_rejected = any(pattern in status_name for pattern in rejected_patterns)
+            if is_rejected:
+                rejected_status_ids.append(status.status_id)
+                continue
+            
+            # All other statuses are Pending
+            pending_status_ids.append(status.status_id)
+        
+        print(f"Service {service_id} - Approved IDs: {approved_status_ids}")
+        print(f"Service {service_id} - Rejected IDs: {rejected_status_ids}")
+        print(f"Service {service_id} - Pending IDs: {pending_status_ids}")
+        
+    except Exception as e:
+        print(f"Error in get_status_mapping: {e}")
+    
+    return approved_status_ids, rejected_status_ids, pending_status_ids
+
 def service_dashboard(request):
     try:
         service_id = request.session.get("service_db")
@@ -1016,6 +1097,12 @@ def service_dashboard(request):
                             print(f"Error processing status {status}: {e}")
                             continue
                     
+                    # ========== Count NULL statuses ==========
+                    null_status_count = applications.filter(status__isnull=True).count()
+                    if null_status_count > 0:
+                        status_distribution['No Status (Pending)'] = null_status_count
+                        status_colors['No Status (Pending)'] = '#F39C12'
+                    
                     status_labels = list(status_distribution.keys())
                     status_values = list(status_distribution.values())
                     status_color_list = [status_colors.get(label, '#6c757d') for label in status_labels]
@@ -1025,26 +1112,58 @@ def service_dashboard(request):
         except Exception as e:
             print(f"Status processing error: {e}")
         
-        # Calculate counts
+        # ========== DYNAMIC COUNT CALCULATION ==========
         approved_count = 0
         pending_count = 0
         rejected_count = 0
         
         try:
-            for status_name, count in status_distribution.items():
-                try:
-                    lower_status = status_name.lower()
-                    if 'approved' in lower_status or 'issued' in lower_status or 'certificate' in lower_status:
-                        approved_count += count
-                    elif 'pending' in lower_status or 'process' in lower_status or 'forward' in lower_status:
-                        pending_count += count
-                    elif 'rejected' in lower_status or 'refused' in lower_status:
-                        rejected_count += count
-                except Exception as e:
-                    print(f"Error calculating counts for {status_name}: {e}")
-                    continue
+            if StatusMaster:
+                # Get dynamic status mapping for this service
+                approved_status_ids, rejected_status_ids, pending_status_ids = get_status_mapping(
+                    service_id, StatusMaster, db_alias
+                )
+                
+                # Count Approved statuses
+                for status_id in approved_status_ids:
+                    try:
+                        status_obj = StatusMaster.objects.using(db_alias).filter(status_id=status_id).first()
+                        if status_obj:
+                            count = applications.filter(status=status_obj).count()
+                            approved_count += count
+                    except Exception as e:
+                        print(f"Error processing approved status ID {status_id}: {e}")
+                        continue
+                
+                # Count Rejected statuses
+                for status_id in rejected_status_ids:
+                    try:
+                        status_obj = StatusMaster.objects.using(db_alias).filter(status_id=status_id).first()
+                        if status_obj:
+                            count = applications.filter(status=status_obj).count()
+                            rejected_count += count
+                    except Exception as e:
+                        print(f"Error processing rejected status ID {status_id}: {e}")
+                        continue
+                
+                # ========== Count NULL statuses as Pending ==========
+                null_status_count = applications.filter(status__isnull=True).count()
+                pending_count += null_status_count
+                
+                # ========== Count all pending statuses ==========
+                for status_id in pending_status_ids:
+                    try:
+                        status_obj = StatusMaster.objects.using(db_alias).filter(status_id=status_id).first()
+                        if status_obj:
+                            count = applications.filter(status=status_obj).count()
+                            pending_count += count
+                    except Exception as e:
+                        print(f"Error processing pending status ID {status_id}: {e}")
+                        continue
+                        
         except Exception as e:
             print(f"Count calculation error: {e}")
+            print(traceback.format_exc())
         
         # ========== DAILY DATA ==========
         date_range = []
@@ -1112,8 +1231,12 @@ def service_dashboard(request):
                     for field in table_fields:
                         try:
                             if field == 'status':
-                                row['status'] = app.status.status_name if app.status else 'N/A'
-                                row['status_color'] = app.status.status_color if app.status else '#6c757d'
+                                if app.status:
+                                    row['status'] = app.status.status_name if app.status.status_name else 'N/A'
+                                    row['status_color'] = app.status.status_color if app.status.status_color else '#6c757d'
+                                else:
+                                    row['status'] = 'No Status (Pending)'
+                                    row['status_color'] = '#F39C12'
                             elif field == 'created_at':
                                 row['created_at'] = app.created_at.strftime('%Y-%m-%d %H:%M') if app.created_at else '-'
                             else:
@@ -1187,7 +1310,7 @@ def service_dashboard(request):
         return render(request, 'Master/error.html', {
             'message': f'Error: {str(e)}'
         })
-
+        
 def get_default_daily_data(applications):
     try:
         date_range = []
