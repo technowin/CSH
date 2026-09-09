@@ -53,6 +53,64 @@ import hashlib
 logger = logging.getLogger("session_debug") 
 from django.contrib.auth import login
 
+
+def _get_user_service_db_aliases(user_id):
+    mappings = user_dept_services.objects.using('default').filter(user_id=user_id)
+    service_dbs = []
+    for mapping in mappings:
+        service_db = str(mapping.service_id).strip() if mapping.service_id else ''
+        if service_db and service_db not in ['default', '6']:
+            service_dbs.append(service_db)
+
+    return list(dict.fromkeys(service_dbs))
+
+
+def _sync_user_activation_status(user_id, is_active, requested_service_db=None):
+    user = CustomUser.objects.using('default').get(id=user_id)
+
+    # Update the default database directly so the change is guaranteed to persist.
+    CustomUser.objects.using('default').filter(id=user_id).update(is_active=is_active)
+
+    service_dbs = _get_user_service_db_aliases(user_id)
+    if requested_service_db and requested_service_db not in ['default', '6']:
+        service_dbs.append(requested_service_db)
+
+    for service_db in list(dict.fromkeys(service_dbs)):
+        try:
+            CustomUser.objects.using(service_db).filter(id=user_id).update(is_active=is_active)
+        except Exception as exc:
+            logger.exception(
+                "Failed to sync activation status for user %s in service DB %s: %s",
+                user_id,
+                service_db,
+                exc,
+            )
+
+    return user
+
+
+def _sync_user_profile_in_service_dbs(user_id, full_name, email, phone, role_id, is_active, requested_service_db=None):
+    service_dbs = _get_user_service_db_aliases(user_id)
+    if requested_service_db and requested_service_db not in ['default', '6']:
+        service_dbs.append(requested_service_db)
+
+    for service_db in list(dict.fromkeys(service_dbs)):
+        try:
+            CustomUser.objects.using(service_db).filter(id=user_id).update(
+                full_name=full_name,
+                email=email,
+                phone=phone,
+                role_id=role_id,
+                is_active=is_active,
+            )
+        except Exception as exc:
+            logger.exception(
+                "Failed to sync profile for user %s in service DB %s: %s",
+                user_id,
+                service_db,
+                exc,
+            )
+
 # def get_client_ip(request):
 #     """
 #     Returns real client IP behind nginx/gunicorn.
@@ -610,30 +668,18 @@ def register_new_user(request):
                         except:
                             pass
                     
-                    # Get user from default database
-                    user = CustomUser.objects.get(id=user_id)
-                    
+                    request_service_db = request.POST.get('service_db', '')
+
+                    user = _sync_user_activation_status(
+                        user_id=user_id,
+                        is_active=(action == 'activate'),
+                        requested_service_db=request_service_db,
+                    )
+
                     if action == 'activate':
-                        user.is_active = True
                         messages.success(request, f"User {user.full_name} activated successfully!")
                     else:  # deactivate
-                        user.is_active = False
                         messages.success(request, f"User {user.full_name} deactivated successfully!")
-                    
-                    # Save in default database
-                    user.save(using='default')
-                    
-                    # Also update in service database
-                    try:
-                        # Get the service mapping for this user
-                        user_service = user_dept_services.objects.using('default').filter(user_id=user_id).first()
-                        if user_service and user_service.service_id:
-                            service_db = str(user_service.service_id)
-                            # Update in service database
-                            user.save()
-                            print(f"User updated in service DB: {service_db}")
-                    except Exception as e:
-                        print(f"Error updating in service DB: {e}")
                         
                 except CustomUser.DoesNotExist:
                     messages.error(request, "User not found!")
@@ -765,56 +811,15 @@ def register_new_user(request):
                             print(f"Error updating user_dept_services: {e}")
                     
                     try:
-                        if service_db and service_db != 'default':
-                            # Get or create user in service database
-                            service_user, created = CustomUser.objects.using(service_db).get_or_create(
-                                id=user_id,
-                                defaults={
-                                    'full_name': full_name,
-                                    'email': email,
-                                    'phone': phone,
-                                    'role_id': role_id,
-                                    'is_active': user.is_active,
-                                }
-                            )
-                            
-                            if not created:
-                                # Update existing user in service database
-                                service_user.full_name = full_name
-                                service_user.email = email
-                                service_user.phone = phone
-                                service_user.role_id = role_id
-                                service_user.is_active = user.is_active
-                                service_user.save(using=service_db)  # ✅ Added using=service_db
-                                print(f"User updated in service DB: {service_db}")
-                            else:
-                                print(f"User created in service DB: {service_db}")
-                        else:
-                            # If no service selected in POST, check from mapping table
-                            user_services = user_dept_services.objects.using('default').filter(user_id=user_id)
-                            for user_service in user_services:
-                                service_db_name = str(user_service.service_id)
-                                try:
-                                    service_user, created = CustomUser.objects.using(service_db_name).get_or_create(
-                                        id=user_id,
-                                        defaults={
-                                            'full_name': full_name,
-                                            'email': email,
-                                            'phone': phone,
-                                            'role_id': role_id,
-                                            'is_active': user.is_active,
-                                        }
-                                    )
-                                    if not created:
-                                        service_user.full_name = full_name
-                                        service_user.email = email
-                                        service_user.phone = phone
-                                        service_user.role_id = role_id
-                                        service_user.is_active = user.is_active
-                                        service_user.save(using=service_db_name)  # ✅ Added using=service_db_name
-                                    print(f"User updated in service DB: {service_db_name}")
-                                except Exception as e:
-                                    print(f"Error updating in service DB {service_db_name}: {e}")
+                        _sync_user_profile_in_service_dbs(
+                            user_id=user_id,
+                            full_name=full_name,
+                            email=email,
+                            phone=phone,
+                            role_id=role_id,
+                            is_active=user.is_active,
+                            requested_service_db=service_db if service_db and service_db != 'default' else None,
+                        )
                     except Exception as e:
                         print(f"Error updating in service DB: {e}")
                         messages.warning(request, f"User updated in default DB but error in service DB: {str(e)}")
