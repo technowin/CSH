@@ -236,7 +236,7 @@
                                                        class="user-toggle" 
                                                        data-user-id="{{ row.0 }}" 
                                                        data-user-name="{{ row.1 }}"
-                                                       data-service-db="default"
+                                                       data-service-db="{{ current_service_db|default:'default' }}"
                                                        {% if row.5 == 'Active' %}checked{% endif %}>
                                                 <span class="toggle-slider"></span>
                                             </label>

@@ -87,7 +87,15 @@ def masters(request):
     finally:
         Db.closeConnection()
         if request.method=="GET":
-            return render(request,'Master/index.html', {'entity':entity,'type':type,'name':name,'header':header,'data':data,'pre_url':pre_url})
+            return render(request,'Master/index.html', {
+                'entity': entity,
+                'type': type,
+                'name': name,
+                'header': header,
+                'data': data,
+                'pre_url': pre_url,
+                'current_service_db': request.session.get('service_db', 'default'),
+            })
         elif request.method=="POST":  
             new_url = f'/masters?entity={entity}&type={type}'
             return redirect(new_url) 
