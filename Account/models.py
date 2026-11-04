@@ -228,3 +228,15 @@ class passwordChangeLog (models.Model):
         ordering = ['-updated_at']
 
     
+class APIClient(models.Model):
+    client_id = models.CharField(max_length=100, unique=True)
+    client_secret = models.CharField(max_length=255, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "api_client"
+
+    def __str__(self):
+        return self.client_id
