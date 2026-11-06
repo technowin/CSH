@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from django.conf.urls.static import static
 from Account.views import *
 from Dashboard.views import *
@@ -35,6 +35,7 @@ from django.urls import path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('api_service.urls')),
     # APP URLS
 
     # Account
@@ -181,9 +182,9 @@ urlpatterns = [
     path('citizen_view_cr/<str:row_id>/<str:new_id>/', citizen_view_cr, name='citizen_view_cr'),
     path('create_partial_view', create_partial_view, name='create_partial_view'),
 
-    path('chalan_doc_cr/<str:row_id>/', Chalan_cr, name='Chalan_cr'),
+    # path('chalan_doc_cr/<str:row_id>/', Chalan_cr, name='Chalan_cr'),
     path('registrationchalan_cr/<str:row_id>/',RegistrationChalan_cr, name='RegistrationChalan_cr'),
-    path("upload_chalan_receipt_cr/<str:form_id>/", upload_chalan_receipt_cr, name="upload_chalan_receipt_cr"),
+    # path("upload_chalan_receipt_cr/<str:form_id>/", upload_chalan_receipt_cr, name="upload_chalan_receipt_cr"),
     path("upload_registration_receipt_cr/<str:form_id>/", upload_registration_receipt_cr, name="upload_registration_receipt_cr"),
     path('downloadRefusalDocument_cr/<str:row_id>/', downloadRefusalDocument_cr, name='downloadRefusalDocument_cr'), 
     
