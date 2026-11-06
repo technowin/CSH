@@ -25,8 +25,8 @@ class Db:
             logger.exception("Error closing connection '%s': %s", service_alias, e)
 
 
-def callproc(procedure_name, params=None):
-    connection = Db.get_connection()
+def callproc(procedure_name, params=None, database_alias=None):
+    connection = Db.get_connection(database_alias)
     try:
         fetched_data = []
         with connection.cursor() as cursor:
@@ -47,7 +47,7 @@ def callproc(procedure_name, params=None):
         connection.rollback()
         raise
     finally:
-        Db.close_connection()
+        Db.close_connection(database_alias)
 
 def get_service_db():
     """
